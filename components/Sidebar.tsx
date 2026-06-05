@@ -14,7 +14,11 @@ import {
   Battery,
   Car,
   Settings,
-  Leaf
+  Leaf,
+  Package,
+  ClipboardList,
+  ShoppingCart,
+ 
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase/client';
 
@@ -67,9 +71,8 @@ export function Sidebar({ activeSection: propActiveSection, onSectionChange: pro
   
   const pathname = usePathname();
   
-  // Determine active section from URL path - FIXED for /dashboard/* routes
+  // Determine active section from URL path
   const getActiveSectionFromPath = (path: string) => {
-    // Remove leading slash and split into segments
     const segments = path.split('/').filter(seg => seg !== '');
     
     // Handle root or just /dashboard
@@ -82,13 +85,20 @@ export function Sidebar({ activeSection: propActiveSection, onSectionChange: pro
       const section = segments[1];
       switch (section) {
         case 'customer':
+        case 'customers':
           return 'customer';
         case 'vehicles':
           return 'vehicles';
-        case 'repairs':
+        case 'stock':
+        case 'parts':
+        case 'inventory':
+          return 'stock';
         case 'service':
-          return 'repairs';
+        case 'repairs':
+        case 'appointments':
+          return 'service';
         case 'invoices':
+        case 'billing':
           return 'invoices';
         default:
           return 'dashboard';
@@ -166,29 +176,43 @@ export function Sidebar({ activeSection: propActiveSection, onSectionChange: pro
       const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
       const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString();
       
+      // Get customers count
       const { count: customersCount } = await supabase
-        .from('showroom_users')
-        .select('*', { count: 'exact', head: true });
-      
-      const { count: vehiclesCount } = await supabase
-        .from('vehicles')
+        .from('customers')
         .select('*', { count: 'exact', head: true })
         .eq('showroom_id', showroomId);
       
+      // Get vehicles count from inventory
+      const { count: vehiclesCount } = await supabase
+        .from('inventory')
+        .select('*', { count: 'exact', head: true })
+        .eq('showroom_id', showroomId);
+      
+      // Get sales invoices for monthly revenue
       const { data: invoices, error: invoicesError } = await supabase
-        .from('invoices')
-        .select('total_amount')
+        .from('sales_invoices')
+        .select('ex_showroom_price, rto_charges, insurance_amount, handling_charges, fast_charger_cost, extended_warranty_cost, accessories_amount')
         .eq('showroom_id', showroomId)
         .gte('created_at', startOfMonth)
         .lte('created_at', endOfMonth);
       
       let monthlyRevenue = 0;
       if (!invoicesError && invoices) {
-        monthlyRevenue = invoices.reduce((sum, inv) => sum + (inv.total_amount || 0), 0);
+        monthlyRevenue = invoices.reduce((sum, inv) => {
+          return sum + 
+            (inv.ex_showroom_price || 0) + 
+            (inv.rto_charges || 0) + 
+            (inv.insurance_amount || 0) + 
+            (inv.handling_charges || 0) + 
+            (inv.fast_charger_cost || 0) + 
+            (inv.extended_warranty_cost || 0) + 
+            (inv.accessories_amount || 0);
+        }, 0);
       }
       
+      // Get total invoices count
       const { count: invoicesCount } = await supabase
-        .from('invoices')
+        .from('sales_invoices')
         .select('*', { count: 'exact', head: true })
         .eq('showroom_id', showroomId);
       
@@ -218,11 +242,42 @@ export function Sidebar({ activeSection: propActiveSection, onSectionChange: pro
   }
 
   const menuItems = [
-    { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, href: '/dashboard' },
-    { id: 'customer', label: 'Customer', icon: Users, href: '/dashboard/customer' },
-    { id: 'vehicles', label: 'Vehicles', icon: Car, href: '/dashboard/vehicles' },
-    { id: 'repairs', label: 'Service', icon: Wrench, href: '/dashboard/repairs' },
-    { id: 'invoices', label: 'Invoices', icon: FileText, href: '/dashboard/invoices' },
+    { 
+      id: 'dashboard', 
+      label: 'Dashboard', 
+      icon: LayoutDashboard, 
+      href: '/dashboard' 
+    },
+    { 
+      id: 'customer', 
+      label: 'Customers', 
+      icon: Users, 
+      href: '/dashboard/customer' 
+    },
+    { 
+      id: 'vehicles', 
+      label: 'Vehicles', 
+      icon: Car, 
+      href: '/dashboard/vehicles' 
+    },
+    { 
+      id: 'stock', 
+      label: 'Stock/Parts', 
+      icon: Package, 
+      href: '/dashboard/stock' 
+    },
+    { 
+      id: 'service', 
+      label: 'Service', 
+      icon: Wrench, 
+      href: '/dashboard/service' 
+    },
+    { 
+      id: 'invoices', 
+      label: 'Invoices', 
+      icon: FileText, 
+      href: '/dashboard/invoices' 
+    },
   ];
 
   const getPrimaryColor = () => branding?.primary_color || EV_GREEN.primary;
@@ -264,10 +319,6 @@ export function Sidebar({ activeSection: propActiveSection, onSectionChange: pro
     }
   };
 
-  // Debug log to see what's happening
-  console.log('Current pathname:', pathname);
-  console.log('Active section:', activeSection);
-
   return (
     <div className="w-64 h-full bg-gradient-to-b from-white to-gray-50 border-r border-gray-200 flex flex-col shadow-lg">
       <div className="p-6 border-b border-gray-200 bg-gradient-to-r from-green-50 to-emerald-50">
@@ -290,7 +341,7 @@ export function Sidebar({ activeSection: propActiveSection, onSectionChange: pro
         </Link>
       </div>
       
-      <nav className="flex-1 p-4 space-y-1">
+      <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
         {menuItems.map((item) => {
           const Icon = item.icon;
           const isActive = activeSection === item.id;
@@ -303,7 +354,7 @@ export function Sidebar({ activeSection: propActiveSection, onSectionChange: pro
               onClick={() => handleNavigation(item.id, item.href)}
               className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group ${
                 isActive 
-                  ? 'shadow-md' 
+                  ? 'shadow-md transform scale-[1.02]' 
                   : 'hover:bg-green-50 hover:text-green-700'
               }`}
               style={linkStyle}
@@ -320,6 +371,7 @@ export function Sidebar({ activeSection: propActiveSection, onSectionChange: pro
         })}
       </nav>
 
+      {/* Stats Card */}
       <div className="p-4 m-4 rounded-xl bg-gradient-to-br from-green-50 to-emerald-50 border border-green-200 shadow-sm">
         <div className="flex items-center gap-2 mb-3">
           <div className="w-8 h-8 rounded-lg bg-green-100 flex items-center justify-center">

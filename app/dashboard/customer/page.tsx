@@ -1,9 +1,52 @@
-// app/customers/page.tsx - With blur effect on modals
+// app/customers/page.tsx - With blur effect on modals and validation-based navigation
 
 'use client';
 
 import { apiClient } from '@/lib/supabase/api-client';
 import { useState, useEffect, useCallback, useMemo } from 'react';
+import React from 'react';
+import { 
+  User,
+  Search, 
+  Filter, 
+  Eye, 
+  Edit, 
+  Trash2, 
+  X, 
+  Plus,
+  RefreshCw,
+  ChevronRight,
+  ChevronLeft,
+  AlertCircle,
+  AlertTriangle,
+  CheckCircle,
+  Info,
+  Phone,
+  Mail,
+  MapPin,
+  CreditCard,
+  Users,
+  Building2,
+  Shield,
+  Star,
+  Target,
+  Bell,
+  Calendar,
+  Tag,
+  Briefcase,
+  Zap,
+  Battery,
+  Globe,
+  Languages,
+  MessageSquare,
+  Smartphone,
+  FileText,
+  Link,
+  PhoneCall,
+  Award,
+  TrendingUp,
+  UserPlus
+} from 'lucide-react';
 
 // Types
 interface Customer {
@@ -52,7 +95,6 @@ interface Customer {
   pan_number: string | null;
   gst_number: string | null;
   driving_license_number: string | null;
-  profile_image_url: string | null;
   emergency_contact_name: string | null;
   emergency_contact_number: string | null;
   emergency_contact_relation: string | null;
@@ -84,14 +126,16 @@ const Toast = ({ message, type, onClose }: { message: string; type: 'success' | 
     info: 'bg-blue-500'
   };
 
+  const icons = {
+    success: <CheckCircle className="w-5 h-5" />,
+    error: <AlertCircle className="w-5 h-5" />,
+    info: <Info className="w-5 h-5" />
+  };
+
   return (
     <div className="fixed bottom-4 right-4 z-50 animate-slide-up">
       <div className={`${colors[type]} text-white px-6 py-3 rounded-lg shadow-lg flex items-center space-x-2`}>
-        <span>
-          {type === 'success' && '✓'}
-          {type === 'error' && '✗'}
-          {type === 'info' && 'ℹ'}
-        </span>
+        {icons[type]}
         <span>{message}</span>
       </div>
     </div>
@@ -118,9 +162,30 @@ const StatusBadge = ({ status, type }: { status: string; type: 'lead' | 'custome
     VIP: 'bg-yellow-100 text-yellow-800',
   };
 
+  const leadIcons: Record<string, React.ReactNode> = {
+    New: <Star className="w-3 h-3" />,
+    Contacted: <Phone className="w-3 h-3" />,
+    Interested: <Target className="w-3 h-3" />,
+    'Test Ride Done': <CheckCircle className="w-3 h-3" />,
+    Negotiation: <TrendingUp className="w-3 h-3" />,
+    Converted: <CheckCircle className="w-3 h-3" />,
+    Lost: <X className="w-3 h-3" />,
+    'Follow-up': <Bell className="w-3 h-3" />,
+  };
+
+  const customerIcons: Record<string, React.ReactNode> = {
+    Active: <CheckCircle className="w-3 h-3" />,
+    Inactive: <AlertCircle className="w-3 h-3" />,
+    Blocked: <Shield className="w-3 h-3" />,
+    VIP: <Star className="w-3 h-3" />,
+  };
+
   const colors = type === 'lead' ? leadColors : customerColors;
+  const icons = type === 'lead' ? leadIcons : customerIcons;
+
   return (
-    <span className={`px-2 py-1 rounded-full text-xs font-medium ${colors[status] || 'bg-gray-100 text-gray-800'}`}>
+    <span className={`px-2 py-1 rounded-full text-xs font-medium inline-flex items-center gap-1 ${colors[status] || 'bg-gray-100 text-gray-800'}`}>
+      {icons[status]}
       {status}
     </span>
   );
@@ -168,6 +233,52 @@ export default function CustomerManagementPage() {
     source: '',
   });
 
+  // Tab configuration with mandatory fields
+  const tabs = useMemo(() => [
+    { 
+      key: 'basic', 
+      label: 'Basic Info', 
+      icon: <User className="w-4 h-4" />,
+      mandatoryFields: ['first_name', 'mobile']
+    },
+    { 
+      key: 'government', 
+      label: 'Government IDs', 
+      icon: <CreditCard className="w-4 h-4" />,
+      mandatoryFields: [] // All fields optional
+    },
+    { 
+      key: 'ev', 
+      label: 'EV Preferences', 
+      icon: <Battery className="w-4 h-4" />,
+      mandatoryFields: [] // All fields optional
+    },
+    { 
+      key: 'address', 
+      label: 'Address', 
+      icon: <MapPin className="w-4 h-4" />,
+      mandatoryFields: ['address_line1', 'city', 'state', 'pincode']
+    },
+    { 
+      key: 'communication', 
+      label: 'Communication', 
+      icon: <MessageSquare className="w-4 h-4" />,
+      mandatoryFields: [] // All fields optional
+    },
+    { 
+      key: 'lead', 
+      label: 'Lead Management', 
+      icon: <Target className="w-4 h-4" />,
+      mandatoryFields: [] // All fields optional
+    },
+    { 
+      key: 'emergency', 
+      label: 'Emergency Contact', 
+      icon: <PhoneCall className="w-4 h-4" />,
+      mandatoryFields: [] // All fields optional
+    },
+  ], []);
+
   const [formData, setFormData] = useState({
     first_name: '',
     last_name: '',
@@ -176,7 +287,6 @@ export default function CustomerManagementPage() {
     email: '',
     gender: '',
     date_of_birth: '',
-    profile_image_url: '',
     aadhaar_number: '',
     pan_number: '',
     gst_number: '',
@@ -219,6 +329,78 @@ export default function CustomerManagementPage() {
 
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [sectionError, setSectionError] = useState('');
+
+  // Validate mandatory fields for current section
+  const validateCurrentSection = (): boolean => {
+    const currentTab = tabs[currentTabIndex];
+    const errors: Record<string, string> = {};
+    
+    currentTab.mandatoryFields.forEach(field => {
+      const value = formData[field as keyof typeof formData];
+      if (!value || (typeof value === 'string' && !value.trim())) {
+        const fieldLabels: Record<string, string> = {
+          first_name: 'First name',
+          mobile: 'Mobile number',
+          address_line1: 'Address line 1',
+          city: 'City',
+          state: 'State',
+          pincode: 'Pincode'
+        };
+        errors[field] = `${fieldLabels[field] || field} is required`;
+      } else if (field === 'mobile' && typeof value === 'string' && !/^[0-9]{10}$/.test(value)) {
+        errors[field] = 'Mobile must be 10 digits';
+      } else if (field === 'pincode' && typeof value === 'string' && !/^[0-9]{6}$/.test(value)) {
+        errors[field] = 'Pincode must be 6 digits';
+      } else if (field === 'email' && value && typeof value === 'string' && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
+        errors[field] = 'Invalid email format';
+      }
+    });
+    
+    setFormErrors(prev => ({ ...prev, ...errors }));
+    
+    if (Object.keys(errors).length > 0) {
+      setSectionError(`Please fill in all required fields in the ${currentTab.label} section`);
+      return false;
+    }
+    
+    setSectionError('');
+    return true;
+  };
+
+  // Navigate to next/previous tab with validation
+  const goToNextTab = () => {
+    if (!validateCurrentSection()) {
+      return;
+    }
+    
+    const currentIndex = tabs.findIndex(tab => tab.key === activeTab);
+    if (currentIndex < tabs.length - 1) {
+      setActiveTab(tabs[currentIndex + 1].key);
+      setSectionError('');
+    }
+  };
+
+  const goToPreviousTab = () => {
+    const currentIndex = tabs.findIndex(tab => tab.key === activeTab);
+    if (currentIndex > 0) {
+      setActiveTab(tabs[currentIndex - 1].key);
+      setSectionError('');
+    }
+  };
+
+  const switchTab = (tabKey: string) => {
+    // Validate current section before switching
+    if (!validateCurrentSection()) {
+      return;
+    }
+    setActiveTab(tabKey);
+    setSectionError('');
+  };
+
+  const currentTabIndex = tabs.findIndex(tab => tab.key === activeTab);
+  const isFirstTab = currentTabIndex === 0;
+  const isLastTab = currentTabIndex === tabs.length - 1;
 
   // Prevent body scroll when modal is open
   useEffect(() => {
@@ -324,7 +506,6 @@ export default function CustomerManagementPage() {
       email: '',
       gender: '',
       date_of_birth: '',
-      profile_image_url: '',
       aadhaar_number: '',
       pan_number: '',
       gst_number: '',
@@ -365,6 +546,8 @@ export default function CustomerManagementPage() {
       assigned_sales_executive_id: '',
     });
     setFormErrors({});
+    setSectionError('');
+    setActiveTab('basic');
   };
 
   const prepareSubmitData = (data: typeof formData) => {
@@ -391,7 +574,6 @@ export default function CustomerManagementPage() {
       emergency_contact_relation: data.emergency_contact_relation === '' ? null : data.emergency_contact_relation,
       latitude: data.latitude === '' ? null : parseFloat(data.latitude),
       longitude: data.longitude === '' ? null : parseFloat(data.longitude),
-      profile_image_url: data.profile_image_url === '' ? null : data.profile_image_url,
       tags: data.tags ? data.tags.split(',').map(t => t.trim()) : [],
     };
   };
@@ -484,7 +666,6 @@ export default function CustomerManagementPage() {
       email: customer.email || '',
       gender: customer.gender || '',
       date_of_birth: customer.date_of_birth?.split('T')[0] || '',
-      profile_image_url: customer.profile_image_url || '',
       aadhaar_number: customer.aadhaar_number || '',
       pan_number: customer.pan_number || '',
       gst_number: customer.gst_number || '',
@@ -524,10 +705,21 @@ export default function CustomerManagementPage() {
       emergency_contact_relation: customer.emergency_contact_relation || '',
       assigned_sales_executive_id: customer.assigned_sales_executive_id || '',
     });
+    setActiveTab('basic');
+    setSectionError('');
+    setFormErrors({});
     setShowModal(true);
   };
 
-  const tabs = useMemo(() => ['basic', 'government', 'ev', 'address', 'communication', 'lead', 'emergency'], []);
+  const handleSubmit = () => {
+    if (validateForm()) {
+      if (editingCustomer) {
+        updateCustomer();
+      } else {
+        createCustomer();
+      }
+    }
+  };
 
   if (loading && customers.length === 0) {
     return (
@@ -554,14 +746,18 @@ export default function CustomerManagementPage() {
         <div className="max-w-7xl mx-auto px-4 py-4">
           <div className="flex justify-between items-center">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">Customer Management</h1>
+              <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+                <Users className="w-6 h-6" />
+                Customer Management
+              </h1>
               <p className="text-sm text-gray-500 mt-1">Manage customers, track leads, and view purchase history</p>
             </div>
             <button
               onClick={() => { resetForm(); setEditingCustomer(null); setShowModal(true); }}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
             >
-              + Add Customer
+              <UserPlus className="w-4 h-4" />
+              Add Customer
             </button>
           </div>
         </div>
@@ -571,27 +767,45 @@ export default function CustomerManagementPage() {
       <div className="max-w-7xl mx-auto px-4 py-6">
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
           <div className="bg-white rounded-lg shadow p-4 hover:shadow-md transition-shadow">
-            <p className="text-sm text-gray-500">Total</p>
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-sm text-gray-500">Total</p>
+              <Users className="w-4 h-4 text-gray-400" />
+            </div>
             <p className="text-2xl font-bold">{stats.total}</p>
           </div>
           <div className="bg-white rounded-lg shadow p-4 hover:shadow-md transition-shadow">
-            <p className="text-sm text-gray-500">Active</p>
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-sm text-gray-500">Active</p>
+              <CheckCircle className="w-4 h-4 text-green-400" />
+            </div>
             <p className="text-2xl font-bold text-green-600">{stats.active}</p>
           </div>
           <div className="bg-white rounded-lg shadow p-4 hover:shadow-md transition-shadow">
-            <p className="text-sm text-gray-500">VIP</p>
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-sm text-gray-500">VIP</p>
+              <Star className="w-4 h-4 text-yellow-400" />
+            </div>
             <p className="text-2xl font-bold text-yellow-600">{stats.vip}</p>
           </div>
           <div className="bg-white rounded-lg shadow p-4 hover:shadow-md transition-shadow">
-            <p className="text-sm text-gray-500">Converted</p>
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-sm text-gray-500">Converted</p>
+              <TrendingUp className="w-4 h-4 text-purple-400" />
+            </div>
             <p className="text-2xl font-bold text-purple-600">{stats.converted}</p>
           </div>
           <div className="bg-white rounded-lg shadow p-4 hover:shadow-md transition-shadow">
-            <p className="text-sm text-gray-500">Loyalty Points</p>
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-sm text-gray-500">Loyalty Points</p>
+              <Award className="w-4 h-4 text-orange-400" />
+            </div>
             <p className="text-2xl font-bold text-orange-600">{stats.totalLoyaltyPoints.toLocaleString()}</p>
           </div>
           <div className="bg-white rounded-lg shadow p-4 hover:shadow-md transition-shadow">
-            <p className="text-sm text-gray-500">Vehicles</p>
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-sm text-gray-500">Vehicles</p>
+              <FileText className="w-4 h-4 text-indigo-400" />
+            </div>
             <p className="text-2xl font-bold text-indigo-600">{stats.totalVehicles}</p>
           </div>
         </div>
@@ -601,6 +815,7 @@ export default function CustomerManagementPage() {
       <div className="max-w-7xl mx-auto px-4 pb-8">
         <div className="mb-6 flex gap-4">
           <div className="flex-1 relative">
+            <Search className="absolute left-3 top-2.5 text-gray-400 w-5 h-5" />
             <input
               type="text"
               placeholder="Search by name, mobile, email, or code..."
@@ -608,19 +823,19 @@ export default function CustomerManagementPage() {
               onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 pl-10"
             />
-            <span className="absolute left-3 top-2.5 text-gray-400">🔍</span>
           </div>
           <button 
             onClick={() => setShowFilters(!showFilters)} 
-            className="px-4 py-2 border rounded-lg bg-white hover:bg-gray-50 transition-colors"
+            className="px-4 py-2 border rounded-lg bg-white hover:bg-gray-50 transition-colors flex items-center gap-2"
           >
-            Filters {Object.values(filters).some(f => f) && '●'}
+            <Filter className="w-4 h-4" />
+            Filters {Object.values(filters).some(f => f) && <span className="w-2 h-2 bg-blue-500 rounded-full"></span>}
           </button>
           <button 
             onClick={loadCustomers} 
             className="px-4 py-2 border rounded-lg bg-white hover:bg-gray-50 transition-colors"
           >
-            ⟳
+            <RefreshCw className="w-4 h-4" />
           </button>
         </div>
 
@@ -672,13 +887,27 @@ export default function CustomerManagementPage() {
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Customer</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Contact</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Type/Status</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Location</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Lead</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Executive</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Vehicles</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                    <div className="flex items-center gap-1"><User className="w-3 h-3" /> Customer</div>
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                    <div className="flex items-center gap-1"><Phone className="w-3 h-3" /> Contact</div>
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                    <div className="flex items-center gap-1"><Tag className="w-3 h-3" /> Type/Status</div>
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                    <div className="flex items-center gap-1"><MapPin className="w-3 h-3" /> Location</div>
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                    <div className="flex items-center gap-1"><Target className="w-3 h-3" /> Lead</div>
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                    <div className="flex items-center gap-1"><Briefcase className="w-3 h-3" /> Executive</div>
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                    <div className="flex items-center gap-1"><FileText className="w-3 h-3" /> Vehicles</div>
+                  </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
                 </tr>
               </thead>
@@ -695,7 +924,10 @@ export default function CustomerManagementPage() {
                 ) : customers.length === 0 ? (
                   <tr>
                     <td colSpan={8} className="px-6 py-12 text-center text-gray-500">
-                      No customers found
+                      <div className="flex flex-col items-center gap-2">
+                        <Users className="w-8 h-8 text-gray-300" />
+                        <span>No customers found</span>
+                      </div>
                     </td>
                   </tr>
                 ) : (
@@ -706,22 +938,37 @@ export default function CustomerManagementPage() {
                         <div className="text-sm text-gray-500">Code: {customer.customer_code}</div>
                       </td>
                       <td className="px-6 py-4">
-                        <div className="text-sm">{customer.mobile}</div>
-                        <div className="text-sm text-gray-500">{customer.email || 'No email'}</div>
+                        <div className="text-sm flex items-center gap-1">
+                          <Phone className="w-3 h-3 text-gray-400" />
+                          {customer.mobile}
+                        </div>
+                        <div className="text-sm text-gray-500 flex items-center gap-1">
+                          <Mail className="w-3 h-3 text-gray-400" />
+                          {customer.email || 'No email'}
+                        </div>
                       </td>
                       <td className="px-6 py-4">
-                        <div className="text-sm mb-1">{customer.customer_type}</div>
+                        <div className="text-sm mb-1 flex items-center gap-1">
+                          {customer.customer_type === 'Corporate' && <Building2 className="w-3 h-3" />}
+                          {customer.customer_type}
+                        </div>
                         <StatusBadge status={customer.customer_status} type="customer" />
                       </td>
                       <td className="px-6 py-4">
-                        <div className="text-sm">{customer.city}</div>
+                        <div className="text-sm flex items-center gap-1">
+                          <MapPin className="w-3 h-3 text-gray-400" />
+                          {customer.city}
+                        </div>
                         <div className="text-sm text-gray-500">{customer.state}</div>
                       </td>
                       <td className="px-6 py-4">
                         <StatusBadge status={customer.lead_status} type="lead" />
                       </td>
                       <td className="px-6 py-4">
-                        <div className="text-sm">{customer.assigned_sales_executive?.full_name || 'Unassigned'}</div>
+                        <div className="text-sm flex items-center gap-1">
+                          <User className="w-3 h-3 text-gray-400" />
+                          {customer.assigned_sales_executive?.full_name || 'Unassigned'}
+                        </div>
                       </td>
                       <td className="px-6 py-4">
                         <div className="text-sm">{customer.total_vehicles_owned || 0} vehicles</div>
@@ -729,9 +976,15 @@ export default function CustomerManagementPage() {
                       </td>
                       <td className="px-6 py-4">
                         <div className="flex space-x-2">
-                          <button onClick={() => viewCustomer(customer.id)} className="text-blue-600 hover:text-blue-800 transition-colors" title="View">👁️</button>
-                          <button onClick={() => handleEdit(customer)} className="text-green-600 hover:text-green-800 transition-colors" title="Edit">✏️</button>
-                          <button onClick={() => deleteCustomer(customer.id)} className="text-red-600 hover:text-red-800 transition-colors" title="Delete">🗑️</button>
+                          <button onClick={() => viewCustomer(customer.id)} className="text-blue-600 hover:text-blue-800 transition-colors p-1" title="View">
+                            <Eye className="w-4 h-4" />
+                          </button>
+                          <button onClick={() => handleEdit(customer)} className="text-green-600 hover:text-green-800 transition-colors p-1" title="Edit">
+                            <Edit className="w-4 h-4" />
+                          </button>
+                          <button onClick={() => deleteCustomer(customer.id)} className="text-red-600 hover:text-red-800 transition-colors p-1" title="Delete">
+                            <Trash2 className="w-4 h-4" />
+                          </button>
                         </div>
                       </td>
                     </tr>
@@ -751,17 +1004,19 @@ export default function CustomerManagementPage() {
                 <button
                   onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
                   disabled={currentPage === 1}
-                  className="px-3 py-1 border rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors"
+                  className="px-3 py-1 border rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors flex items-center gap-1"
                 >
+                  <ChevronLeft className="w-4 h-4" />
                   Previous
                 </button>
                 <span className="px-3 py-1 text-sm">Page {currentPage} of {totalPages}</span>
                 <button
                   onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
                   disabled={currentPage === totalPages}
-                  className="px-3 py-1 border rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors"
+                  className="px-3 py-1 border rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors flex items-center gap-1"
                 >
                   Next
+                  <ChevronRight className="w-4 h-4" />
                 </button>
               </div>
             </div>
@@ -769,39 +1024,79 @@ export default function CustomerManagementPage() {
         </div>
       </div>
 
-      {/* Customer Form Modal - WITH BLUR EFFECT */}
+      {/* Customer Form Modal - WITH BLUR EFFECT AND VALIDATION */}
       {showModal && (
         <div className="fixed inset-0 backdrop-blur-md bg-white/30 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-lg shadow-xl w-full max-w-5xl max-h-[90vh] flex flex-col animate-fade-in">
+            {/* Modal Header */}
             <div className="flex-shrink-0 bg-white border-b px-6 py-4 flex justify-between items-center rounded-t-lg">
-              <h2 className="text-xl font-bold">{editingCustomer ? 'Edit Customer' : 'Add New Customer'}</h2>
+              <div>
+                <h2 className="text-xl font-bold flex items-center gap-2">
+                  <User className="w-5 h-5" />
+                  {editingCustomer ? 'Edit Customer' : 'Add New Customer'}
+                </h2>
+                <p className="text-sm text-gray-500 mt-0.5">
+                  Section {currentTabIndex + 1} of {tabs.length}: {tabs[currentTabIndex].label}
+                  {tabs[currentTabIndex].mandatoryFields.length > 0 && (
+                    <span className="text-red-500 ml-2">* Required fields</span>
+                  )}
+                </p>
+              </div>
               <button 
                 onClick={() => { setShowModal(false); setEditingCustomer(null); resetForm(); }} 
                 className="text-gray-400 hover:text-gray-600 transition-colors"
               >
-                ✕
+                <X className="w-5 h-5" />
               </button>
             </div>
+
+            {/* Progress Bar */}
+            <div className="w-full bg-gray-200 h-1.5">
+              <div 
+                className="bg-blue-600 h-1.5 transition-all duration-300 ease-in-out"
+                style={{ width: `${((currentTabIndex + 1) / tabs.length) * 100}%` }}
+              ></div>
+            </div>
+
             <div className="flex-1 overflow-y-auto p-6">
-              {/* Tabs */}
+              {/* Section Error Message */}
+              {sectionError && (
+                <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm flex items-center gap-2">
+                  <AlertTriangle className="w-4 h-4" />
+                  <span>{sectionError}</span>
+                </div>
+              )}
+
+              {/* Tabs - Horizontal Scroll */}
               <div className="border-b mb-6">
-                <div className="flex flex-wrap gap-2">
-                  {tabs.map((tab) => (
+                <div className="flex space-x-1 overflow-x-auto pb-2">
+                  {tabs.map((tab, index) => (
                     <button
-                      key={tab}
-                      onClick={() => setActiveTab(tab)}
-                      className={`px-4 py-2 font-medium capitalize transition-colors ${activeTab === tab ? 'text-blue-600 border-b-2 border-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
+                      key={tab.key}
+                      type="button"
+                      onClick={() => switchTab(tab.key)}
+                      className={`flex items-center space-x-2 px-4 py-2 rounded-t-lg font-medium text-sm whitespace-nowrap transition-colors ${
+                        activeTab === tab.key
+                          ? 'bg-blue-50 text-blue-600 border-b-2 border-blue-600'
+                          : index < currentTabIndex
+                          ? 'text-green-600 hover:bg-green-50'
+                          : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+                      } ${tab.mandatoryFields.length > 0 && index > currentTabIndex ? 'font-semibold' : ''}`}
                     >
-                      {tab}
+                      {tab.icon}
+                      <span>{tab.label}</span>
+                      {tab.mandatoryFields.length > 0 && <span className="text-red-400 text-xs">*</span>}
+                      {index < currentTabIndex && <CheckCircle className="w-4 h-4 text-green-500" />}
                     </button>
                   ))}
                 </div>
               </div>
 
-              <form onSubmit={(e) => { e.preventDefault(); editingCustomer ? updateCustomer() : createCustomer(); }}>
+              {/* Tab Content */}
+              <div>
                 {/* Basic Information Tab */}
                 {activeTab === 'basic' && (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 animate-fade-in">
                     <div>
                       <label className="block text-sm font-medium mb-1">First Name *</label>
                       <input type="text" value={formData.first_name} onChange={(e) => setFormData({...formData, first_name: e.target.value})} className={`w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 ${formErrors.first_name ? 'border-red-500' : 'border-gray-300'}`} />
@@ -812,7 +1107,10 @@ export default function CustomerManagementPage() {
                       <input type="text" value={formData.last_name} onChange={(e) => setFormData({...formData, last_name: e.target.value})} className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium mb-1">Mobile *</label>
+                      <label className="block text-sm font-medium mb-1 flex items-center gap-1">
+                        <Smartphone className="w-4 h-4" />
+                        Mobile *
+                      </label>
                       <input type="tel" value={formData.mobile} onChange={(e) => setFormData({...formData, mobile: e.target.value})} className={`w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 ${formErrors.mobile ? 'border-red-500' : 'border-gray-300'}`} />
                       {formErrors.mobile && <p className="text-red-500 text-xs mt-1">{formErrors.mobile}</p>}
                     </div>
@@ -821,7 +1119,10 @@ export default function CustomerManagementPage() {
                       <input type="tel" value={formData.alternate_mobile} onChange={(e) => setFormData({...formData, alternate_mobile: e.target.value})} className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium mb-1">Email</label>
+                      <label className="block text-sm font-medium mb-1 flex items-center gap-1">
+                        <Mail className="w-4 h-4" />
+                        Email
+                      </label>
                       <input type="email" value={formData.email} onChange={(e) => setFormData({...formData, email: e.target.value})} className={`w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 ${formErrors.email ? 'border-red-500' : 'border-gray-300'}`} />
                       {formErrors.email && <p className="text-red-500 text-xs mt-1">{formErrors.email}</p>}
                     </div>
@@ -832,7 +1133,10 @@ export default function CustomerManagementPage() {
                       </select>
                     </div>
                     <div>
-                      <label className="block text-sm font-medium mb-1">Date of Birth</label>
+                      <label className="block text-sm font-medium mb-1 flex items-center gap-1">
+                        <Calendar className="w-4 h-4" />
+                        Date of Birth
+                      </label>
                       <input type="date" value={formData.date_of_birth} onChange={(e) => setFormData({...formData, date_of_birth: e.target.value})} className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" />
                     </div>
                     <div>
@@ -847,12 +1151,18 @@ export default function CustomerManagementPage() {
                     </div>
                     {formData.customer_type !== 'Individual' && (
                       <div>
-                        <label className="block text-sm font-medium mb-1">Business Name</label>
+                        <label className="block text-sm font-medium mb-1 flex items-center gap-1">
+                          <Building2 className="w-4 h-4" />
+                          Business Name
+                        </label>
                         <input type="text" value={formData.business_name} onChange={(e) => setFormData({...formData, business_name: e.target.value})} className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" />
                       </div>
                     )}
                     <div>
-                      <label className="block text-sm font-medium mb-1">Occupation</label>
+                      <label className="block text-sm font-medium mb-1 flex items-center gap-1">
+                        <Briefcase className="w-4 h-4" />
+                        Occupation
+                      </label>
                       <input type="text" value={formData.occupation} onChange={(e) => setFormData({...formData, occupation: e.target.value})} className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" />
                     </div>
                     <div>
@@ -866,57 +1176,135 @@ export default function CustomerManagementPage() {
                         <option value="> 20 Lakhs">&gt; 20 Lakhs</option>
                       </select>
                     </div>
-                    <div>
-                      <label className="block text-sm font-medium mb-1">Profile Image URL</label>
-                      <input type="text" value={formData.profile_image_url} onChange={(e) => setFormData({...formData, profile_image_url: e.target.value})} className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="https://..." />
-                    </div>
                   </div>
                 )}
 
                 {/* Government IDs Tab */}
                 {activeTab === 'government' && (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div><label className="block text-sm font-medium mb-1">Aadhaar Number</label><input type="text" value={formData.aadhaar_number} onChange={(e) => setFormData({...formData, aadhaar_number: e.target.value})} className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="12 digit number" /></div>
-                    <div><label className="block text-sm font-medium mb-1">PAN Number</label><input type="text" value={formData.pan_number} onChange={(e) => setFormData({...formData, pan_number: e.target.value})} className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="ABCDE1234F" /></div>
-                    <div><label className="block text-sm font-medium mb-1">GST Number</label><input type="text" value={formData.gst_number} onChange={(e) => setFormData({...formData, gst_number: e.target.value})} className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="22AAAAA0000A1Z" /></div>
-                    <div><label className="block text-sm font-medium mb-1">Driving License Number</label><input type="text" value={formData.driving_license_number} onChange={(e) => setFormData({...formData, driving_license_number: e.target.value})} className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" /></div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 animate-fade-in">
+                    <div>
+                      <label className="block text-sm font-medium mb-1 flex items-center gap-1">
+                        <CreditCard className="w-4 h-4" />
+                        Aadhaar Number
+                      </label>
+                      <input type="text" value={formData.aadhaar_number} onChange={(e) => setFormData({...formData, aadhaar_number: e.target.value})} className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="12 digit number" />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium mb-1 flex items-center gap-1">
+                        <CreditCard className="w-4 h-4" />
+                        PAN Number
+                      </label>
+                      <input type="text" value={formData.pan_number} onChange={(e) => setFormData({...formData, pan_number: e.target.value})} className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="ABCDE1234F" />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium mb-1 flex items-center gap-1">
+                        <FileText className="w-4 h-4" />
+                        GST Number
+                      </label>
+                      <input type="text" value={formData.gst_number} onChange={(e) => setFormData({...formData, gst_number: e.target.value})} className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="22AAAAA0000A1Z" />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium mb-1 flex items-center gap-1">
+                        <Shield className="w-4 h-4" />
+                        Driving License Number
+                      </label>
+                      <input type="text" value={formData.driving_license_number} onChange={(e) => setFormData({...formData, driving_license_number: e.target.value})} className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                    </div>
                   </div>
                 )}
 
                 {/* EV Preferences Tab */}
                 {activeTab === 'ev' && (
-                  <div className="space-y-4">
+                  <div className="space-y-4 animate-fade-in">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <label className="flex items-center"><input type="checkbox" checked={formData.has_home_charging} onChange={(e) => setFormData({...formData, has_home_charging: e.target.checked})} className="mr-2 rounded" /> Has Home Charging Setup</label>
-                      <label className="flex items-center"><input type="checkbox" checked={formData.is_ev_first_time} onChange={(e) => setFormData({...formData, is_ev_first_time: e.target.checked})} className="mr-2 rounded" /> First Time EV Buyer</label>
+                      <label className="flex items-center">
+                        <input type="checkbox" checked={formData.has_home_charging} onChange={(e) => setFormData({...formData, has_home_charging: e.target.checked})} className="mr-2 rounded" />
+                        <Zap className="w-4 h-4 mr-1" />
+                        Has Home Charging Setup
+                      </label>
+                      <label className="flex items-center">
+                        <input type="checkbox" checked={formData.is_ev_first_time} onChange={(e) => setFormData({...formData, is_ev_first_time: e.target.checked})} className="mr-2 rounded" />
+                        <Battery className="w-4 h-4 mr-1" />
+                        First Time EV Buyer
+                      </label>
                     </div>
-                    <div><label className="block text-sm font-medium mb-1">Charging Capacity Available</label><input type="text" value={formData.charging_capacity_available} onChange={(e) => setFormData({...formData, charging_capacity_available: e.target.value})} className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="e.g., 3.3kW, 7.4kW" /></div>
-                    <div><label className="block text-sm font-medium mb-1">Previous Vehicle Type</label><input type="text" value={formData.previous_vehicle_type} onChange={(e) => setFormData({...formData, previous_vehicle_type: e.target.value})} className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Petrol, Diesel, CNG, etc." /></div>
+                    <div>
+                      <label className="block text-sm font-medium mb-1 flex items-center gap-1">
+                        <Zap className="w-4 h-4" />
+                        Charging Capacity Available
+                      </label>
+                      <input type="text" value={formData.charging_capacity_available} onChange={(e) => setFormData({...formData, charging_capacity_available: e.target.value})} className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="e.g., 3.3kW, 7.4kW" />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium mb-1 flex items-center gap-1">
+                        <FileText className="w-4 h-4" />
+                        Previous Vehicle Type
+                      </label>
+                      <input type="text" value={formData.previous_vehicle_type} onChange={(e) => setFormData({...formData, previous_vehicle_type: e.target.value})} className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Petrol, Diesel, CNG, etc." />
+                    </div>
                   </div>
                 )}
 
                 {/* Address Tab */}
                 {activeTab === 'address' && (
-                  <div className="space-y-4">
-                    <div><label className="block text-sm font-medium mb-1">Address Line 1 *</label><input type="text" value={formData.address_line1} onChange={(e) => setFormData({...formData, address_line1: e.target.value})} className={`w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 ${formErrors.address_line1 ? 'border-red-500' : 'border-gray-300'}`} />{formErrors.address_line1 && <p className="text-red-500 text-xs mt-1">{formErrors.address_line1}</p>}</div>
-                    <div><label className="block text-sm font-medium mb-1">Address Line 2</label><input type="text" value={formData.address_line2} onChange={(e) => setFormData({...formData, address_line2: e.target.value})} className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" /></div>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      <div><label className="block text-sm font-medium mb-1">City *</label><input type="text" value={formData.city} onChange={(e) => setFormData({...formData, city: e.target.value})} className={`w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 ${formErrors.city ? 'border-red-500' : 'border-gray-300'}`} />{formErrors.city && <p className="text-red-500 text-xs mt-1">{formErrors.city}</p>}</div>
-                      <div><label className="block text-sm font-medium mb-1">State *</label><input type="text" value={formData.state} onChange={(e) => setFormData({...formData, state: e.target.value})} className={`w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 ${formErrors.state ? 'border-red-500' : 'border-gray-300'}`} />{formErrors.state && <p className="text-red-500 text-xs mt-1">{formErrors.state}</p>}</div>
-                      <div><label className="block text-sm font-medium mb-1">Pincode *</label><input type="text" value={formData.pincode} onChange={(e) => setFormData({...formData, pincode: e.target.value})} className={`w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 ${formErrors.pincode ? 'border-red-500' : 'border-gray-300'}`} />{formErrors.pincode && <p className="text-red-500 text-xs mt-1">{formErrors.pincode}</p>}</div>
+                  <div className="space-y-4 animate-fade-in">
+                    <div>
+                      <label className="block text-sm font-medium mb-1 flex items-center gap-1">
+                        <MapPin className="w-4 h-4" />
+                        Address Line 1 *
+                      </label>
+                      <input type="text" value={formData.address_line1} onChange={(e) => setFormData({...formData, address_line1: e.target.value})} className={`w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 ${formErrors.address_line1 ? 'border-red-500' : 'border-gray-300'}`} />
+                      {formErrors.address_line1 && <p className="text-red-500 text-xs mt-1">{formErrors.address_line1}</p>}
                     </div>
-                    <div><label className="block text-sm font-medium mb-1">Country</label><input type="text" value={formData.country} onChange={(e) => setFormData({...formData, country: e.target.value})} className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" /></div>
+                    <div>
+                      <label className="block text-sm font-medium mb-1">Address Line 2</label>
+                      <input type="text" value={formData.address_line2} onChange={(e) => setFormData({...formData, address_line2: e.target.value})} className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium mb-1">City *</label>
+                        <input type="text" value={formData.city} onChange={(e) => setFormData({...formData, city: e.target.value})} className={`w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 ${formErrors.city ? 'border-red-500' : 'border-gray-300'}`} />
+                        {formErrors.city && <p className="text-red-500 text-xs mt-1">{formErrors.city}</p>}
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium mb-1">State *</label>
+                        <input type="text" value={formData.state} onChange={(e) => setFormData({...formData, state: e.target.value})} className={`w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 ${formErrors.state ? 'border-red-500' : 'border-gray-300'}`} />
+                        {formErrors.state && <p className="text-red-500 text-xs mt-1">{formErrors.state}</p>}
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium mb-1">Pincode *</label>
+                        <input type="text" value={formData.pincode} onChange={(e) => setFormData({...formData, pincode: e.target.value})} className={`w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 ${formErrors.pincode ? 'border-red-500' : 'border-gray-300'}`} />
+                        {formErrors.pincode && <p className="text-red-500 text-xs mt-1">{formErrors.pincode}</p>}
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium mb-1 flex items-center gap-1">
+                        <Globe className="w-4 h-4" />
+                        Country
+                      </label>
+                      <input type="text" value={formData.country} onChange={(e) => setFormData({...formData, country: e.target.value})} className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                    </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div><label className="block text-sm font-medium mb-1">Latitude</label><input type="text" value={formData.latitude} onChange={(e) => setFormData({...formData, latitude: e.target.value})} className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" /></div>
-                      <div><label className="block text-sm font-medium mb-1">Longitude</label><input type="text" value={formData.longitude} onChange={(e) => setFormData({...formData, longitude: e.target.value})} className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" /></div>
+                      <div>
+                        <label className="block text-sm font-medium mb-1">Latitude</label>
+                        <input type="text" value={formData.latitude} onChange={(e) => setFormData({...formData, latitude: e.target.value})} className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium mb-1">Longitude</label>
+                        <input type="text" value={formData.longitude} onChange={(e) => setFormData({...formData, longitude: e.target.value})} className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                      </div>
                     </div>
                   </div>
                 )}
 
                 {/* Communication Tab */}
                 {activeTab === 'communication' && (
-                  <div className="space-y-4">
-                    <div><label className="block text-sm font-medium mb-1">Preferred Language</label>
+                  <div className="space-y-4 animate-fade-in">
+                    <div>
+                      <label className="block text-sm font-medium mb-1 flex items-center gap-1">
+                        <Languages className="w-4 h-4" />
+                        Preferred Language
+                      </label>
                       <select value={formData.preferred_language} onChange={(e) => setFormData({...formData, preferred_language: e.target.value})} className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
                         <option value="English">English</option>
                         <option value="Hindi">Hindi</option>
@@ -930,19 +1318,39 @@ export default function CustomerManagementPage() {
                       </select>
                     </div>
                     <div className="space-y-2">
-                      <label className="flex items-center"><input type="checkbox" checked={formData.whatsapp_opt_in} onChange={(e) => setFormData({...formData, whatsapp_opt_in: e.target.checked})} className="mr-2 rounded" /> WhatsApp Opt-in</label>
-                      <label className="flex items-center"><input type="checkbox" checked={formData.sms_opt_in} onChange={(e) => setFormData({...formData, sms_opt_in: e.target.checked})} className="mr-2 rounded" /> SMS Opt-in</label>
-                      <label className="flex items-center"><input type="checkbox" checked={formData.email_opt_in} onChange={(e) => setFormData({...formData, email_opt_in: e.target.checked})} className="mr-2 rounded" /> Email Opt-in</label>
-                      <label className="flex items-center"><input type="checkbox" checked={formData.promotional_opt_in} onChange={(e) => setFormData({...formData, promotional_opt_in: e.target.checked})} className="mr-2 rounded" /> Promotional Opt-in</label>
+                      <label className="flex items-center">
+                        <input type="checkbox" checked={formData.whatsapp_opt_in} onChange={(e) => setFormData({...formData, whatsapp_opt_in: e.target.checked})} className="mr-2 rounded" />
+                        <MessageSquare className="w-4 h-4 mr-1" />
+                        WhatsApp Opt-in
+                      </label>
+                      <label className="flex items-center">
+                        <input type="checkbox" checked={formData.sms_opt_in} onChange={(e) => setFormData({...formData, sms_opt_in: e.target.checked})} className="mr-2 rounded" />
+                        <Smartphone className="w-4 h-4 mr-1" />
+                        SMS Opt-in
+                      </label>
+                      <label className="flex items-center">
+                        <input type="checkbox" checked={formData.email_opt_in} onChange={(e) => setFormData({...formData, email_opt_in: e.target.checked})} className="mr-2 rounded" />
+                        <Mail className="w-4 h-4 mr-1" />
+                        Email Opt-in
+                      </label>
+                      <label className="flex items-center">
+                        <input type="checkbox" checked={formData.promotional_opt_in} onChange={(e) => setFormData({...formData, promotional_opt_in: e.target.checked})} className="mr-2 rounded" />
+                        <Bell className="w-4 h-4 mr-1" />
+                        Promotional Opt-in
+                      </label>
                     </div>
                   </div>
                 )}
 
                 {/* Lead Management Tab */}
                 {activeTab === 'lead' && (
-                  <div className="space-y-4">
+                  <div className="space-y-4 animate-fade-in">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div><label className="block text-sm font-medium mb-1">Lead Source</label>
+                      <div>
+                        <label className="block text-sm font-medium mb-1 flex items-center gap-1">
+                          <Link className="w-4 h-4" />
+                          Lead Source
+                        </label>
                         <select value={formData.source} onChange={(e) => setFormData({...formData, source: e.target.value})} className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
                           <option value="Walk-in">Walk-in</option>
                           <option value="Website">Website</option>
@@ -956,7 +1364,11 @@ export default function CustomerManagementPage() {
                           <option value="Other">Other</option>
                         </select>
                       </div>
-                      <div><label className="block text-sm font-medium mb-1">Lead Status</label>
+                      <div>
+                        <label className="block text-sm font-medium mb-1 flex items-center gap-1">
+                          <Target className="w-4 h-4" />
+                          Lead Status
+                        </label>
                         <select value={formData.lead_status} onChange={(e) => setFormData({...formData, lead_status: e.target.value})} className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
                           <option value="New">New</option>
                           <option value="Contacted">Contacted</option>
@@ -968,7 +1380,11 @@ export default function CustomerManagementPage() {
                           <option value="Follow-up">Follow-up</option>
                         </select>
                       </div>
-                      <div><label className="block text-sm font-medium mb-1">Customer Status</label>
+                      <div>
+                        <label className="block text-sm font-medium mb-1 flex items-center gap-1">
+                          <Star className="w-4 h-4" />
+                          Customer Status
+                        </label>
                         <select value={formData.customer_status} onChange={(e) => setFormData({...formData, customer_status: e.target.value})} className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
                           <option value="Active">Active</option>
                           <option value="Inactive">Inactive</option>
@@ -976,37 +1392,123 @@ export default function CustomerManagementPage() {
                           <option value="VIP">VIP</option>
                         </select>
                       </div>
-                      <div><label className="block text-sm font-medium mb-1">Assigned Sales Executive</label>
+                      <div>
+                        <label className="block text-sm font-medium mb-1 flex items-center gap-1">
+                          <User className="w-4 h-4" />
+                          Assigned Sales Executive
+                        </label>
                         <select value={formData.assigned_sales_executive_id} onChange={(e) => setFormData({...formData, assigned_sales_executive_id: e.target.value})} className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
                           <option value="">Unassigned</option>
                           {salesExecutives.map(exec => (<option key={exec.id} value={exec.id}>{exec.full_name}</option>))}
                         </select>
                       </div>
-                      <div><label className="block text-sm font-medium mb-1">Referred By</label><input type="text" value={formData.referred_by} onChange={(e) => setFormData({...formData, referred_by: e.target.value})} className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Customer code or name" /></div>
-                      <div><label className="block text-sm font-medium mb-1">Expected Purchase Month</label><input type="month" value={formData.expected_purchase_month} onChange={(e) => setFormData({...formData, expected_purchase_month: e.target.value})} className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" /></div>
+                      <div>
+                        <label className="block text-sm font-medium mb-1 flex items-center gap-1">
+                          <Link className="w-4 h-4" />
+                          Referred By
+                        </label>
+                        <input type="text" value={formData.referred_by} onChange={(e) => setFormData({...formData, referred_by: e.target.value})} className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Customer code or name" />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium mb-1 flex items-center gap-1">
+                          <Calendar className="w-4 h-4" />
+                          Expected Purchase Month
+                        </label>
+                        <input type="month" value={formData.expected_purchase_month} onChange={(e) => setFormData({...formData, expected_purchase_month: e.target.value})} className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                      </div>
                     </div>
-                    <div><label className="block text-sm font-medium mb-1">Notes</label><textarea rows={3} value={formData.notes} onChange={(e) => setFormData({...formData, notes: e.target.value})} className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Additional notes..." /></div>
-                    <div><label className="block text-sm font-medium mb-1">Tags</label><input type="text" value={formData.tags} onChange={(e) => setFormData({...formData, tags: e.target.value})} className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Comma separated tags" /></div>
+                    <div>
+                      <label className="block text-sm font-medium mb-1 flex items-center gap-1">
+                        <FileText className="w-4 h-4" />
+                        Notes
+                      </label>
+                      <textarea rows={3} value={formData.notes} onChange={(e) => setFormData({...formData, notes: e.target.value})} className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Additional notes..." />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium mb-1 flex items-center gap-1">
+                        <Tag className="w-4 h-4" />
+                        Tags
+                      </label>
+                      <input type="text" value={formData.tags} onChange={(e) => setFormData({...formData, tags: e.target.value})} className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Comma separated tags" />
+                    </div>
                   </div>
                 )}
 
                 {/* Emergency Contact Tab */}
                 {activeTab === 'emergency' && (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div><label className="block text-sm font-medium mb-1">Emergency Contact Name</label><input type="text" value={formData.emergency_contact_name} onChange={(e) => setFormData({...formData, emergency_contact_name: e.target.value})} className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" /></div>
-                    <div><label className="block text-sm font-medium mb-1">Emergency Contact Number</label><input type="tel" value={formData.emergency_contact_number} onChange={(e) => setFormData({...formData, emergency_contact_number: e.target.value})} className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" /></div>
-                    <div><label className="block text-sm font-medium mb-1">Emergency Contact Relation</label><input type="text" value={formData.emergency_contact_relation} onChange={(e) => setFormData({...formData, emergency_contact_relation: e.target.value})} className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Spouse, Father, Mother, etc." /></div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 animate-fade-in">
+                    <div>
+                      <label className="block text-sm font-medium mb-1 flex items-center gap-1">
+                        <User className="w-4 h-4" />
+                        Emergency Contact Name
+                      </label>
+                      <input type="text" value={formData.emergency_contact_name} onChange={(e) => setFormData({...formData, emergency_contact_name: e.target.value})} className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium mb-1 flex items-center gap-1">
+                        <PhoneCall className="w-4 h-4" />
+                        Emergency Contact Number
+                      </label>
+                      <input type="tel" value={formData.emergency_contact_number} onChange={(e) => setFormData({...formData, emergency_contact_number: e.target.value})} className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium mb-1 flex items-center gap-1">
+                        <Link className="w-4 h-4" />
+                        Emergency Contact Relation
+                      </label>
+                      <input type="text" value={formData.emergency_contact_relation} onChange={(e) => setFormData({...formData, emergency_contact_relation: e.target.value})} className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Spouse, Father, Mother, etc." />
+                    </div>
                   </div>
                 )}
 
-                {/* Form Actions */}
-                <div className="sticky bottom-0 bg-white border-t mt-6 pt-4 flex justify-end space-x-3">
-                  <button type="button" onClick={() => { setShowModal(false); setEditingCustomer(null); resetForm(); }} className="px-4 py-2 border rounded-md text-gray-700 hover:bg-gray-50 transition-colors">Cancel</button>
-                  <button type="submit" disabled={isSubmitting} className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50">
-                    {isSubmitting ? 'Saving...' : (editingCustomer ? 'Update Customer' : 'Create Customer')}
-                  </button>
+                {/* Navigation Buttons - Bottom Only */}
+                <div className="sticky bottom-0 bg-white border-t mt-8 pt-4 flex justify-between items-center">
+                  <div className="flex items-center space-x-3">
+                    <button
+                      type="button"
+                      onClick={() => { setShowModal(false); setEditingCustomer(null); resetForm(); }}
+                      className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 transition-colors"
+                    >
+                      Cancel
+                    </button>
+                    {!isFirstTab && (
+                      <button
+                        type="button"
+                        onClick={goToPreviousTab}
+                        className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 transition-colors flex items-center space-x-2"
+                      >
+                        <ChevronLeft className="w-4 h-4" />
+                        <span>Previous</span>
+                      </button>
+                    )}
+                  </div>
+
+                  <div className="flex items-center space-x-3">
+                    <span className="text-sm text-gray-500">
+                      {currentTabIndex + 1} of {tabs.length}
+                    </span>
+                    {!isLastTab ? (
+                      <button
+                        type="button"
+                        onClick={goToNextTab}
+                        className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors flex items-center space-x-2"
+                      >
+                        <span>Next: {tabs[currentTabIndex + 1].label}</span>
+                        <ChevronRight className="w-4 h-4" />
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={handleSubmit}
+                        disabled={isSubmitting}
+                        className="px-6 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors disabled:opacity-50 font-medium"
+                      >
+                        {isSubmitting ? 'Saving...' : (editingCustomer ? 'Update Customer' : 'Create Customer')}
+                      </button>
+                    )}
+                  </div>
                 </div>
-              </form>
+              </div>
             </div>
           </div>
         </div>
@@ -1017,8 +1519,13 @@ export default function CustomerManagementPage() {
         <div className="fixed inset-0 backdrop-blur-md bg-white/30 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] flex flex-col animate-fade-in">
             <div className="flex-shrink-0 bg-white border-b px-6 py-4 flex justify-between items-center rounded-t-lg">
-              <h2 className="text-xl font-bold">Customer Details</h2>
-              <button onClick={() => setShowDetailModal(false)} className="text-gray-400 hover:text-gray-600 transition-colors">✕</button>
+              <h2 className="text-xl font-bold flex items-center gap-2">
+                <Eye className="w-5 h-5" />
+                Customer Details
+              </h2>
+              <button onClick={() => setShowDetailModal(false)} className="text-gray-400 hover:text-gray-600 transition-colors">
+                <X className="w-5 h-5" />
+              </button>
             </div>
             <div className="flex-1 overflow-y-auto p-6">
               <div className="mb-6 flex justify-between items-start">
@@ -1035,7 +1542,10 @@ export default function CustomerManagementPage() {
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <h4 className="font-semibold mb-2 border-b pb-1">Personal Info</h4>
+                  <h4 className="font-semibold mb-2 border-b pb-1 flex items-center gap-2">
+                    <User className="w-4 h-4" />
+                    Personal Info
+                  </h4>
                   <p><strong>Mobile:</strong> {selectedCustomer.mobile}</p>
                   {selectedCustomer.alternate_mobile && <p><strong>Alternate:</strong> {selectedCustomer.alternate_mobile}</p>}
                   {selectedCustomer.email && <p><strong>Email:</strong> {selectedCustomer.email}</p>}
@@ -1045,7 +1555,10 @@ export default function CustomerManagementPage() {
                   <p><strong>Income:</strong> {selectedCustomer.annual_income_range || 'N/A'}</p>
                 </div>
                 <div>
-                  <h4 className="font-semibold mb-2 border-b pb-1">Business Info</h4>
+                  <h4 className="font-semibold mb-2 border-b pb-1 flex items-center gap-2">
+                    <Building2 className="w-4 h-4" />
+                    Business Info
+                  </h4>
                   <p><strong>Type:</strong> {selectedCustomer.customer_type}</p>
                   {selectedCustomer.business_name && <p><strong>Business:</strong> {selectedCustomer.business_name}</p>}
                   {selectedCustomer.gst_number && <p><strong>GST:</strong> {selectedCustomer.gst_number}</p>}
@@ -1053,27 +1566,39 @@ export default function CustomerManagementPage() {
                   {selectedCustomer.aadhaar_number && <p><strong>Aadhaar:</strong> {selectedCustomer.aadhaar_number}</p>}
                 </div>
                 <div>
-                  <h4 className="font-semibold mb-2 border-b pb-1">Address</h4>
+                  <h4 className="font-semibold mb-2 border-b pb-1 flex items-center gap-2">
+                    <MapPin className="w-4 h-4" />
+                    Address
+                  </h4>
                   <p>{selectedCustomer.address_line1}</p>
                   {selectedCustomer.address_line2 && <p>{selectedCustomer.address_line2}</p>}
                   <p>{selectedCustomer.city}, {selectedCustomer.state} - {selectedCustomer.pincode}</p>
                   <p>{selectedCustomer.country}</p>
                 </div>
                 <div>
-                  <h4 className="font-semibold mb-2 border-b pb-1">EV Preferences</h4>
+                  <h4 className="font-semibold mb-2 border-b pb-1 flex items-center gap-2">
+                    <Battery className="w-4 h-4" />
+                    EV Preferences
+                  </h4>
                   <p><strong>First Time EV:</strong> {selectedCustomer.is_ev_first_time ? 'Yes' : 'No'}</p>
                   <p><strong>Home Charging:</strong> {selectedCustomer.has_home_charging ? 'Yes' : 'No'}</p>
                   {selectedCustomer.charging_capacity_available && <p><strong>Charging Capacity:</strong> {selectedCustomer.charging_capacity_available}</p>}
                   {selectedCustomer.previous_vehicle_type && <p><strong>Previous Vehicle:</strong> {selectedCustomer.previous_vehicle_type}</p>}
                 </div>
                 <div>
-                  <h4 className="font-semibold mb-2 border-b pb-1">Statistics</h4>
+                  <h4 className="font-semibold mb-2 border-b pb-1 flex items-center gap-2">
+                    <TrendingUp className="w-4 h-4" />
+                    Statistics
+                  </h4>
                   <p><strong>Vehicles Owned:</strong> {selectedCustomer.total_vehicles_owned || 0}</p>
                   <p><strong>Total Purchase:</strong> ₹{(selectedCustomer.total_purchase_amount || 0).toLocaleString()}</p>
                   <p><strong>Loyalty Points:</strong> {selectedCustomer.loyalty_points || 0}</p>
                 </div>
                 <div>
-                  <h4 className="font-semibold mb-2 border-b pb-1">Emergency Contact</h4>
+                  <h4 className="font-semibold mb-2 border-b pb-1 flex items-center gap-2">
+                    <PhoneCall className="w-4 h-4" />
+                    Emergency Contact
+                  </h4>
                   {selectedCustomer.emergency_contact_name ? (
                     <>
                       <p><strong>Name:</strong> {selectedCustomer.emergency_contact_name}</p>
