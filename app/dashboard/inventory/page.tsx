@@ -1,0 +1,1173 @@
+// app/dashboard/inventory/page.tsx
+'use client';
+
+import React, { useState, useEffect, useCallback } from 'react';
+import {
+  Search,
+  Plus,
+  Edit,
+  Trash2,
+  Download,
+  Filter,
+  X,
+  ChevronDown,
+  ChevronUp,
+  ChevronLeft,
+  ChevronRight,
+  CheckCircle,
+  AlertTriangle,
+  Battery,
+  MapPin,
+  Calendar,
+  DollarSign,
+  Package,
+  Eye,
+  RefreshCw,
+  Truck,
+  Activity,
+} from 'lucide-react';
+
+// ============================================================================
+// TYPES
+// ============================================================================
+
+type VehicleType = 'Electric Scooter' | 'Electric Motorcycle' | 'Electric Car' | 'Electric Rickshaw' | 'Electric Bus';
+type StockStatus = 'Available' | 'Booked' | 'Sold' | 'Reserved' | 'In Transit' | 'Damaged' | 'QC Pending';
+type SortOrder = 'asc' | 'desc';
+
+interface Brand {
+  id: string;
+  brand_name: string;
+}
+
+interface Vehicle {
+  id: string;
+  model_name: string;
+  variant_name: string | null;
+  vehicle_type: VehicleType;
+  ex_showroom_price: number;
+  insurance_amount?: number;
+  rto_charges?: number;
+  battery_capacity_kwh?: number;
+  range_per_charge_km?: number;
+  motor_power_kw?: number;
+  brand_id: string;
+  brands: Brand;
+}
+
+interface CustomerInfo {
+  id: string;
+  first_name: string;
+  last_name: string;
+  mobile: string;
+}
+
+interface SalesInvoiceInfo {
+  id: string;
+  invoice_number: string;
+}
+
+interface InventoryItem {
+  id: string;
+  showroom_id: string;
+  vehicle_model_id: string;
+  sold_to_customer_id: string | null;
+  sale_invoice_id: string | null;
+  vin_number: string;
+  chassis_number: string;
+  motor_number: string;
+  battery_number: string;
+  color: string | null;
+  variant_name: string | null;
+  received_date: string;
+  received_from: string | null;
+  manufacturing_date: string | null;
+  invoice_date: string | null;
+  purchase_cost: number | null;
+  ex_showroom_price: number | null;
+  on_road_price: number | null;
+  current_selling_price: number | null;
+  battery_charge_percentage: number;
+  battery_health_status: string;
+  last_charge_date: string | null;
+  software_version: string | null;
+  firmware_version: string | null;
+  stock_status: StockStatus;
+  location_in_showroom: string | null;
+  is_test_ride_vehicle: boolean;
+  test_ride_count: number;
+  is_demo_vehicle: boolean;
+  sold_date: string | null;
+  created_at: string;
+  updated_at: string;
+  vehicles: Vehicle;
+  customers: CustomerInfo | null;
+  sales_invoices: SalesInvoiceInfo | null;
+}
+
+interface InventoryFormData {
+  id?: string;
+  showroom_id: string;
+  vehicle_model_id: string;
+  vin_number: string;
+  chassis_number: string;
+  motor_number: string;
+  battery_number: string;
+  color: string;
+  variant_name: string;
+  received_date: string;
+  received_from: string;
+  manufacturing_date: string;
+  purchase_cost: number;
+  ex_showroom_price: number;
+  on_road_price: number;
+  current_selling_price: number;
+  battery_charge_percentage: number;
+  battery_health_status: string;
+  software_version: string;
+  firmware_version: string;
+  stock_status: StockStatus;
+  location_in_showroom: string;
+  is_test_ride_vehicle: boolean;
+  is_demo_vehicle: boolean;
+}
+
+interface FilterState {
+  search: string;
+  stockStatus: string;
+  brandId: string;
+  vehicleType: string;
+  isTestRide: string;
+  isDemo: string;
+}
+
+interface PaginationState {
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
+}
+
+interface InventoryStats {
+  total: number;
+  available: number;
+  booked: number;
+  sold: number;
+  transit: number;
+  testRide: number;
+  demo: number;
+  lowBattery: number;
+}
+
+type ModalMode = 'add' | 'edit' | 'view' | null;
+
+// ============================================================================
+// CONSTANTS
+// ============================================================================
+
+const STOCK_STATUS_OPTIONS: { value: StockStatus; label: string; color: string }[] = [
+  { value: 'Available', label: 'Available', color: 'bg-green-100 text-green-800' },
+  { value: 'Booked', label: 'Booked', color: 'bg-blue-100 text-blue-800' },
+  { value: 'Sold', label: 'Sold', color: 'bg-gray-100 text-gray-800' },
+  { value: 'Reserved', label: 'Reserved', color: 'bg-yellow-100 text-yellow-800' },
+  { value: 'In Transit', label: 'In Transit', color: 'bg-purple-100 text-purple-800' },
+  { value: 'Damaged', label: 'Damaged', color: 'bg-red-100 text-red-800' },
+  { value: 'QC Pending', label: 'QC Pending', color: 'bg-orange-100 text-orange-800' }
+];
+
+const VEHICLE_TYPE_OPTIONS: VehicleType[] = [
+  'Electric Scooter', 'Electric Motorcycle', 'Electric Car', 'Electric Rickshaw', 'Electric Bus'
+];
+
+const COLORS = [
+  'Red', 'Blue', 'Black', 'White', 'Silver', 'Grey', 'Green', 'Yellow', 'Orange', 'Purple'
+];
+
+const SORT_FIELDS = [
+  { value: 'created_at', label: 'Date Added' },
+  { value: 'received_date', label: 'Received Date' },
+  { value: 'vin_number', label: 'VIN Number' },
+  { value: 'stock_status', label: 'Stock Status' },
+  { value: 'ex_showroom_price', label: 'Price' },
+  { value: 'battery_charge_percentage', label: 'Battery Level' }
+];
+
+const BATTERY_HEALTH_OPTIONS = [
+  'Excellent', 'Good', 'Fair', 'Poor', 'Needs Replacement'
+];
+
+// ============================================================================
+// INITIAL FORM DATA
+// ============================================================================
+
+const INITIAL_FORM_DATA: InventoryFormData = {
+  showroom_id: '',
+  vehicle_model_id: '',
+  vin_number: '',
+  chassis_number: '',
+  motor_number: '',
+  battery_number: '',
+  color: '',
+  variant_name: '',
+  received_date: new Date().toISOString().split('T')[0],
+  received_from: '',
+  manufacturing_date: '',
+  purchase_cost: 0,
+  ex_showroom_price: 0,
+  on_road_price: 0,
+  current_selling_price: 0,
+  battery_charge_percentage: 50,
+  battery_health_status: 'Good',
+  software_version: '',
+  firmware_version: '',
+  stock_status: 'Available',
+  location_in_showroom: '',
+  is_test_ride_vehicle: false,
+  is_demo_vehicle: false
+};
+
+// ============================================================================
+// HELPERS
+// ============================================================================
+
+const getShowroomIdFromCookie = (): string => {
+  if (typeof document === 'undefined') return '';
+  const cookies = document.cookie.split(';');
+  for (const cookie of cookies) {
+    const [name, value] = cookie.trim().split('=');
+    if (name === 'showroom_id') return decodeURIComponent(value);
+  }
+  return '';
+};
+
+const calculateOnRoadPrice = (exShowroom: number, insurance: number, rto: number): number => {
+  return exShowroom + insurance + rto;
+};
+
+// ============================================================================
+// COMPONENT
+// ============================================================================
+
+export default function InventoryManagementPage() {
+  const [inventory, setInventory] = useState<InventoryItem[]>([]);
+  const [brands, setBrands] = useState<Brand[]>([]);
+  const [vehicleModels, setVehicleModels] = useState<Vehicle[]>([]);
+  const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
+  const [loading, setLoading] = useState(false);
+  const [modalMode, setModalMode] = useState<ModalMode>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
+  const [stats, setStats] = useState<InventoryStats>({
+    total: 0, available: 0, booked: 0, sold: 0, transit: 0, testRide: 0, demo: 0, lowBattery: 0
+  });
+
+  const [filters, setFilters] = useState<FilterState>({
+    search: '', stockStatus: '', brandId: '', vehicleType: '', isTestRide: '', isDemo: ''
+  });
+  const [pagination, setPagination] = useState<PaginationState>({
+    page: 1, limit: 20, total: 0, totalPages: 0
+  });
+  const [sortBy, setSortBy] = useState('created_at');
+  const [sortOrder, setSortOrder] = useState<SortOrder>('desc');
+  const [showFilters, setShowFilters] = useState(false);
+
+  const [formData, setFormData] = useState<InventoryFormData>(INITIAL_FORM_DATA);
+  const [formErrors, setFormErrors] = useState<Partial<Record<keyof InventoryFormData, string>>>({});
+
+  const [bulkStatus, setBulkStatus] = useState<StockStatus>('Available');
+
+  // ============================================================================
+  // DATA FETCHING
+  // ============================================================================
+
+  const fetchInventory = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const params = new URLSearchParams({
+        page: pagination.page.toString(),
+        limit: pagination.limit.toString(),
+        sort_by: sortBy,
+        sort_order: sortOrder
+      });
+      if (filters.search) params.append('search', filters.search);
+      if (filters.stockStatus) params.append('stock_status', filters.stockStatus);
+      if (filters.brandId) params.append('brand_id', filters.brandId);
+      if (filters.vehicleType) params.append('vehicle_type', filters.vehicleType);
+      if (filters.isTestRide) params.append('is_test_ride_vehicle', filters.isTestRide);
+      if (filters.isDemo) params.append('is_demo_vehicle', filters.isDemo);
+
+      const response = await fetch(`/api/inventory?${params}`);
+      if (response.status === 401) {
+        setError('Please login and select a showroom first');
+        setLoading(false);
+        return;
+      }
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || 'Failed to fetch inventory');
+
+      const inventoryData = Array.isArray(result.data) ? result.data : [];
+      setInventory(inventoryData);
+      setPagination({
+        page: result.pagination?.page || 1,
+        limit: result.pagination?.limit || 20,
+        total: result.pagination?.total || 0,
+        totalPages: result.pagination?.totalPages || 0
+      });
+
+      const newStats: InventoryStats = {
+        total: result.pagination?.total || 0,
+        available: inventoryData.filter((i: InventoryItem) => i.stock_status === 'Available').length,
+        booked: inventoryData.filter((i: InventoryItem) => i.stock_status === 'Booked').length,
+        sold: inventoryData.filter((i: InventoryItem) => i.stock_status === 'Sold').length,
+        transit: inventoryData.filter((i: InventoryItem) => i.stock_status === 'In Transit').length,
+        testRide: inventoryData.filter((i: InventoryItem) => i.is_test_ride_vehicle).length,
+        demo: inventoryData.filter((i: InventoryItem) => i.is_demo_vehicle).length,
+        lowBattery: inventoryData.filter((i: InventoryItem) => i.battery_charge_percentage < 20).length
+      };
+      setStats(newStats);
+    } catch (error: any) {
+      console.error('Fetch error:', error);
+      setError(error.message || 'An error occurred');
+    } finally {
+      setLoading(false);
+    }
+  }, [pagination.page, pagination.limit, filters, sortBy, sortOrder]);
+
+  const fetchBrandsAndModels = async () => {
+    try {
+      const brandsResponse = await fetch('/api/brands');
+      if (brandsResponse.ok) {
+        const brandsResult = await brandsResponse.json();
+        setBrands(brandsResult.data || []);
+      }
+      const vehiclesResponse = await fetch('/api/vehicles');
+      if (vehiclesResponse.ok) {
+        const vehiclesResult = await vehiclesResponse.json();
+        setVehicleModels(vehiclesResult.data || []);
+      }
+    } catch (error) {
+      console.error('Failed to fetch brands/models:', error);
+    }
+  };
+
+  useEffect(() => { fetchBrandsAndModels(); }, []);
+  useEffect(() => { fetchInventory(); }, [fetchInventory]);
+
+  // ============================================================================
+  // AUTO-POPULATE ON VEHICLE MODEL SELECTION
+  // ============================================================================
+
+  useEffect(() => {
+    if (formData.vehicle_model_id && modalMode === 'add') {
+      const selectedVehicle = vehicleModels.find(v => v.id === formData.vehicle_model_id);
+      if (selectedVehicle) {
+        const insuranceAmount = selectedVehicle.insurance_amount || 0;
+        const rtoCharges = selectedVehicle.rto_charges || 0;
+        const exShowroomPrice = selectedVehicle.ex_showroom_price || 0;
+        const onRoadPrice = calculateOnRoadPrice(exShowroomPrice, insuranceAmount, rtoCharges);
+
+        setFormData(prev => ({
+          ...prev,
+          variant_name: selectedVehicle.variant_name || '',
+          ex_showroom_price: exShowroomPrice,
+          on_road_price: onRoadPrice,
+          purchase_cost: prev.purchase_cost || exShowroomPrice,
+          current_selling_price: prev.current_selling_price || onRoadPrice,
+        }));
+      }
+    }
+  }, [formData.vehicle_model_id, vehicleModels, modalMode]);
+
+  // ============================================================================
+  // FORM HELPERS
+  // ============================================================================
+
+  const mapInventoryToFormData = (item: InventoryItem): InventoryFormData => ({
+    id: item.id,
+    showroom_id: item.showroom_id,
+    vehicle_model_id: item.vehicle_model_id,
+    vin_number: item.vin_number,
+    chassis_number: item.chassis_number,
+    motor_number: item.motor_number,
+    battery_number: item.battery_number,
+    color: item.color || '',
+    variant_name: item.variant_name || '',
+    received_date: item.received_date,
+    received_from: item.received_from || '',
+    manufacturing_date: item.manufacturing_date || '',
+    purchase_cost: item.purchase_cost || 0,
+    ex_showroom_price: item.ex_showroom_price || 0,
+    on_road_price: item.on_road_price || 0,
+    current_selling_price: item.current_selling_price || 0,
+    battery_charge_percentage: item.battery_charge_percentage,
+    battery_health_status: item.battery_health_status,
+    software_version: item.software_version || '',
+    firmware_version: item.firmware_version || '',
+    stock_status: item.stock_status,
+    location_in_showroom: item.location_in_showroom || '',
+    is_test_ride_vehicle: item.is_test_ride_vehicle,
+    is_demo_vehicle: item.is_demo_vehicle
+  });
+
+  const resetForm = () => {
+    setFormData(INITIAL_FORM_DATA);
+    setFormErrors({});
+  };
+
+  const openAddModal = () => {
+    setFormData({ ...INITIAL_FORM_DATA, showroom_id: getShowroomIdFromCookie() });
+    setModalMode('add');
+  };
+
+  const openEditModal = (item: InventoryItem) => {
+    setFormData(mapInventoryToFormData(item));
+    setModalMode('edit');
+  };
+
+  const openViewModal = (item: InventoryItem) => {
+    setFormData(mapInventoryToFormData(item));
+    setModalMode('view');
+  };
+
+  const getSelectedVehicleDetails = () => {
+    if (!formData.vehicle_model_id) return null;
+    return vehicleModels.find(v => v.id === formData.vehicle_model_id);
+  };
+
+  // ============================================================================
+  // FORM VALIDATION & HANDLING
+  // ============================================================================
+
+  const validateForm = (): boolean => {
+    const errors: Partial<Record<keyof InventoryFormData, string>> = {};
+    if (!formData.vehicle_model_id) errors.vehicle_model_id = 'Vehicle model is required';
+    if (!formData.vin_number.trim()) errors.vin_number = 'VIN number is required';
+    if (!formData.chassis_number.trim()) errors.chassis_number = 'Chassis number is required';
+    if (!formData.motor_number.trim()) errors.motor_number = 'Motor number is required';
+    if (!formData.battery_number.trim()) errors.battery_number = 'Battery number is required';
+    if (!formData.received_date) errors.received_date = 'Received date is required';
+    if (formData.purchase_cost < 0) errors.purchase_cost = 'Cost cannot be negative';
+    if (formData.battery_charge_percentage < 0 || formData.battery_charge_percentage > 100) {
+      errors.battery_charge_percentage = 'Battery % must be between 0 and 100';
+    }
+    setFormErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+    const { name, value, type } = e.target;
+
+    if (name === 'vehicle_model_id' && value && modalMode === 'add') {
+      const selectedVehicle = vehicleModels.find(v => v.id === value);
+      if (selectedVehicle) {
+        const insuranceAmount = selectedVehicle.insurance_amount || 0;
+        const rtoCharges = selectedVehicle.rto_charges || 0;
+        const exShowroomPrice = selectedVehicle.ex_showroom_price || 0;
+        const onRoadPrice = calculateOnRoadPrice(exShowroomPrice, insuranceAmount, rtoCharges);
+
+        setFormData(prev => ({
+          ...prev,
+          vehicle_model_id: value,
+          variant_name: selectedVehicle.variant_name || '',
+          ex_showroom_price: exShowroomPrice,
+          on_road_price: onRoadPrice,
+          purchase_cost: exShowroomPrice,
+          current_selling_price: onRoadPrice,
+        }));
+        if (formErrors.vehicle_model_id) {
+          setFormErrors(prev => { const n = { ...prev }; delete n.vehicle_model_id; return n; });
+        }
+        return;
+      }
+    }
+
+    if (name === 'ex_showroom_price' && modalMode === 'add') {
+      const selectedVehicle = vehicleModels.find(v => v.id === formData.vehicle_model_id);
+      const newExShowroom = parseFloat(value) || 0;
+      const insuranceAmount = selectedVehicle?.insurance_amount || 0;
+      const rtoCharges = selectedVehicle?.rto_charges || 0;
+      const newOnRoad = calculateOnRoadPrice(newExShowroom, insuranceAmount, rtoCharges);
+
+      setFormData(prev => ({
+        ...prev,
+        ex_showroom_price: newExShowroom,
+        on_road_price: newOnRoad,
+        current_selling_price: newOnRoad,
+      }));
+      return;
+    }
+
+    setFormData(prev => ({
+      ...prev,
+      [name]: type === 'number' ? parseFloat(value) || 0 : value
+    }));
+
+    if (formErrors[name as keyof InventoryFormData]) {
+      setFormErrors(prev => { const n = { ...prev }; delete n[name as keyof InventoryFormData]; return n; });
+    }
+  };
+
+  const handleCheckboxChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, checked } = e.target;
+    setFormData(prev => ({ ...prev, [name]: checked }));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!validateForm()) return;
+
+    setLoading(true);
+    setError(null);
+    try {
+      const url = '/api/inventory';
+      const method = modalMode === 'edit' ? 'PUT' : 'POST';
+
+      const fieldsToSend: (keyof InventoryFormData)[] = [
+        'vehicle_model_id', 'vin_number', 'chassis_number', 'motor_number', 'battery_number',
+        'color', 'variant_name', 'received_date', 'received_from', 'manufacturing_date',
+        'purchase_cost', 'ex_showroom_price', 'on_road_price', 'current_selling_price',
+        'battery_charge_percentage', 'battery_health_status', 'software_version', 'firmware_version',
+        'stock_status', 'location_in_showroom', 'is_test_ride_vehicle', 'is_demo_vehicle'
+      ];
+
+      const body: any = {};
+      fieldsToSend.forEach(field => {
+        if (formData[field] !== undefined) {
+          body[field] = formData[field];
+        }
+      });
+      if (modalMode === 'edit' && formData.id) body.id = formData.id;
+
+      const response = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || `Failed to ${modalMode === 'edit' ? 'update' : 'add'} inventory`);
+
+      setSuccess(modalMode === 'edit' ? 'Inventory updated successfully' : 'Inventory added successfully');
+      setModalMode(null);
+      resetForm();
+      fetchInventory();
+      setTimeout(() => setSuccess(null), 3000);
+    } catch (error: any) {
+      console.error('Submit error:', error);
+      setError(error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // ============================================================================
+  // CRUD OPERATIONS
+  // ============================================================================
+
+  const handleDelete = async (id: string) => {
+    if (!confirm('Are you sure you want to delete this inventory item?')) return;
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await fetch(`/api/inventory?id=${id}`, { method: 'DELETE' });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error);
+      setSuccess(result.message || 'Inventory item deleted successfully');
+      fetchInventory();
+      setTimeout(() => setSuccess(null), 3000);
+    } catch (error: any) {
+      setError(error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleBulkAction = async () => {
+    if (selectedItems.size === 0) { setError('Please select items to update'); return; }
+    if (!confirm(`Update ${selectedItems.size} items to "${bulkStatus}" status?`)) return;
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await fetch('/api/inventory', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ids: Array.from(selectedItems), stock_status: bulkStatus })
+      });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error);
+      setSuccess(result.message);
+      setSelectedItems(new Set());
+      fetchInventory();
+      setTimeout(() => setSuccess(null), 3000);
+    } catch (error: any) {
+      setError(error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleExport = () => {
+    if (inventory.length === 0) { setError('No data to export'); return; }
+    const csvData = inventory.map(item => ({
+      VIN: item.vin_number,
+      Brand: item.vehicles?.brands?.brand_name || '',
+      Model: item.vehicles?.model_name || '',
+      Variant: item.variant_name || item.vehicles?.variant_name || '',
+      Color: item.color || '',
+      Status: item.stock_status,
+      'Ex-Showroom': item.ex_showroom_price || 0,
+      'On-Road': item.on_road_price || 0,
+      'Selling Price': item.current_selling_price || 0,
+      Battery: `${item.battery_charge_percentage}%`,
+      Health: item.battery_health_status,
+      Location: item.location_in_showroom || '',
+      Received: item.received_date,
+      'Test Ride': item.is_test_ride_vehicle ? 'Yes' : 'No',
+      Demo: item.is_demo_vehicle ? 'Yes' : 'No'
+    }));
+    const csv = convertToCSV(csvData);
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `inventory_${new Date().toISOString().split('T')[0]}.csv`;
+    a.click();
+    window.URL.revokeObjectURL(url);
+    setSuccess('Inventory exported successfully');
+    setTimeout(() => setSuccess(null), 3000);
+  };
+
+  const convertToCSV = (data: Record<string, any>[]): string => {
+    if (data.length === 0) return '';
+    const headers = Object.keys(data[0]);
+    const rows = data.map(obj => headers.map(h => `"${(obj[h]?.toString() || '').replace(/"/g, '""')}"`).join(','));
+    return [headers.join(','), ...rows].join('\n');
+  };
+
+  // ============================================================================
+  // SELECTION HANDLING
+  // ============================================================================
+
+  const toggleSelectAll = () => {
+    if (selectedItems.size === inventory.length && inventory.length > 0) {
+      setSelectedItems(new Set());
+    } else {
+      setSelectedItems(new Set(inventory.map(item => item.id)));
+    }
+  };
+
+  const toggleSelectItem = (id: string) => {
+    const newSelected = new Set(selectedItems);
+    newSelected.has(id) ? newSelected.delete(id) : newSelected.add(id);
+    setSelectedItems(newSelected);
+  };
+
+  // ============================================================================
+  // UTILITY FUNCTIONS
+  // ============================================================================
+
+  const getStatusColor = (status: StockStatus): string =>
+    STOCK_STATUS_OPTIONS.find(s => s.value === status)?.color || 'bg-gray-100 text-gray-800';
+
+  const getVehicleIcon = (type: VehicleType): string => {
+    switch (type) {
+      case 'Electric Scooter': return '🛵';
+      case 'Electric Motorcycle': return '🏍️';
+      case 'Electric Car': return '🚗';
+      case 'Electric Rickshaw': return '🛺';
+      case 'Electric Bus': return '🚌';
+      default: return '🚗';
+    }
+  };
+
+  const formatCurrency = (amount: number | null | undefined): string => {
+    if (!amount && amount !== 0) return '₹0';
+    return new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(amount);
+  };
+
+  const formatDate = (date: string | null | undefined): string => {
+    if (!date) return '-';
+    return new Date(date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+  };
+
+  const handleFilterChange = (key: keyof FilterState, value: string) => {
+    setFilters(prev => ({ ...prev, [key]: value }));
+    setPagination(prev => ({ ...prev, page: 1 }));
+  };
+
+  // ============================================================================
+  // RENDER
+  // ============================================================================
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      {/* Header */}
+      <div className="bg-white border-b border-gray-200">
+        <div className="px-4 sm:px-6 lg:px-8 py-6">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900">Inventory Management</h1>
+              <p className="mt-1 text-sm text-gray-500">Manage your EV vehicles, track stock levels, and monitor battery health</p>
+            </div>
+            <div className="mt-4 sm:mt-0 flex flex-col sm:flex-row gap-3">
+              <button onClick={handleExport} disabled={inventory.length === 0}
+                className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-lg shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
+                <Download className="h-4 w-4 mr-2" />Export CSV
+              </button>
+              <button onClick={openAddModal}
+                className="inline-flex items-center px-4 py-2 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700">
+                <Plus className="h-4 w-4 mr-2" />Add Vehicle
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="px-4 sm:px-6 lg:px-8 py-6">
+        {/* Stats Cards */}
+        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-4 mb-6">
+          {[
+            { label: 'Total', value: stats.total, color: 'text-gray-900', icon: Package },
+            { label: 'Available', value: stats.available, color: 'text-green-600', icon: CheckCircle },
+            { label: 'Booked', value: stats.booked, color: 'text-blue-600', icon: Calendar },
+            { label: 'Sold', value: stats.sold, color: 'text-gray-600', icon: DollarSign },
+            { label: 'In Transit', value: stats.transit, color: 'text-purple-600', icon: Truck },
+            { label: 'Test Ride', value: stats.testRide, color: 'text-orange-600', icon: Activity },
+            { label: 'Demo', value: stats.demo, color: 'text-indigo-600', icon: Activity },
+            { label: 'Low Batt', value: stats.lowBattery, color: 'text-red-600', icon: Battery }
+          ].map((stat) => (
+            <div key={stat.label} className="bg-white rounded-lg shadow p-4">
+              <div className="flex items-center justify-between">
+                <div className="text-xs font-medium text-gray-500">{stat.label}</div>
+                <stat.icon className={`h-4 w-4 ${stat.color}`} />
+              </div>
+              <div className={`mt-1 text-xl font-bold ${stat.color}`}>{stat.value}</div>
+            </div>
+          ))}
+        </div>
+
+        {/* Notifications */}
+        {error && (
+          <div className="mb-4 bg-red-50 border-l-4 border-red-400 p-4 rounded-lg">
+            <div className="flex">
+              <AlertTriangle className="h-5 w-5 text-red-400 mr-2 flex-shrink-0" />
+              <p className="text-sm text-red-700 flex-1">{error}</p>
+              <button onClick={() => setError(null)} className="text-red-400 hover:text-red-600"><X className="h-4 w-4" /></button>
+            </div>
+          </div>
+        )}
+        {success && (
+          <div className="mb-4 bg-green-50 border-l-4 border-green-400 p-4 rounded-lg">
+            <div className="flex">
+              <CheckCircle className="h-5 w-5 text-green-400 mr-2 flex-shrink-0" />
+              <p className="text-sm text-green-700 flex-1">{success}</p>
+              <button onClick={() => setSuccess(null)} className="text-green-400 hover:text-green-600"><X className="h-4 w-4" /></button>
+            </div>
+          </div>
+        )}
+
+        {/* Search & Filters */}
+        <div className="bg-white rounded-lg shadow mb-6">
+          <div className="p-4">
+            <div className="flex flex-col sm:flex-row gap-4">
+              <div className="flex-1 relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                <input type="text" placeholder="Search by VIN, Chassis, Motor, or Battery number..."
+                  value={filters.search} onChange={(e) => handleFilterChange('search', e.target.value)}
+                  className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm" />
+              </div>
+              <button onClick={() => setShowFilters(!showFilters)}
+                className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
+                <Filter className="h-4 w-4 mr-2" />Filters
+                {showFilters ? <ChevronUp className="h-4 w-4 ml-2" /> : <ChevronDown className="h-4 w-4 ml-2" />}
+              </button>
+              <select value={sortBy} onChange={(e) => setSortBy(e.target.value)}
+                className="px-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500">
+                {SORT_FIELDS.map(f => <option key={f.value} value={f.value}>{f.label}</option>)}
+              </select>
+              <button onClick={() => setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc')}
+                className="px-4 py-2 border border-gray-300 rounded-lg text-sm hover:bg-gray-50">
+                {sortOrder === 'asc' ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+              </button>
+            </div>
+            {showFilters && (
+              <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 pt-4 border-t">
+                <div>
+                  <label className="block text-xs font-medium text-gray-500 mb-1">Stock Status</label>
+                  <select value={filters.stockStatus} onChange={(e) => handleFilterChange('stockStatus', e.target.value)}
+                    className="block w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500">
+                    <option value="">All Statuses</option>
+                    {STOCK_STATUS_OPTIONS.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-500 mb-1">Brand</label>
+                  <select value={filters.brandId} onChange={(e) => handleFilterChange('brandId', e.target.value)}
+                    className="block w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500">
+                    <option value="">All Brands</option>
+                    {brands.map(b => <option key={b.id} value={b.id}>{b.brand_name}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-500 mb-1">Vehicle Type</label>
+                  <select value={filters.vehicleType} onChange={(e) => handleFilterChange('vehicleType', e.target.value)}
+                    className="block w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500">
+                    <option value="">All Types</option>
+                    {VEHICLE_TYPE_OPTIONS.map(t => <option key={t} value={t}>{t}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-500 mb-1">Test Ride</label>
+                  <select value={filters.isTestRide} onChange={(e) => handleFilterChange('isTestRide', e.target.value)}
+                    className="block w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500">
+                    <option value="">All</option>
+                    <option value="true">Yes</option>
+                    <option value="false">No</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-500 mb-1">Demo Vehicle</label>
+                  <select value={filters.isDemo} onChange={(e) => handleFilterChange('isDemo', e.target.value)}
+                    className="block w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500">
+                    <option value="">All</option>
+                    <option value="true">Yes</option>
+                    <option value="false">No</option>
+                  </select>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Bulk Actions */}
+        {selectedItems.size > 0 && (
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+            <span className="text-sm text-blue-700 font-medium">{selectedItems.size} {selectedItems.size === 1 ? 'vehicle' : 'vehicles'} selected</span>
+            <div className="flex items-center gap-3 w-full sm:w-auto">
+              <select value={bulkStatus} onChange={(e) => setBulkStatus(e.target.value as StockStatus)}
+                className="px-3 py-2 border border-blue-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 flex-1 sm:flex-none">
+                {STOCK_STATUS_OPTIONS.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
+              </select>
+              <button onClick={handleBulkAction} disabled={loading}
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 disabled:opacity-50 whitespace-nowrap">
+                {loading ? 'Updating...' : 'Update Status'}
+              </button>
+              <button onClick={() => setSelectedItems(new Set())}
+                className="px-4 py-2 border border-blue-300 text-blue-700 rounded-lg text-sm font-medium hover:bg-blue-100 whitespace-nowrap">Clear</button>
+            </div>
+          </div>
+        )}
+
+        {/* Inventory Table */}
+        <div className="bg-white rounded-lg shadow overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="w-10 px-4 py-3"><input type="checkbox" checked={selectedItems.size === inventory.length && inventory.length > 0} onChange={toggleSelectAll} className="rounded border-gray-300 text-blue-600 focus:ring-blue-500" /></th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Vehicle</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">VIN / Chassis</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Color</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Price</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Battery</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Location</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Received</th>
+                  <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {loading && inventory.length === 0 ? (
+                  <tr><td colSpan={10} className="px-4 py-12 text-center"><RefreshCw className="h-8 w-8 animate-spin mx-auto text-gray-400" /><p className="mt-2 text-sm text-gray-500">Loading inventory...</p></td></tr>
+                ) : inventory.length === 0 ? (
+                  <tr><td colSpan={10} className="px-4 py-12 text-center"><Package className="h-12 w-12 mx-auto text-gray-300" /><p className="mt-2 text-sm text-gray-500">No vehicles found</p><button onClick={openAddModal} className="mt-3 inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700"><Plus className="h-4 w-4 mr-2" />Add First Vehicle</button></td></tr>
+                ) : (
+                  inventory.map((item) => (
+                    <tr key={item.id} className={`hover:bg-gray-50 transition-colors ${selectedItems.has(item.id) ? 'bg-blue-50' : ''}`}>
+                      <td className="w-10 px-4 py-3"><input type="checkbox" checked={selectedItems.has(item.id)} onChange={() => toggleSelectItem(item.id)} className="rounded border-gray-300 text-blue-600 focus:ring-blue-500" /></td>
+                      <td className="px-4 py-3">
+                        <div className="flex items-center min-w-0">
+                          <span className="text-xl mr-2 flex-shrink-0">{getVehicleIcon(item.vehicles?.vehicle_type)}</span>
+                          <div className="min-w-0">
+                            <div className="text-sm font-medium text-gray-900 truncate">{item.vehicles?.brands?.brand_name || 'Unknown'} {item.vehicles?.model_name || 'Unknown'}</div>
+                            <div className="text-xs text-gray-500 flex flex-wrap gap-1">
+                              <span>{item.variant_name || item.vehicles?.variant_name || ''}</span>
+                              {item.is_test_ride_vehicle && <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800">Test Ride</span>}
+                              {item.is_demo_vehicle && <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">Demo</span>}
+                            </div>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-4 py-3"><div className="text-xs font-mono text-gray-900">{item.vin_number}</div><div className="text-xs text-gray-500 font-mono">{item.chassis_number}</div></td>
+                      <td className="px-4 py-3">
+                        {item.color ? <div className="flex items-center"><div className="h-3 w-3 rounded-full border border-gray-300 mr-2 flex-shrink-0" style={{ backgroundColor: item.color.toLowerCase() }} /><span className="text-sm text-gray-900">{item.color}</span></div> : <span className="text-sm text-gray-400">-</span>}
+                      </td>
+                      <td className="px-4 py-3">
+                        <div className="text-sm font-medium text-gray-900">{formatCurrency(item.current_selling_price || item.on_road_price)}</div>
+                        <div className="text-xs text-gray-500">On-road: {formatCurrency(item.on_road_price)}</div>
+                      </td>
+                      <td className="px-4 py-3">
+                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(item.stock_status)}`}>{item.stock_status}</span>
+                        {item.sold_date && <div className="text-xs text-gray-500 mt-1">Sold: {formatDate(item.sold_date)}</div>}
+                      </td>
+                      <td className="px-4 py-3">
+                        <div className="flex items-center">
+                          <Battery className={`h-4 w-4 mr-1 ${item.battery_charge_percentage < 20 ? 'text-red-500' : item.battery_charge_percentage < 50 ? 'text-yellow-500' : 'text-green-500'}`} />
+                          <span className={`text-sm font-medium ${item.battery_charge_percentage < 20 ? 'text-red-600' : 'text-gray-900'}`}>{item.battery_charge_percentage}%</span>
+                        </div>
+                        <div className="text-xs text-gray-500">{item.battery_health_status}</div>
+                      </td>
+                      <td className="px-4 py-3"><div className="flex items-center text-sm text-gray-500"><MapPin className="h-3 w-3 mr-1 flex-shrink-0" /><span className="truncate max-w-[120px]">{item.location_in_showroom || 'Not assigned'}</span></div></td>
+                      <td className="px-4 py-3"><div className="flex items-center text-sm text-gray-500"><Calendar className="h-3 w-3 mr-1 flex-shrink-0" />{formatDate(item.received_date)}</div></td>
+                      <td className="px-4 py-3 text-right text-sm font-medium">
+                        <div className="flex items-center justify-end space-x-1">
+                          <button onClick={() => openViewModal(item)} className="text-gray-400 hover:text-gray-600 p-1.5 rounded hover:bg-gray-100" title="View"><Eye className="h-4 w-4" /></button>
+                          <button onClick={() => openEditModal(item)} className="text-blue-600 hover:text-blue-900 p-1.5 rounded hover:bg-blue-100" title="Edit"><Edit className="h-4 w-4" /></button>
+                          <button onClick={() => handleDelete(item.id)} className="text-red-600 hover:text-red-900 p-1.5 rounded hover:bg-red-100" title="Delete"><Trash2 className="h-4 w-4" /></button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+          {pagination.totalPages > 1 && (
+            <div className="bg-white px-4 py-3 border-t border-gray-200 sm:px-6">
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
+                <div className="text-sm text-gray-700">Showing <span className="font-medium">{((pagination.page - 1) * pagination.limit) + 1}</span> - <span className="font-medium">{Math.min(pagination.page * pagination.limit, pagination.total)}</span> of <span className="font-medium">{pagination.total}</span> results</div>
+                <div className="flex items-center space-x-1">
+                  <button onClick={() => setPagination(prev => ({ ...prev, page: prev.page - 1 }))} disabled={pagination.page === 1} className="px-3 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"><ChevronLeft className="h-4 w-4" /></button>
+                  {Array.from({ length: Math.min(5, pagination.totalPages) }, (_, i) => {
+                    let pageNum: number;
+                    if (pagination.totalPages <= 5) pageNum = i + 1;
+                    else if (pagination.page <= 3) pageNum = i + 1;
+                    else if (pagination.page >= pagination.totalPages - 2) pageNum = pagination.totalPages - 4 + i;
+                    else pageNum = pagination.page - 2 + i;
+                    return <button key={pageNum} onClick={() => setPagination(prev => ({ ...prev, page: pageNum }))} className={`min-w-[40px] px-3 py-2 rounded-md text-sm font-medium ${pagination.page === pageNum ? 'bg-blue-600 text-white' : 'text-gray-700 hover:bg-gray-50 border border-gray-300'}`}>{pageNum}</button>;
+                  })}
+                  <button onClick={() => setPagination(prev => ({ ...prev, page: prev.page + 1 }))} disabled={pagination.page === pagination.totalPages} className="px-3 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"><ChevronRight className="h-4 w-4" /></button>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Modal */}
+      {modalMode && (
+        <div className="fixed inset-0 z-50 overflow-y-auto">
+          <div className="flex items-center justify-center min-h-screen px-4 pt-4 pb-20">
+            <div className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" onClick={() => setModalMode(null)} />
+            <div className="relative bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+              <div className="sticky top-0 bg-white px-6 py-4 border-b border-gray-200 flex items-center justify-between z-10">
+                <h2 className="text-lg font-semibold text-gray-900">
+                  {modalMode === 'add' ? 'Add New Vehicle' : modalMode === 'edit' ? 'Edit Vehicle' : 'Vehicle Details'}
+                </h2>
+                <button onClick={() => setModalMode(null)} className="text-gray-400 hover:text-gray-600 p-1 rounded hover:bg-gray-100"><X className="h-5 w-5" /></button>
+              </div>
+
+              <form onSubmit={handleSubmit} className="p-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {/* Vehicle Selection */}
+                  <div className="lg:col-span-2">
+                    <label className="block text-sm font-medium text-gray-700">Vehicle Model <span className="text-red-500">*</span></label>
+                    <select name="vehicle_model_id" value={formData.vehicle_model_id} onChange={handleInputChange} disabled={modalMode === 'view'}
+                      className={`mt-1 block w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-blue-500 ${formErrors.vehicle_model_id ? 'border-red-500' : 'border-gray-300'} disabled:bg-gray-100 disabled:cursor-not-allowed`}>
+                      <option value="">Select Model</option>
+                      {vehicleModels.map(vehicle => (
+                        <option key={vehicle.id} value={vehicle.id}>
+                          {vehicle.brands?.brand_name} - {vehicle.model_name} ({vehicle.vehicle_type})
+                          {vehicle.variant_name ? ` - ${vehicle.variant_name}` : ''}
+                          {vehicle.ex_showroom_price ? ` - ₹${vehicle.ex_showroom_price.toLocaleString('en-IN')}` : ''}
+                        </option>
+                      ))}
+                    </select>
+                    {formErrors.vehicle_model_id && <p className="mt-1 text-xs text-red-500">{formErrors.vehicle_model_id}</p>}
+                  </div>
+
+                  {/* Color */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">Color</label>
+                    <select name="color" value={formData.color} onChange={handleInputChange} disabled={modalMode === 'view'}
+                      className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed">
+                      <option value="">Select Color</option>
+                      {COLORS.map(c => <option key={c} value={c}>{c}</option>)}
+                    </select>
+                  </div>
+
+                  {/* VIN */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">VIN Number <span className="text-red-500">*</span></label>
+                    <input type="text" name="vin_number" value={formData.vin_number} onChange={handleInputChange} disabled={modalMode === 'view'} placeholder="Enter VIN"
+                      className={`mt-1 block w-full px-3 py-2 border rounded-lg text-sm font-mono focus:ring-2 focus:ring-blue-500 ${formErrors.vin_number ? 'border-red-500' : 'border-gray-300'} disabled:bg-gray-100 disabled:cursor-not-allowed`} />
+                    {formErrors.vin_number && <p className="mt-1 text-xs text-red-500">{formErrors.vin_number}</p>}
+                  </div>
+
+                  {/* Chassis */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">Chassis Number <span className="text-red-500">*</span></label>
+                    <input type="text" name="chassis_number" value={formData.chassis_number} onChange={handleInputChange} disabled={modalMode === 'view'} placeholder="Enter chassis number"
+                      className={`mt-1 block w-full px-3 py-2 border rounded-lg text-sm font-mono focus:ring-2 focus:ring-blue-500 ${formErrors.chassis_number ? 'border-red-500' : 'border-gray-300'} disabled:bg-gray-100 disabled:cursor-not-allowed`} />
+                    {formErrors.chassis_number && <p className="mt-1 text-xs text-red-500">{formErrors.chassis_number}</p>}
+                  </div>
+
+                  {/* Motor */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">Motor Number <span className="text-red-500">*</span></label>
+                    <input type="text" name="motor_number" value={formData.motor_number} onChange={handleInputChange} disabled={modalMode === 'view'} placeholder="Enter motor number"
+                      className={`mt-1 block w-full px-3 py-2 border rounded-lg text-sm font-mono focus:ring-2 focus:ring-blue-500 ${formErrors.motor_number ? 'border-red-500' : 'border-gray-300'} disabled:bg-gray-100 disabled:cursor-not-allowed`} />
+                    {formErrors.motor_number && <p className="mt-1 text-xs text-red-500">{formErrors.motor_number}</p>}
+                  </div>
+
+                  {/* Battery */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">Battery Number <span className="text-red-500">*</span></label>
+                    <input type="text" name="battery_number" value={formData.battery_number} onChange={handleInputChange} disabled={modalMode === 'view'} placeholder="Enter battery number"
+                      className={`mt-1 block w-full px-3 py-2 border rounded-lg text-sm font-mono focus:ring-2 focus:ring-blue-500 ${formErrors.battery_number ? 'border-red-500' : 'border-gray-300'} disabled:bg-gray-100 disabled:cursor-not-allowed`} />
+                    {formErrors.battery_number && <p className="mt-1 text-xs text-red-500">{formErrors.battery_number}</p>}
+                  </div>
+
+                  {/* Variant */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">Variant Name</label>
+                    <input type="text" name="variant_name" value={formData.variant_name} onChange={handleInputChange} disabled={modalMode === 'view'} placeholder="Variant"
+                      className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed" />
+                  </div>
+
+                  {/* Received Date */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">Received Date <span className="text-red-500">*</span></label>
+                    <input type="date" name="received_date" value={formData.received_date} onChange={handleInputChange} disabled={modalMode === 'view'}
+                      className={`mt-1 block w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-blue-500 ${formErrors.received_date ? 'border-red-500' : 'border-gray-300'} disabled:bg-gray-100 disabled:cursor-not-allowed`} />
+                    {formErrors.received_date && <p className="mt-1 text-xs text-red-500">{formErrors.received_date}</p>}
+                  </div>
+
+                  {/* Received From */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">Received From</label>
+                    <input type="text" name="received_from" value={formData.received_from} onChange={handleInputChange} disabled={modalMode === 'view'} placeholder="Source / Supplier"
+                      className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed" />
+                  </div>
+
+                  {/* Manufacturing Date */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">Manufacturing Date</label>
+                    <input type="date" name="manufacturing_date" value={formData.manufacturing_date} onChange={handleInputChange} disabled={modalMode === 'view'}
+                      className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed" />
+                  </div>
+                </div>
+
+                {/* Pricing Section */}
+                <div className="border-t pt-4 mt-4">
+                  <h3 className="text-sm font-semibold text-gray-900 mb-3">Pricing Details</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">Purchase Cost (₹)</label>
+                      <input type="number" name="purchase_cost" value={formData.purchase_cost || ''} onChange={handleInputChange} disabled={modalMode === 'view'} placeholder="0" min="0"
+                        className={`mt-1 block w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-blue-500 ${formErrors.purchase_cost ? 'border-red-500' : 'border-gray-300'} disabled:bg-gray-100 disabled:cursor-not-allowed`} />
+                      {formErrors.purchase_cost && <p className="mt-1 text-xs text-red-500">{formErrors.purchase_cost}</p>}
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">Ex-Showroom Price (₹)</label>
+                      <input type="number" name="ex_showroom_price" value={formData.ex_showroom_price || ''} onChange={handleInputChange} disabled={modalMode === 'view'} placeholder="0" min="0"
+                        className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed" />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">On Road Price (₹)</label>
+                      <input type="number" name="on_road_price" value={formData.on_road_price || ''} onChange={handleInputChange} disabled={modalMode === 'view'} placeholder="0" min="0"
+                        className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed" />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">Selling Price (₹)</label>
+                      <input type="number" name="current_selling_price" value={formData.current_selling_price || ''} onChange={handleInputChange} disabled={modalMode === 'view'} placeholder="0" min="0"
+                        className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed" />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Battery & Software */}
+                <div className="border-t pt-4 mt-4">
+                  <h3 className="text-sm font-semibold text-gray-900 mb-3">Battery & Software</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">Battery Charge %</label>
+                      <input type="number" name="battery_charge_percentage" value={formData.battery_charge_percentage} onChange={handleInputChange} disabled={modalMode === 'view'} min="0" max="100"
+                        className={`mt-1 block w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-blue-500 ${formErrors.battery_charge_percentage ? 'border-red-500' : 'border-gray-300'} disabled:bg-gray-100 disabled:cursor-not-allowed`} />
+                      {formErrors.battery_charge_percentage && <p className="mt-1 text-xs text-red-500">{formErrors.battery_charge_percentage}</p>}
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">Battery Health</label>
+                      <select name="battery_health_status" value={formData.battery_health_status} onChange={handleInputChange} disabled={modalMode === 'view'}
+                        className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed">
+                        {BATTERY_HEALTH_OPTIONS.map(o => <option key={o} value={o}>{o}</option>)}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">Software Version</label>
+                      <input type="text" name="software_version" value={formData.software_version} onChange={handleInputChange} disabled={modalMode === 'view'} placeholder="e.g., v2.1.0"
+                        className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg text-sm font-mono focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed" />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">Firmware Version</label>
+                      <input type="text" name="firmware_version" value={formData.firmware_version} onChange={handleInputChange} disabled={modalMode === 'view'} placeholder="e.g., f1.2.3"
+                        className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg text-sm font-mono focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed" />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Status & Location */}
+                <div className="border-t pt-4 mt-4">
+                  <h3 className="text-sm font-semibold text-gray-900 mb-3">Status & Location</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">Stock Status</label>
+                      <select name="stock_status" value={formData.stock_status} onChange={handleInputChange} disabled={modalMode === 'view'}
+                        className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed">
+                        {STOCK_STATUS_OPTIONS.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">Location in Showroom</label>
+                      <input type="text" name="location_in_showroom" value={formData.location_in_showroom} onChange={handleInputChange} disabled={modalMode === 'view'} placeholder="e.g., Section A, Spot 3"
+                        className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed" />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Vehicle Flags */}
+                <div className="border-t pt-4 mt-4">
+                  <h3 className="text-sm font-semibold text-gray-900 mb-3">Vehicle Flags</h3>
+                  <div className="flex flex-wrap gap-6">
+                    <label className="flex items-center cursor-pointer">
+                      <input type="checkbox" name="is_test_ride_vehicle" checked={formData.is_test_ride_vehicle} onChange={handleCheckboxChange} disabled={modalMode === 'view'}
+                        className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded disabled:cursor-not-allowed" />
+                      <span className="ml-2 text-sm text-gray-700">Test Ride Vehicle</span>
+                    </label>
+                    <label className="flex items-center cursor-pointer">
+                      <input type="checkbox" name="is_demo_vehicle" checked={formData.is_demo_vehicle} onChange={handleCheckboxChange} disabled={modalMode === 'view'}
+                        className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded disabled:cursor-not-allowed" />
+                      <span className="ml-2 text-sm text-gray-700">Demo Vehicle</span>
+                    </label>
+                  </div>
+                </div>
+
+                {/* Form Actions */}
+                {modalMode !== 'view' && (
+                  <div className="mt-6 border-t pt-4 flex justify-end space-x-3">
+                    <button type="button" onClick={() => setModalMode(null)}
+                      className="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50">Cancel</button>
+                    <button type="submit" disabled={loading}
+                      className="px-6 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center">
+                      {loading ? <><RefreshCw className="h-4 w-4 animate-spin mr-2" />Saving...</> : modalMode === 'add' ? 'Add Vehicle' : 'Update Vehicle'}
+                    </button>
+                  </div>
+                )}
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}

@@ -184,7 +184,7 @@ const StatusBadge = ({ status, type }: { status: string; type: 'lead' | 'custome
   const icons = type === 'lead' ? leadIcons : customerIcons;
 
   return (
-    <span className={`px-2 py-1 rounded-full text-xs font-medium inline-flex items-center gap-1 ${colors[status] || 'bg-gray-100 text-gray-800'}`}>
+    <span className={`px-2 py-1 rounded-full text-xs font-medium inline-flex items-center gap-1 whitespace-nowrap ${colors[status] || 'bg-gray-100 text-gray-800'}`}>
       {icons[status]}
       {status}
     </span>
@@ -194,7 +194,7 @@ const StatusBadge = ({ status, type }: { status: string; type: 'lead' | 'custome
 // Loading Skeleton
 const LoadingSkeleton = () => (
   <div className="space-y-4">
-    <div className="grid grid-cols-6 gap-4">
+    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
       {[...Array(6)].map((_, i) => (
         <div key={i} className="h-20 bg-gray-100 rounded-lg animate-pulse"></div>
       ))}
@@ -456,7 +456,6 @@ export default function CustomerManagementPage() {
         setTotalCustomers(result.total);
       }
     } catch (error) {
-      console.error('Error loading customers:', error);
       showToast('Failed to load customers', 'error');
     } finally {
       setLoading(false);
@@ -468,7 +467,7 @@ export default function CustomerManagementPage() {
       const result = await apiClient.get('/api/customers-stats');
       if (result.success) setStats(result.stats);
     } catch (error) {
-      console.error('Error loading stats:', error);
+      // Silent fail for stats
     }
   }, []);
 
@@ -477,7 +476,7 @@ export default function CustomerManagementPage() {
       const result = await apiClient.get('/api/sales-executives');
       if (result.success) setSalesExecutives(result.data);
     } catch (error) {
-      console.error('Error loading sales executives:', error);
+      // Silent fail for sales executives
     }
   }, []);
 
@@ -594,7 +593,6 @@ export default function CustomerManagementPage() {
         showToast(result.error || 'Failed to create customer', 'error');
       }
     } catch (error) {
-      console.error('Error creating customer:', error);
       showToast('Failed to create customer', 'error');
     } finally {
       setIsSubmitting(false);
@@ -617,7 +615,6 @@ export default function CustomerManagementPage() {
         showToast(result.error || 'Failed to update customer', 'error');
       }
     } catch (error) {
-      console.error('Error updating customer:', error);
       showToast('Failed to update customer', 'error');
     } finally {
       setIsSubmitting(false);
@@ -636,7 +633,6 @@ export default function CustomerManagementPage() {
         showToast(result.error || 'Failed to delete customer', 'error');
       }
     } catch (error) {
-      console.error('Error deleting customer:', error);
       showToast('Failed to delete customer', 'error');
     }
   };
@@ -651,7 +647,6 @@ export default function CustomerManagementPage() {
         showToast(result.error || 'Failed to load customer details', 'error');
       }
     } catch (error) {
-      console.error('Error viewing customer:', error);
       showToast('Failed to load customer details', 'error');
     }
   };
@@ -744,7 +739,7 @@ export default function CustomerManagementPage() {
       {/* Header - Normal scrolling */}
       <div className="bg-white border-b shadow-sm">
         <div className="max-w-7xl mx-auto px-4 py-4">
-          <div className="flex justify-between items-center">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
             <div>
               <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
                 <Users className="w-6 h-6" />
@@ -754,7 +749,7 @@ export default function CustomerManagementPage() {
             </div>
             <button
               onClick={() => { resetForm(); setEditingCustomer(null); setShowModal(true); }}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2 w-full sm:w-auto justify-center"
             >
               <UserPlus className="w-4 h-4" />
               Add Customer
@@ -813,7 +808,7 @@ export default function CustomerManagementPage() {
 
       {/* Search and Filters */}
       <div className="max-w-7xl mx-auto px-4 pb-8">
-        <div className="mb-6 flex gap-4">
+        <div className="mb-6 flex flex-col sm:flex-row gap-4">
           <div className="flex-1 relative">
             <Search className="absolute left-3 top-2.5 text-gray-400 w-5 h-5" />
             <input
@@ -824,19 +819,21 @@ export default function CustomerManagementPage() {
               className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 pl-10"
             />
           </div>
-          <button 
-            onClick={() => setShowFilters(!showFilters)} 
-            className="px-4 py-2 border rounded-lg bg-white hover:bg-gray-50 transition-colors flex items-center gap-2"
-          >
-            <Filter className="w-4 h-4" />
-            Filters {Object.values(filters).some(f => f) && <span className="w-2 h-2 bg-blue-500 rounded-full"></span>}
-          </button>
-          <button 
-            onClick={loadCustomers} 
-            className="px-4 py-2 border rounded-lg bg-white hover:bg-gray-50 transition-colors"
-          >
-            <RefreshCw className="w-4 h-4" />
-          </button>
+          <div className="flex gap-2">
+            <button 
+              onClick={() => setShowFilters(!showFilters)} 
+              className="px-4 py-2 border rounded-lg bg-white hover:bg-gray-50 transition-colors flex items-center gap-2"
+            >
+              <Filter className="w-4 h-4" />
+              Filters {Object.values(filters).some(f => f) && <span className="w-2 h-2 bg-blue-500 rounded-full"></span>}
+            </button>
+            <button 
+              onClick={loadCustomers} 
+              className="px-4 py-2 border rounded-lg bg-white hover:bg-gray-50 transition-colors"
+            >
+              <RefreshCw className="w-4 h-4" />
+            </button>
+          </div>
         </div>
 
         {showFilters && (
@@ -881,122 +878,120 @@ export default function CustomerManagementPage() {
           </div>
         )}
 
-        {/* Customers Table */}
+        {/* Customers Table - No horizontal scroll */}
         <div className="bg-white rounded-lg shadow overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
+          <table className="w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase w-[18%]">
+                  <div className="flex items-center gap-1"><User className="w-3 h-3" /> Customer</div>
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase w-[18%]">
+                  <div className="flex items-center gap-1"><Phone className="w-3 h-3" /> Contact</div>
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase w-[14%]">
+                  <div className="flex items-center gap-1"><Tag className="w-3 h-3" /> Type/Status</div>
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase w-[12%]">
+                  <div className="flex items-center gap-1"><MapPin className="w-3 h-3" /> Location</div>
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase w-[10%]">
+                  <div className="flex items-center gap-1"><Target className="w-3 h-3" /> Lead</div>
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase w-[12%]">
+                  <div className="flex items-center gap-1"><Briefcase className="w-3 h-3" /> Executive</div>
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase w-[10%]">
+                  <div className="flex items-center gap-1"><FileText className="w-3 h-3" /> Vehicles</div>
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase w-[6%]">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-200">
+              {loading ? (
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                    <div className="flex items-center gap-1"><User className="w-3 h-3" /> Customer</div>
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                    <div className="flex items-center gap-1"><Phone className="w-3 h-3" /> Contact</div>
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                    <div className="flex items-center gap-1"><Tag className="w-3 h-3" /> Type/Status</div>
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                    <div className="flex items-center gap-1"><MapPin className="w-3 h-3" /> Location</div>
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                    <div className="flex items-center gap-1"><Target className="w-3 h-3" /> Lead</div>
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                    <div className="flex items-center gap-1"><Briefcase className="w-3 h-3" /> Executive</div>
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                    <div className="flex items-center gap-1"><FileText className="w-3 h-3" /> Vehicles</div>
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                  <td colSpan={8} className="px-4 py-12 text-center">
+                    <div className="flex justify-center">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                    </div>
+                    <p className="mt-2 text-sm text-gray-500">Loading customers...</p>
+                  </td>
                 </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-200">
-                {loading ? (
-                  <tr>
-                    <td colSpan={8} className="px-6 py-12 text-center">
-                      <div className="flex justify-center">
-                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+              ) : customers.length === 0 ? (
+                <tr>
+                  <td colSpan={8} className="px-4 py-12 text-center text-gray-500">
+                    <div className="flex flex-col items-center gap-2">
+                      <Users className="w-8 h-8 text-gray-300" />
+                      <span>No customers found</span>
+                    </div>
+                  </td>
+                </tr>
+              ) : (
+                customers.map((customer) => (
+                  <tr key={customer.id} className="hover:bg-gray-50 transition-colors">
+                    <td className="px-4 py-3">
+                      <div className="font-medium text-gray-900 text-sm">{customer.first_name} {customer.last_name || ''}</div>
+                      <div className="text-xs text-gray-500">Code: {customer.customer_code}</div>
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="text-sm flex items-center gap-1">
+                        <Phone className="w-3 h-3 text-gray-400 flex-shrink-0" />
+                        <span className="truncate">{customer.mobile}</span>
                       </div>
-                      <p className="mt-2 text-sm text-gray-500">Loading customers...</p>
+                      <div className="text-xs text-gray-500 flex items-center gap-1 mt-1">
+                        <Mail className="w-3 h-3 text-gray-400 flex-shrink-0" />
+                        <span className="truncate">{customer.email || 'No email'}</span>
+                      </div>
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="text-sm mb-1 flex items-center gap-1 whitespace-nowrap">
+                        {customer.customer_type === 'Corporate' && <Building2 className="w-3 h-3 flex-shrink-0" />}
+                        <span className="truncate">{customer.customer_type}</span>
+                      </div>
+                      <StatusBadge status={customer.customer_status} type="customer" />
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="text-sm flex items-center gap-1">
+                        <MapPin className="w-3 h-3 text-gray-400 flex-shrink-0" />
+                        <span className="truncate">{customer.city}</span>
+                      </div>
+                      <div className="text-xs text-gray-500 truncate">{customer.state}</div>
+                    </td>
+                    <td className="px-4 py-3">
+                      <StatusBadge status={customer.lead_status} type="lead" />
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="text-sm flex items-center gap-1">
+                        <User className="w-3 h-3 text-gray-400 flex-shrink-0" />
+                        <span className="truncate">{customer.assigned_sales_executive?.full_name || 'Unassigned'}</span>
+                      </div>
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="text-sm whitespace-nowrap">{customer.total_vehicles_owned || 0} vehicles</div>
+                      <div className="text-xs text-gray-500">₹{(customer.total_purchase_amount || 0).toLocaleString()}</div>
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="flex space-x-1">
+                        <button onClick={() => viewCustomer(customer.id)} className="text-blue-600 hover:text-blue-800 transition-colors p-1" title="View">
+                          <Eye className="w-4 h-4" />
+                        </button>
+                        <button onClick={() => handleEdit(customer)} className="text-green-600 hover:text-green-800 transition-colors p-1" title="Edit">
+                          <Edit className="w-4 h-4" />
+                        </button>
+                        <button onClick={() => deleteCustomer(customer.id)} className="text-red-600 hover:text-red-800 transition-colors p-1" title="Delete">
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
                     </td>
                   </tr>
-                ) : customers.length === 0 ? (
-                  <tr>
-                    <td colSpan={8} className="px-6 py-12 text-center text-gray-500">
-                      <div className="flex flex-col items-center gap-2">
-                        <Users className="w-8 h-8 text-gray-300" />
-                        <span>No customers found</span>
-                      </div>
-                    </td>
-                  </tr>
-                ) : (
-                  customers.map((customer) => (
-                    <tr key={customer.id} className="hover:bg-gray-50 transition-colors">
-                      <td className="px-6 py-4">
-                        <div className="font-medium text-gray-900">{customer.first_name} {customer.last_name || ''}</div>
-                        <div className="text-sm text-gray-500">Code: {customer.customer_code}</div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="text-sm flex items-center gap-1">
-                          <Phone className="w-3 h-3 text-gray-400" />
-                          {customer.mobile}
-                        </div>
-                        <div className="text-sm text-gray-500 flex items-center gap-1">
-                          <Mail className="w-3 h-3 text-gray-400" />
-                          {customer.email || 'No email'}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="text-sm mb-1 flex items-center gap-1">
-                          {customer.customer_type === 'Corporate' && <Building2 className="w-3 h-3" />}
-                          {customer.customer_type}
-                        </div>
-                        <StatusBadge status={customer.customer_status} type="customer" />
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="text-sm flex items-center gap-1">
-                          <MapPin className="w-3 h-3 text-gray-400" />
-                          {customer.city}
-                        </div>
-                        <div className="text-sm text-gray-500">{customer.state}</div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <StatusBadge status={customer.lead_status} type="lead" />
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="text-sm flex items-center gap-1">
-                          <User className="w-3 h-3 text-gray-400" />
-                          {customer.assigned_sales_executive?.full_name || 'Unassigned'}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="text-sm">{customer.total_vehicles_owned || 0} vehicles</div>
-                        <div className="text-sm text-gray-500">₹{(customer.total_purchase_amount || 0).toLocaleString()}</div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="flex space-x-2">
-                          <button onClick={() => viewCustomer(customer.id)} className="text-blue-600 hover:text-blue-800 transition-colors p-1" title="View">
-                            <Eye className="w-4 h-4" />
-                          </button>
-                          <button onClick={() => handleEdit(customer)} className="text-green-600 hover:text-green-800 transition-colors p-1" title="Edit">
-                            <Edit className="w-4 h-4" />
-                          </button>
-                          <button onClick={() => deleteCustomer(customer.id)} className="text-red-600 hover:text-red-800 transition-colors p-1" title="Delete">
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
+                ))
+              )}
+            </tbody>
+          </table>
 
           {/* Pagination */}
           {!loading && customers.length > 0 && (
-            <div className="px-6 py-4 border-t flex justify-between items-center">
+            <div className="px-4 py-4 border-t flex flex-col sm:flex-row justify-between items-center gap-3">
               <div className="text-sm text-gray-700">
                 Showing {((currentPage - 1) * 20) + 1} to {Math.min(currentPage * 20, totalCustomers)} of {totalCustomers} customers
               </div>
