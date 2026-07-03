@@ -251,7 +251,9 @@ export async function POST(request: Request) {
       login_timestamp: loginTimestamp
     }
     
-    return NextResponse.json({ 
+    const authToken = crypto.randomBytes(64).toString('hex')
+
+    const response = NextResponse.json({ 
       success: true, 
       user_id: newUser.id,
       showroom_id: newShowroom.id,
@@ -261,6 +263,24 @@ export async function POST(request: Request) {
       showroom: completeShowroomData, // ← Backward compatibility
       message: 'Registration successful' 
     })
+
+    // Set auth cookies so the dashboard and all data routes work immediately after signup
+    const cookieOptions = {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax' as const,
+      maxAge: 60 * 60 * 24 * 7,
+      path: '/'
+    }
+    response.cookies.set('auth_token', authToken, cookieOptions)
+    response.cookies.set('user_id', newUser.id, { ...cookieOptions, httpOnly: false })
+    response.cookies.set('user_name', newUser.full_name, { ...cookieOptions, httpOnly: false })
+    response.cookies.set('user_email', newUser.email, { ...cookieOptions, httpOnly: false })
+    response.cookies.set('user_logged_in', 'true', { ...cookieOptions, httpOnly: false })
+    response.cookies.set('showroom_id', newShowroom.id, { ...cookieOptions, httpOnly: false })
+    response.cookies.set('showroom_name', newShowroom.showroom_name, { ...cookieOptions, httpOnly: false })
+
+    return response
     
   } catch (error) {
     console.error('Registration error:', error)

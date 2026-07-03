@@ -110,24 +110,30 @@ export async function POST(request: Request) {
         complete_data: completeData,
       })
       
-      // Set HTTP-only cookie
-      response.cookies.set('auth_token', authToken, {
+      // Cookie options shared across all auth cookies
+      const cookieOptions = {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax',
+        sameSite: 'lax' as const,
         maxAge: 60 * 60 * 24 * 7,
         path: '/'
-      })
-      
-      // Set client-readable cookie
-      response.cookies.set('user_logged_in', 'true', {
-        httpOnly: false,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax',
-        maxAge: 60 * 60 * 24 * 7,
-        path: '/'
-      })
-      
+      }
+
+      // HTTP-only auth token
+      response.cookies.set('auth_token', authToken, cookieOptions)
+
+      // Client-readable identity cookies
+      response.cookies.set('user_id', user.id, { ...cookieOptions, httpOnly: false })
+      response.cookies.set('user_name', user.full_name, { ...cookieOptions, httpOnly: false })
+      response.cookies.set('user_email', user.email, { ...cookieOptions, httpOnly: false })
+      response.cookies.set('user_logged_in', 'true', { ...cookieOptions, httpOnly: false })
+
+      // Showroom scoping cookies used by all data routes
+      if (showroom) {
+        response.cookies.set('showroom_id', showroom.id, { ...cookieOptions, httpOnly: false })
+        response.cookies.set('showroom_name', showroom.showroom_name, { ...cookieOptions, httpOnly: false })
+      }
+
       return response
     }
     
