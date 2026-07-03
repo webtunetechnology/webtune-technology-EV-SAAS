@@ -25,7 +25,7 @@ const navItems = [
   { href: '/admin/inventory', label: 'Inventory', icon: Boxes },
   { href: '/admin/sales', label: 'Sales', icon: ReceiptText },
   { href: '/admin/service', label: 'Service', icon: Wrench },
-  { href: '/admin/vehicles', label: 'Vehicle Catalog', icon: Car },
+  { href: '/admin/vehicle-catalog', label: 'Vehicle Catalog', icon: Car },
   { href: '/admin/brands', label: 'Brands', icon: Tags },
   { href: '/admin/plans', label: 'Plans', icon: CreditCard },
 ]

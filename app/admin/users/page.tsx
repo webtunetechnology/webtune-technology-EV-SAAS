@@ -54,7 +54,7 @@ export default function UsersPage() {
     if (!editing) return
     setBusy(true)
     const payload: Record<string, unknown> = { full_name: form.full_name, role: form.role }
-    if (form.password.trim()) payload.password = form.password
+    if (form.password.trim()) payload.new_password = form.password
     await adminMutate(`/api/admin/users/${editing.id}`, 'PATCH', payload)
     setBusy(false)
     setEditing(null)

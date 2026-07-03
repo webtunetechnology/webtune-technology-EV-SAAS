@@ -47,7 +47,7 @@ export default function AdminDashboardPage() {
               <QuickLink href="/admin/vendors" title="Manage Vendors" description="View, edit, suspend, or delete showrooms" icon={Store} />
               <QuickLink href="/admin/users" title="Manage Users" description="Control every account and role on the platform" icon={Users} />
               <QuickLink href="/admin/plans" title="Subscription Plans" description={`${stats.plans} plans configured`} icon={CreditCard} />
-              <QuickLink href="/admin/vehicles" title="Vehicle Catalog" description={`${stats.vehicles} models in master catalog`} icon={Car} />
+              <QuickLink href="/admin/vehicle-catalog" title="Vehicle Catalog" description={`${stats.vehicles} models in master catalog`} icon={Car} />
             </div>
           </div>
         )}
