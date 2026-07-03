@@ -8,10 +8,6 @@ import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import emailjs from '@emailjs/browser'
-
-// Initialize EmailJS
-emailjs.init(process.env.NEXT_PUBLIC_EMAILJS_PUBLIC_KEY || '')
 
 // Types for stored data
 interface UserData {
@@ -194,32 +190,28 @@ function RegisterContent() {
   // Send email using EmailJS
   const sendEmailOTP = async (emailAddress: string, otpCode: string) => {
     try {
-      const serviceId = process.env.NEXT_PUBLIC_EMAILJS_SERVICE_ID
-      const templateId = process.env.NEXT_PUBLIC_EMAILJS_TEMPLATE_ID
+      // Send via the server-side route (uses the EmailJS REST API).
+      // This avoids depending on NEXT_PUBLIC_* client-bundle inlining and keeps keys off the browser.
+      const response = await fetch('/api/auth/send-otp-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: emailAddress, otp_code: otpCode }),
+      })
 
-      if (!serviceId || !templateId) {
-        console.error('EmailJS configuration missing')
+      const data = await response.json().catch(() => ({}))
+
+      if (!response.ok || !data.success) {
+        const text = data?.error || 'Unknown error'
+        console.error('[v0] Email sending failed:', response.status, text)
+        setError(`Failed to send OTP email: ${text}`)
         return false
       }
 
-      const templateParams = {
-        email: emailAddress,
-        otp_code: otpCode,
-        to_email: emailAddress,
-      }
-
-      console.log('Sending email to:', emailAddress)
-      
-      const response = await emailjs.send(
-        serviceId,
-        templateId,
-        templateParams
-      )
-
-      console.log('EmailJS response:', response)
-      return response.status === 200
-    } catch (error) {
-      console.error('Email sending failed:', error)
+      return true
+    } catch (error: any) {
+      const text = error?.message || 'Network error'
+      console.error('[v0] Email sending failed:', text)
+      setError(`Failed to send OTP email: ${text}`)
       return false
     }
   }
@@ -263,7 +255,8 @@ function RegisterContent() {
       const emailSent = await sendEmailOTP(email, newOtp)
       
       if (!emailSent) {
-        setError('Failed to send OTP email. Please try again.')
+        // sendEmailOTP already sets a detailed error message
+        setError((prev) => prev || 'Failed to send OTP email. Please try again.')
         setLoading(false)
         return
       }
