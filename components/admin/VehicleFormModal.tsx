@@ -97,7 +97,7 @@ const emptyForm: FormState = {
   is_discontinued: false,
 }
 
-const VEHICLE_TYPES = ['Scooter', 'Motorcycle', 'Car', 'Auto Rickshaw', 'Bicycle', 'Truck']
+const DEFAULT_VEHICLE_TYPES = ['Scooter', 'Motorcycle', 'Car', 'Auto Rickshaw', 'Bicycle', 'Truck']
 
 const SECTIONS = [
   { id: 'basic', label: 'Basic Info', icon: Info, heading: 'Basic Information', desc: 'Core identity of the model — brand, name, variant, and type.' },
@@ -121,12 +121,18 @@ export function VehicleFormModal({
   editing,
   brands,
   onSaved,
+  vehicleTypes = DEFAULT_VEHICLE_TYPES,
+  onSubmit,
 }: {
   open: boolean
   onClose: () => void
   editing: Vehicle | null
   brands: Brand[]
   onSaved: () => void
+  /** Override the list of selectable vehicle types (defaults to the admin catalog list). */
+  vehicleTypes?: string[]
+  /** Custom persistence handler. When provided it is used instead of the default admin API call. */
+  onSubmit?: (payload: Record<string, unknown>, editing: Vehicle | null) => Promise<void>
 }) {
   const [form, setForm] = useState<FormState>(emptyForm)
   const [active, setActive] = useState<SectionId>('basic')
@@ -203,7 +209,9 @@ export function VehicleFormModal({
       is_discontinued: form.is_discontinued,
     }
     try {
-      if (editing) {
+      if (onSubmit) {
+        await onSubmit(payload, editing)
+      } else if (editing) {
         await adminMutate(`/api/admin/vehicles/${editing.id}`, 'PATCH', payload)
       } else {
         await adminMutate('/api/admin/vehicles', 'POST', payload)
@@ -384,7 +392,7 @@ export function VehicleFormModal({
                           <SelectValue placeholder="Select type" />
                         </SelectTrigger>
                         <SelectContent>
-                          {VEHICLE_TYPES.map((t) => (
+                          {vehicleTypes.map((t) => (
                             <SelectItem key={t} value={t}>
                               {t}
                             </SelectItem>

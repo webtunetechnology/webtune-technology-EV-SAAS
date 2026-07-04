@@ -5,6 +5,15 @@
 import { apiClient } from '@/lib/supabase/api-client';
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import React from 'react';
+import { VehicleFormModal } from '@/components/admin/VehicleFormModal';
+
+const VENDOR_VEHICLE_TYPES = [
+  'Electric Scooter',
+  'Electric Motorcycle',
+  'Electric Car',
+  'Electric Rickshaw',
+  'Electric Bus',
+];
 import { 
   Car,
   Search, 
@@ -476,6 +485,19 @@ export default function VehicleManagementPage() {
     };
   };
 
+  // Persistence handler for the shared VehicleFormModal wizard.
+  const submitVehicle = async (
+    payload: Record<string, unknown>,
+    editing: { id: string } | null
+  ) => {
+    const result = editing
+      ? await apiClient.put(`/api/vehicles/${editing.id}`, payload)
+      : await apiClient.post('/api/vehicles', payload);
+    if (!result.success) {
+      throw new Error(result.error || 'Failed to save vehicle');
+    }
+  };
+
   const createVehicle = async () => {
     if (!validateForm()) return;
     setIsSubmitting(true);
@@ -882,445 +904,20 @@ export default function VehicleManagementPage() {
         </div>
       </div>
 
-      {/* Vehicle Form Modal - WITH BLUR EFFECT AND VALIDATION */}
-      {showModal && (
-        <div className="fixed inset-0 backdrop-blur-md bg-white/30 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg shadow-xl w-full max-w-5xl max-h-[90vh] flex flex-col animate-fade-in">
-            {/* Modal Header */}
-            <div className="flex-shrink-0 bg-white border-b px-6 py-4 flex justify-between items-center rounded-t-lg">
-              <div>
-                <h2 className="text-xl font-bold flex items-center gap-2">
-                  <Car className="w-5 h-5" />
-                  {editingVehicle ? 'Edit Vehicle' : 'Add New Vehicle'}
-                </h2>
-                <p className="text-sm text-gray-500 mt-0.5">
-                  Section {currentTabIndex + 1} of {tabs.length}: {tabs[currentTabIndex].label}
-                  {tabs[currentTabIndex].mandatoryFields.length > 0 && (
-                    <span className="text-red-500 ml-2">* Required fields</span>
-                  )}
-                </p>
-              </div>
-              <button 
-                onClick={() => { setShowModal(false); setEditingVehicle(null); resetForm(); }} 
-                className="text-gray-400 hover:text-gray-600 transition-colors"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            {/* Progress Bar */}
-            <div className="w-full bg-gray-200 h-1.5">
-              <div 
-                className="bg-blue-600 h-1.5 transition-all duration-300 ease-in-out"
-                style={{ width: `${((currentTabIndex + 1) / tabs.length) * 100}%` }}
-              ></div>
-            </div>
-
-            <div className="flex-1 overflow-y-auto p-6">
-              {/* Section Error Message */}
-              {sectionError && (
-                <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm flex items-center gap-2">
-                  <AlertTriangle className="w-4 h-4" />
-                  <span>{sectionError}</span>
-                </div>
-              )}
-
-              {/* Tabs - Horizontal Scroll */}
-              <div className="border-b mb-6">
-                <div className="flex space-x-1 overflow-x-auto pb-2">
-                  {tabs.map((tab, index) => (
-                    <button
-                      key={tab.key}
-                      type="button"
-                      onClick={() => switchTab(tab.key)}
-                      className={`flex items-center space-x-2 px-4 py-2 rounded-t-lg font-medium text-sm whitespace-nowrap transition-colors ${
-                        activeTab === tab.key
-                          ? 'bg-blue-50 text-blue-600 border-b-2 border-blue-600'
-                          : index < currentTabIndex
-                          ? 'text-green-600 hover:bg-green-50'
-                          : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
-                      } ${tab.mandatoryFields.length > 0 && index > currentTabIndex ? 'font-semibold' : ''}`}
-                    >
-                      {tab.icon}
-                      <span>{tab.label}</span>
-                      {tab.mandatoryFields.length > 0 && <span className="text-red-400 text-xs">*</span>}
-                      {index < currentTabIndex && <CheckCircle className="w-4 h-4 text-green-500" />}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Tab Content */}
-              <div>
-                {/* Basic Information Tab */}
-                {activeTab === 'basic' && (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 animate-fade-in">
-                    <div>
-                      <label className="block text-sm font-medium mb-1">Brand *</label>
-                      <select 
-                        value={formData.brand_id} 
-                        onChange={(e) => setFormData({...formData, brand_id: e.target.value})} 
-                        className={`w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 ${formErrors.brand_id ? 'border-red-500' : 'border-gray-300'}`}
-                      >
-                        <option value="">Select Brand</option>
-                        {brands.map(brand => (
-                          <option key={brand.id} value={brand.id}>{brand.brand_name}</option>
-                        ))}
-                      </select>
-                      {formErrors.brand_id && <p className="text-red-500 text-xs mt-1">{formErrors.brand_id}</p>}
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium mb-1">Model Name *</label>
-                      <input 
-                        type="text" 
-                        value={formData.model_name} 
-                        onChange={(e) => setFormData({...formData, model_name: e.target.value})} 
-                        className={`w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 ${formErrors.model_name ? 'border-red-500' : 'border-gray-300'}`} 
-                        placeholder="e.g., iQube, Nexon EV"
-                      />
-                      {formErrors.model_name && <p className="text-red-500 text-xs mt-1">{formErrors.model_name}</p>}
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium mb-1">Variant Name</label>
-                      <input 
-                        type="text" 
-                        value={formData.variant_name} 
-                        onChange={(e) => setFormData({...formData, variant_name: e.target.value})} 
-                        className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" 
-                        placeholder="e.g., Standard, Premium, Pro"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium mb-1">Vehicle Type *</label>
-                      <select 
-                        value={formData.vehicle_type} 
-                        onChange={(e) => setFormData({...formData, vehicle_type: e.target.value})} 
-                        className={`w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 ${formErrors.vehicle_type ? 'border-red-500' : 'border-gray-300'}`}
-                      >
-                        <option value="Electric Scooter">Electric Scooter</option>
-                        <option value="Electric Motorcycle">Electric Motorcycle</option>
-                        <option value="Electric Car">Electric Car</option>
-                        <option value="Electric Rickshaw">Electric Rickshaw</option>
-                        <option value="Electric Bus">Electric Bus</option>
-                      </select>
-                      {formErrors.vehicle_type && <p className="text-red-500 text-xs mt-1">{formErrors.vehicle_type}</p>}
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium mb-1 flex items-center gap-1">
-                        <Users className="w-4 h-4" />
-                        Seating Capacity
-                      </label>
-                      <input 
-                        type="number" 
-                        value={formData.seating_capacity} 
-                        onChange={(e) => setFormData({...formData, seating_capacity: e.target.value})} 
-                        className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" 
-                        min="1" 
-                        max="50"
-                      />
-                    </div>
-                  </div>
-                )}
-
-                {/* Battery & Motor Tab */}
-                {activeTab === 'battery' && (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 animate-fade-in">
-                    <div>
-                      <label className="block text-sm font-medium mb-1 flex items-center gap-1">
-                        <Battery className="w-4 h-4" />
-                        Battery Capacity (kWh)
-                      </label>
-                      <input 
-                        type="number" 
-                        step="0.01" 
-                        value={formData.battery_capacity_kwh} 
-                        onChange={(e) => setFormData({...formData, battery_capacity_kwh: e.target.value})} 
-                        className={`w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 ${formErrors.battery_capacity_kwh ? 'border-red-500' : 'border-gray-300'}`} 
-                        placeholder="e.g., 3.24"
-                      />
-                      {formErrors.battery_capacity_kwh && <p className="text-red-500 text-xs mt-1">{formErrors.battery_capacity_kwh}</p>}
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium mb-1 flex items-center gap-1">
-                        <Zap className="w-4 h-4" />
-                        Motor Power (kW)
-                      </label>
-                      <input 
-                        type="number" 
-                        step="0.01" 
-                        value={formData.motor_power_kw} 
-                        onChange={(e) => setFormData({...formData, motor_power_kw: e.target.value})} 
-                        className={`w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 ${formErrors.motor_power_kw ? 'border-red-500' : 'border-gray-300'}`} 
-                        placeholder="e.g., 4.4"
-                      />
-                      {formErrors.motor_power_kw && <p className="text-red-500 text-xs mt-1">{formErrors.motor_power_kw}</p>}
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium mb-1 flex items-center gap-1">
-                        <Gauge className="w-4 h-4" />
-                        Range Per Charge (km)
-                      </label>
-                      <input 
-                        type="number" 
-                        value={formData.range_per_charge_km} 
-                        onChange={(e) => setFormData({...formData, range_per_charge_km: e.target.value})} 
-                        className={`w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 ${formErrors.range_per_charge_km ? 'border-red-500' : 'border-gray-300'}`} 
-                        placeholder="e.g., 145"
-                      />
-                      {formErrors.range_per_charge_km && <p className="text-red-500 text-xs mt-1">{formErrors.range_per_charge_km}</p>}
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium mb-1 flex items-center gap-1">
-                        <Clock className="w-4 h-4" />
-                        Charging Time Standard (hrs)
-                      </label>
-                      <input 
-                        type="number" 
-                        step="0.1" 
-                        value={formData.charging_time_standard_hrs} 
-                        onChange={(e) => setFormData({...formData, charging_time_standard_hrs: e.target.value})} 
-                        className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" 
-                        placeholder="e.g., 5.5"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium mb-1 flex items-center gap-1">
-                        <Zap className="w-4 h-4" />
-                        Charging Time Fast (hrs)
-                      </label>
-                      <input 
-                        type="number" 
-                        step="0.1" 
-                        value={formData.charging_time_fast_hrs} 
-                        onChange={(e) => setFormData({...formData, charging_time_fast_hrs: e.target.value})} 
-                        className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" 
-                        placeholder="e.g., 1.5"
-                      />
-                    </div>
-                  </div>
-                )}
-
-                {/* Performance Tab */}
-                {activeTab === 'performance' && (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 animate-fade-in">
-                    <div>
-                      <label className="block text-sm font-medium mb-1 flex items-center gap-1">
-                        <Gauge className="w-4 h-4" />
-                        Top Speed (km/h)
-                      </label>
-                      <input 
-                        type="number" 
-                        value={formData.top_speed_kmph} 
-                        onChange={(e) => setFormData({...formData, top_speed_kmph: e.target.value})} 
-                        className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" 
-                        placeholder="e.g., 78"
-                      />
-                    </div>
-                  </div>
-                )}
-
-                {/* Pricing Tab */}
-                {activeTab === 'pricing' && (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 animate-fade-in">
-                    <div>
-                      <label className="block text-sm font-medium mb-1 flex items-center gap-1">
-                        <DollarSign className="w-4 h-4" />
-                        Ex-Showroom Price (₹)
-                      </label>
-                      <input 
-                        type="number" 
-                        step="0.01" 
-                        value={formData.ex_showroom_price} 
-                        onChange={(e) => setFormData({...formData, ex_showroom_price: e.target.value})} 
-                        className={`w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 ${formErrors.ex_showroom_price ? 'border-red-500' : 'border-gray-300'}`} 
-                        placeholder="e.g., 124999"
-                      />
-                      {formErrors.ex_showroom_price && <p className="text-red-500 text-xs mt-1">{formErrors.ex_showroom_price}</p>}
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium mb-1 flex items-center gap-1">
-                        <Shield className="w-4 h-4" />
-                        Insurance Amount (₹)
-                      </label>
-                      <input 
-                        type="number" 
-                        step="0.01" 
-                        value={formData.insurance_amount} 
-                        onChange={(e) => setFormData({...formData, insurance_amount: e.target.value})} 
-                        className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" 
-                        placeholder="e.g., 8500"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium mb-1 flex items-center gap-1">
-                        <Settings className="w-4 h-4" />
-                        RTO Charges (₹)
-                      </label>
-                      <input 
-                        type="number" 
-                        step="0.01" 
-                        value={formData.rto_charges} 
-                        onChange={(e) => setFormData({...formData, rto_charges: e.target.value})} 
-                        className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" 
-                        placeholder="e.g., 6500"
-                      />
-                    </div>
-                  </div>
-                )}
-
-                {/* Warranty Tab */}
-                {activeTab === 'warranty' && (
-                  <div className="space-y-4 animate-fade-in">
-                    <h3 className="font-semibold text-gray-700 border-b pb-2 flex items-center gap-2">
-                      <Car className="w-4 h-4" />
-                      Vehicle Warranty
-                    </h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-sm font-medium mb-1 flex items-center gap-1">
-                          <Calendar className="w-4 h-4" />
-                          Vehicle Warranty (Years)
-                        </label>
-                        <input 
-                          type="number" 
-                          value={formData.vehicle_warranty_years} 
-                          onChange={(e) => setFormData({...formData, vehicle_warranty_years: e.target.value})} 
-                          className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium mb-1 flex items-center gap-1">
-                          <Gauge className="w-4 h-4" />
-                          Vehicle Warranty (KM)
-                        </label>
-                        <input 
-                          type="number" 
-                          value={formData.vehicle_warranty_km} 
-                          onChange={(e) => setFormData({...formData, vehicle_warranty_km: e.target.value})} 
-                          className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        />
-                      </div>
-                    </div>
-                    <h3 className="font-semibold text-gray-700 border-b pb-2 mt-4 flex items-center gap-2">
-                      <Battery className="w-4 h-4" />
-                      Battery Warranty
-                    </h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-sm font-medium mb-1 flex items-center gap-1">
-                          <Calendar className="w-4 h-4" />
-                          Battery Warranty (Years)
-                        </label>
-                        <input 
-                          type="number" 
-                          value={formData.battery_warranty_years} 
-                          onChange={(e) => setFormData({...formData, battery_warranty_years: e.target.value})} 
-                          className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium mb-1 flex items-center gap-1">
-                          <Gauge className="w-4 h-4" />
-                          Battery Warranty (KM)
-                        </label>
-                        <input 
-                          type="number" 
-                          value={formData.battery_warranty_km} 
-                          onChange={(e) => setFormData({...formData, battery_warranty_km: e.target.value})} 
-                          className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* Status Tab */}
-                {activeTab === 'status' && (
-                  <div className="space-y-4 animate-fade-in">
-                    <label className="flex items-center space-x-3">
-                      <input 
-                        type="checkbox" 
-                        checked={formData.is_active} 
-                        onChange={(e) => setFormData({...formData, is_active: e.target.checked})} 
-                        className="w-5 h-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                      />
-                      <span className="text-sm font-medium flex items-center gap-2">
-                        <CheckCircle className="w-4 h-4 text-green-500" />
-                        Active - Vehicle is currently available for sale
-                      </span>
-                    </label>
-                    <label className="flex items-center space-x-3">
-                      <input 
-                        type="checkbox" 
-                        checked={formData.is_discontinued} 
-                        onChange={(e) => setFormData({...formData, is_discontinued: e.target.checked})} 
-                        className="w-5 h-5 rounded border-gray-300 text-red-600 focus:ring-red-500"
-                      />
-                      <span className="text-sm font-medium flex items-center gap-2">
-                        <AlertCircle className="w-4 h-4 text-red-500" />
-                        Discontinued - Vehicle model has been discontinued
-                      </span>
-                    </label>
-                    <div className="bg-gray-50 rounded-lg p-4 mt-4">
-                      <p className="text-sm text-gray-600">
-                        <strong>Note:</strong> Discontinued vehicles will not appear in new sales but will remain in existing customer records and service history.
-                      </p>
-                    </div>
-                  </div>
-                )}
-
-                {/* Navigation Buttons */}
-                <div className="sticky bottom-0 bg-white border-t mt-8 pt-4 flex justify-between items-center">
-                  <div className="flex items-center space-x-3">
-                    <button
-                      type="button"
-                      onClick={() => { setShowModal(false); setEditingVehicle(null); resetForm(); }}
-                      className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 transition-colors"
-                    >
-                      Cancel
-                    </button>
-                    {!isFirstTab && (
-                      <button
-                        type="button"
-                        onClick={goToPreviousTab}
-                        className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 transition-colors flex items-center space-x-2"
-                      >
-                        <ChevronLeft className="w-4 h-4" />
-                        <span>Previous</span>
-                      </button>
-                    )}
-                  </div>
-
-                  <div className="flex items-center space-x-3">
-                    <span className="text-sm text-gray-500">
-                      {currentTabIndex + 1} of {tabs.length}
-                    </span>
-                    {!isLastTab ? (
-                      <button
-                        type="button"
-                        onClick={goToNextTab}
-                        className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors flex items-center space-x-2"
-                      >
-                        <span>Next: {tabs[currentTabIndex + 1].label}</span>
-                        <ChevronRight className="w-4 h-4" />
-                      </button>
-                    ) : (
-                      <button
-                        type="button"
-                        onClick={handleSubmit}
-                        disabled={isSubmitting}
-                        className="px-6 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors disabled:opacity-50 font-medium"
-                      >
-                        {isSubmitting ? 'Saving...' : (editingVehicle ? 'Update Vehicle' : 'Create Vehicle')}
-                      </button>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Vehicle Form Modal - shared wizard UI (matches admin catalog) */}
+      <VehicleFormModal
+        open={showModal}
+        onClose={() => { setShowModal(false); setEditingVehicle(null); }}
+        editing={editingVehicle}
+        brands={brands}
+        vehicleTypes={VENDOR_VEHICLE_TYPES}
+        onSaved={() => {
+          loadVehicles();
+          loadStats();
+          showToast(editingVehicle ? 'Vehicle updated successfully!' : 'Vehicle created successfully!', 'success');
+        }}
+        onSubmit={submitVehicle}
+      />
 
       {/* Vehicle Detail Modal - WITH BLUR EFFECT */}
       {showDetailModal && selectedVehicle && (
