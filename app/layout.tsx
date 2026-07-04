@@ -7,8 +7,9 @@ const _geist = Geist({ subsets: ["latin"] });
 const _geistMono = Geist_Mono({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: 'EV Dealership Platform',
-  description: 'Manage your electric vehicle sales and showroom operations',
+  title: 'Voltline — The Operating System for EV Dealerships',
+  description:
+    'Voltline is an all-in-one platform for electric vehicle showrooms — manage your catalog, inventory, customers, GST invoicing, service records and sales analytics from one dashboard.',
   generator: 'v0.app',
   icons: {
     icon: [
