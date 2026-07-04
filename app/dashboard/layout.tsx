@@ -12,6 +12,7 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [collapsed, setCollapsed] = useState(false);
   const pathname = usePathname();
   
   // Get active section from pathname
@@ -29,7 +30,11 @@ export default function DashboardLayout({
     <div className="min-h-screen bg-gray-50">
       {/* Sidebar - hidden on mobile by default */}
       <div className={`fixed inset-y-0 left-0 z-50 transform ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0 transition-transform duration-300 ease-in-out`}>
-        <Sidebar activeSection={activeSection} />
+        <Sidebar
+          activeSection={activeSection}
+          collapsed={collapsed}
+          onToggleCollapse={() => setCollapsed((v) => !v)}
+        />
       </div>
       
       {/* Mobile sidebar backdrop */}
@@ -41,7 +46,7 @@ export default function DashboardLayout({
       )}
       
       {/* Main content */}
-      <div className="lg:ml-64">
+      <div className={`transition-[margin] duration-300 ease-in-out ${collapsed ? 'lg:ml-20' : 'lg:ml-64'}`}>
         <Header activeSection={activeSection} onMenuClick={() => setSidebarOpen(!sidebarOpen)} />
         <main className="p-4 md:p-6 lg:p-8">
           <SubscriptionGate>{children}</SubscriptionGate>
