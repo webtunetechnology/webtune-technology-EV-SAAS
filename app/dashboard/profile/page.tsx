@@ -70,6 +70,7 @@ interface BillingConfig {
   invoice_prefix: string;
   default_gst_percentage: number;
   invoice_footer_note: string | null;
+  invoice_terms_conditions: string | null;
   authorized_signature_url: string | null;
   bank_name: string | null;
   account_number: string | null;
@@ -510,6 +511,7 @@ export default function ProfilePage() {
             invoice_prefix: editingData.invoice_prefix,
             default_gst_percentage: editingData.default_gst_percentage,
             invoice_footer_note: editingData.invoice_footer_note,
+            invoice_terms_conditions: editingData.invoice_terms_conditions,
             authorized_signature_url: editingData.authorized_signature_url,
             bank_name: editingData.bank_name,
             account_number: editingData.account_number,
@@ -1140,6 +1142,24 @@ export default function ProfilePage() {
                   <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">Invoice Footer Note</label>
                   <p className="text-sm italic mt-0.5 text-gray-600">{billing.invoice_footer_note || 'No footer note set'}</p>
                 </div>
+                <div>
+                  <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">Invoice Terms &amp; Conditions</label>
+                  {billing.invoice_terms_conditions ? (
+                    <ol className="mt-1 list-decimal space-y-0.5 pl-5 text-sm text-gray-700">
+                      {billing.invoice_terms_conditions
+                        .split('\n')
+                        .map((t) => t.replace(/^\s*\d+[.)]\s*/, '').trim())
+                        .filter(Boolean)
+                        .map((t, i) => (
+                          <li key={i}>{t}</li>
+                        ))}
+                    </ol>
+                  ) : (
+                    <p className="text-sm italic mt-0.5 text-gray-500">
+                      Using default terms (goods once sold, warranty, overdue interest, jurisdiction)
+                    </p>
+                  )}
+                </div>
                 <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-lg p-4 border border-gray-200">
                   <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">Bank Details</label>
                   <div className="mt-2 space-y-1">
@@ -1542,6 +1562,19 @@ export default function ProfilePage() {
                       rows={3}
                       placeholder="Thank you for choosing EV service!"
                     />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Invoice Terms &amp; Conditions</label>
+                    <textarea
+                      value={editingData.invoice_terms_conditions || ''}
+                      onChange={(e) => setEditingData({ ...editingData, invoice_terms_conditions: e.target.value })}
+                      className="w-full px-4 py-2.5 border border-gray-300 rounded-lg"
+                      rows={5}
+                      placeholder={'Enter one term per line, e.g.\nGoods once sold cannot be taken back or exchanged.\nWarranty as per manufacturer terms and conditions.\nSubject to local jurisdiction.'}
+                    />
+                    <p className="mt-1 text-xs text-gray-500">
+                      Enter one term per line. Numbering is added automatically on the invoice. Leave blank to use the default terms.
+                    </p>
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">Bank Name</label>

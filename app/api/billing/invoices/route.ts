@@ -63,6 +63,7 @@ interface BillingConfig {
   default_gst_percentage: number;
   invoice_sequence: number;
   invoice_footer_note?: string;
+  invoice_terms_conditions?: string;
   bank_name?: string;
   account_number?: string;
   ifsc_code?: string;
@@ -143,6 +144,48 @@ function getBrandName(vehicleData: any): string {
 
 function round2(n: number): number {
   return Math.round((Number(n) + Number.EPSILON) * 100) / 100;
+}
+
+// Fallback terms used when a showroom has not configured its own in the profile.
+const DEFAULT_INVOICE_TERMS = [
+  'Goods once sold cannot be taken back or exchanged.',
+  'Warranty as per manufacturer terms and conditions.',
+  'Interest @24% p.a. charged on overdue bills beyond 15 days.',
+  'Subject to local jurisdiction.',
+];
+
+// Turn the vendor-configured terms text (one term per line) into a clean, numbered list.
+// Falls back to the default terms when nothing is configured.
+function resolveInvoiceTerms(raw?: string | null): string[] {
+  const lines = (raw || '')
+    .split('\n')
+    .map((l) => l.replace(/^\s*\d+[.)]\s*/, '').trim()) // strip any leading "1." / "1)" numbering
+    .filter((l) => l.length > 0);
+  const source = lines.length > 0 ? lines : DEFAULT_INVOICE_TERMS;
+  return source.map((t, i) => `${i + 1}. ${t}`);
+}
+
+// Fetch a remote image (logo / signature) and return a base64 data URL + jsPDF format.
+async function fetchImageAsDataUrl(
+  url: string | null | undefined
+): Promise<{ dataUrl: string; format: 'PNG' | 'JPEG' } | null> {
+  if (!url) return null;
+  try {
+    const res = await fetch(url, { cache: 'no-store' });
+    if (!res.ok) {
+      console.error('Image fetch failed:', url, res.status);
+      return null;
+    }
+    const contentType = (res.headers.get('content-type') || 'image/png').toLowerCase();
+    const buffer = Buffer.from(await res.arrayBuffer());
+    if (buffer.byteLength === 0) return null;
+    const format: 'PNG' | 'JPEG' = contentType.includes('jpeg') || contentType.includes('jpg') ? 'JPEG' : 'PNG';
+    const mime = format === 'JPEG' ? 'image/jpeg' : 'image/png';
+    return { dataUrl: `data:${mime};base64,${buffer.toString('base64')}`, format };
+  } catch (err) {
+    console.error('Image fetch error:', url, err);
+    return null;
+  }
 }
 
 // GST state codes for "Place of Supply"
@@ -716,12 +759,35 @@ async function generateInvoicePDF(invoice: any): Promise<ArrayBuffer> {
   box(L, y, R - L, compH);
   vline(splitX, y, y + compH);
 
-  // Logo monogram
+  // Logo: use the uploaded showroom logo if available, otherwise fall back to a monogram.
   const logoSize = 15;
-  doc.setFillColor(NAVY[0], NAVY[1], NAVY[2]);
-  doc.rect(L + 3, y + 3, logoSize, logoSize, 'F');
-  const initials = (invoice.showroom_name || 'EV').split(' ').map((w: string) => w[0]).join('').slice(0, 2).toUpperCase();
-  txt(initials, L + 3 + logoSize / 2, y + 3 + logoSize / 2 + 2, { size: 11, bold: true, color: [255, 255, 255], align: 'center' });
+  const logoX = L + 3;
+  const logoY = y + 3;
+  const logoImg = await fetchImageAsDataUrl(invoice.logo_url);
+  if (logoImg) {
+    try {
+      const props = doc.getImageProperties(logoImg.dataUrl);
+      const ratio = props.width / props.height;
+      let w = logoSize;
+      let h = logoSize;
+      if (ratio > 1) h = logoSize / ratio;
+      else w = logoSize * ratio;
+      const ox = logoX + (logoSize - w) / 2;
+      const oy = logoY + (logoSize - h) / 2;
+      doc.addImage(logoImg.dataUrl, logoImg.format, ox, oy, w, h);
+    } catch (err) {
+      console.error('addImage(logo) failed:', err);
+      doc.setFillColor(NAVY[0], NAVY[1], NAVY[2]);
+      doc.rect(logoX, logoY, logoSize, logoSize, 'F');
+      const initials = (invoice.showroom_name || 'EV').split(' ').map((w: string) => w[0]).join('').slice(0, 2).toUpperCase();
+      txt(initials, logoX + logoSize / 2, logoY + logoSize / 2 + 2, { size: 11, bold: true, color: [255, 255, 255], align: 'center' });
+    }
+  } else {
+    doc.setFillColor(NAVY[0], NAVY[1], NAVY[2]);
+    doc.rect(logoX, logoY, logoSize, logoSize, 'F');
+    const initials = (invoice.showroom_name || 'EV').split(' ').map((w: string) => w[0]).join('').slice(0, 2).toUpperCase();
+    txt(initials, logoX + logoSize / 2, logoY + logoSize / 2 + 2, { size: 11, bold: true, color: [255, 255, 255], align: 'center' });
+  }
 
   const compTextX = L + 3 + logoSize + 3;
   txt(invoice.showroom_name || 'EV Showroom', compTextX, y + 6, { size: 11, bold: true, color: NAVY });
@@ -917,36 +983,63 @@ async function generateInvoicePDF(invoice: any): Promise<ArrayBuffer> {
     txt('No UPI configured', (c2 + c3) / 2, ty + 22, { size: 7, color: GRAY, align: 'center' });
   }
 
-  // Signature stamp
+  // Signature: use the uploaded authorised signature image if available, else fall back to a drawn stamp.
   txt(`For ${invoice.showroom_name || 'EV Showroom'}`, R - 3, ty + 5, { size: 7.5, bold: true, align: 'right' });
-  const stampCx = (c3 + R) / 2;
-  const stampCy = ty + 20;
-  doc.setDrawColor(NAVY[0], NAVY[1], NAVY[2]);
-  doc.setLineWidth(0.5);
-  doc.circle(stampCx, stampCy, 12);
-  doc.setLineWidth(0.3);
-  doc.circle(stampCx, stampCy, 9.5);
-  txt('SIGNATURE', stampCx, stampCy + 1, { size: 7, bold: true, color: NAVY, align: 'center' });
-  doc.setDrawColor(0, 0, 0);
-  doc.setLineWidth(0.2);
+  const signImg = await fetchImageAsDataUrl(invoice.authorized_signature_url);
+  const signPlaced = (() => {
+    if (!signImg) return false;
+    try {
+      const props = doc.getImageProperties(signImg.dataUrl);
+      const ratio = props.width / props.height;
+      const maxW = R - c3 - 8;   // available width in the signature column
+      const maxH = 16;           // available height above the caption
+      let w = maxW;
+      let h = w / ratio;
+      if (h > maxH) {
+        h = maxH;
+        w = h * ratio;
+      }
+      const sx = R - 3 - w;             // right-aligned within the column
+      const sy = ty + 8;
+      doc.addImage(signImg.dataUrl, signImg.format, sx, sy, w, h);
+      return true;
+    } catch (err) {
+      console.error('addImage(signature) failed:', err);
+      return false;
+    }
+  })();
+
+  if (!signPlaced) {
+    const stampCx = (c3 + R) / 2;
+    const stampCy = ty + 20;
+    doc.setDrawColor(NAVY[0], NAVY[1], NAVY[2]);
+    doc.setLineWidth(0.5);
+    doc.circle(stampCx, stampCy, 12);
+    doc.setLineWidth(0.3);
+    doc.circle(stampCx, stampCy, 9.5);
+    txt('SIGNATURE', stampCx, stampCy + 1, { size: 7, bold: true, color: NAVY, align: 'center' });
+    doc.setDrawColor(0, 0, 0);
+    doc.setLineWidth(0.2);
+  }
   txt('Authorised Signatory', R - 3, ty + payH - 3, { size: 7, color: GRAY, align: 'right' });
   ty += payH;
 
   // ============ NOTES / TERMS ============
-  const notesH = 30;
+  // Pre-wrap the terms so the box can grow to fit vendor-configured content.
+  const terms = resolveInvoiceTerms(invoice.invoice_terms_conditions);
+  const wrappedTerms: string[] = [];
+  terms.forEach((t) => {
+    doc.splitTextToSize(t, R - splitX - 8).forEach((ln: string) => wrappedTerms.push(ln));
+  });
+  // 10mm header offset + line height per term line + 4mm bottom padding, min 30mm.
+  const notesH = Math.max(30, 10 + wrappedTerms.length * 3.2 + 4);
   box(L, ty, R - L, notesH);
   vline(splitX, ty, ty + notesH);
   txt('Notes:', L + 3, ty + 5, { size: 8, bold: true });
   txt(invoice.invoice_footer_note || 'Thank you for your business.', L + 3, ty + 10, { size: 7.5, color: GRAY });
   txt('Terms and Conditions:', splitX + 4, ty + 5, { size: 8, bold: true });
-  const terms = [
-    '1. Goods once sold cannot be taken back or exchanged.',
-    '2. Warranty as per manufacturer terms and conditions.',
-    '3. Interest @24% p.a. charged on overdue bills beyond 15 days.',
-    '4. Subject to local jurisdiction.',
-  ];
   let tyy = ty + 10;
-  terms.forEach((t) => { const w = doc.splitTextToSize(t, R - splitX - 8); w.forEach((ln: string) => { txt(ln, splitX + 4, tyy, { size: 6.8, color: GRAY }); tyy += 3.2; }); });
+  wrappedTerms.forEach((ln) => { txt(ln, splitX + 4, tyy, { size: 6.8, color: GRAY }); tyy += 3.2; });
   ty += notesH;
 
   return doc.output('arraybuffer');
@@ -1235,13 +1328,17 @@ async function generateAndUploadPDF(
       showroom_state: addressData?.state || '',
       showroom_phone: brandingData?.official_mobile_number || brandingData?.whatsapp_number || 'N/A',
       showroom_email: brandingData?.support_email || 'N/A',
+      logo_url: brandingData?.logo_url || null,
+      banner_url: brandingData?.banner_url || null,
       gst_number: showroomData?.gst_number || 'N/A',
       pan_number: showroomData?.pan_number || 'N/A',
       bank_name: billingConfigData?.bank_name || null,
       account_number: billingConfigData?.account_number || null,
       ifsc_code: billingConfigData?.ifsc_code || null,
       upi_id: billingConfigData?.upi_id || null,
+      authorized_signature_url: billingConfigData?.authorized_signature_url || null,
       invoice_footer_note: billingConfigData?.invoice_footer_note || null,
+      invoice_terms_conditions: billingConfigData?.invoice_terms_conditions || null,
       charger_type: invoiceData.charger_type || 'Standard',
       home_charger_installed: invoiceData.home_charger_installed || false,
       home_charger_model: invoiceData.home_charger_model || null,
@@ -1510,9 +1607,10 @@ export async function generatePDFEndpoint(request: NextRequest) {
       bank_name: bcfg?.bank_name || null,
       account_number: bcfg?.account_number || null,
       ifsc_code: bcfg?.ifsc_code || null,
-      upi_id: bcfg?.upi_id || null,
-      invoice_footer_note: bcfg?.invoice_footer_note || null,
-    });
+  upi_id: bcfg?.upi_id || null,
+  invoice_footer_note: bcfg?.invoice_footer_note || null,
+  invoice_terms_conditions: bcfg?.invoice_terms_conditions || null,
+  });
 
     return NextResponse.json({ success: true, data: { html: htmlContent, invoice } });
   } catch (error: any) {
