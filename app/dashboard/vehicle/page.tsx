@@ -121,7 +121,7 @@ const StatusBadge = ({ isActive, isDiscontinued }: { isActive: boolean; isDiscon
   }
   if (!isActive) {
     return (
-      <span className="px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800 inline-flex items-center gap-1">
+      <span className="px-2.5 py-1 rounded-full text-xs font-medium bg-muted text-muted-foreground inline-flex items-center gap-1">
         <X className="w-3 h-3" />
         Inactive
       </span>
@@ -153,7 +153,7 @@ const VehicleTypeBadge = ({ type }: { type: string }) => {
   };
 
   return (
-    <span className={`px-2 py-1 rounded-full text-xs font-medium inline-flex items-center gap-1 ${colors[type] || 'bg-gray-100 text-gray-800'}`}>
+    <span className={`px-2.5 py-1 rounded-full text-xs font-medium inline-flex items-center gap-1 ${colors[type] || 'bg-muted text-muted-foreground'}`}>
       {icons[type]}
       {type}
     </span>
@@ -165,10 +165,10 @@ const LoadingSkeleton = () => (
   <div className="space-y-4">
     <div className="grid grid-cols-6 gap-4">
       {[...Array(6)].map((_, i) => (
-        <div key={i} className="h-20 bg-gray-100 rounded-lg animate-pulse"></div>
+        <div key={i} className="h-20 bg-muted rounded-lg animate-pulse"></div>
       ))}
     </div>
-    <div className="h-96 bg-gray-100 rounded-lg animate-pulse"></div>
+    <div className="h-96 bg-muted rounded-lg animate-pulse"></div>
   </div>
 );
 
@@ -618,10 +618,8 @@ export default function VehicleManagementPage() {
 
   if (loading && vehicles.length === 0) {
     return (
-      <div className="min-h-screen bg-gray-50">
-        <div className="max-w-7xl mx-auto px-4 py-8">
-          <LoadingSkeleton />
-        </div>
+      <div>
+        <LoadingSkeleton />
       </div>
     );
   }
@@ -758,22 +756,22 @@ export default function VehicleManagementPage() {
                       </td>
                       <td className="px-6 py-4">
                         <VehicleTypeBadge type={vehicle.vehicle_type} />
-                        <div className="text-xs text-gray-500 mt-1 flex items-center gap-1">
+                        <div className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
                           <Users className="w-3 h-3" />
                           {vehicle.seating_capacity} seater
                         </div>
                       </td>
                       <td className="px-6 py-4">
-                        <div className="text-sm">{vehicle.battery_capacity_kwh ? `${vehicle.battery_capacity_kwh} kWh` : 'N/A'}</div>
-                        <div className="text-xs text-gray-500">Range: {vehicle.range_per_charge_km ? `${vehicle.range_per_charge_km} km` : 'N/A'}</div>
+                        <div className="text-sm text-foreground">{vehicle.battery_capacity_kwh ? `${vehicle.battery_capacity_kwh} kWh` : 'N/A'}</div>
+                        <div className="text-xs text-muted-foreground">Range: {vehicle.range_per_charge_km ? `${vehicle.range_per_charge_km} km` : 'N/A'}</div>
                       </td>
                       <td className="px-6 py-4">
-                        <div className="text-sm">{vehicle.top_speed_kmph ? `${vehicle.top_speed_kmph} km/h` : 'N/A'}</div>
-                        <div className="text-xs text-gray-500">Motor: {vehicle.motor_power_kw ? `${vehicle.motor_power_kw} kW` : 'N/A'}</div>
+                        <div className="text-sm text-foreground">{vehicle.top_speed_kmph ? `${vehicle.top_speed_kmph} km/h` : 'N/A'}</div>
+                        <div className="text-xs text-muted-foreground">Motor: {vehicle.motor_power_kw ? `${vehicle.motor_power_kw} kW` : 'N/A'}</div>
                       </td>
                       <td className="px-6 py-4">
-                        <div className="text-sm font-medium">{vehicle.ex_showroom_price ? `₹${vehicle.ex_showroom_price.toLocaleString()}` : 'N/A'}</div>
-                        <div className="text-xs text-gray-500">
+                        <div className="text-sm font-medium text-foreground">{vehicle.ex_showroom_price ? `₹${vehicle.ex_showroom_price.toLocaleString()}` : 'N/A'}</div>
+                        <div className="text-xs text-muted-foreground">
                           {vehicle.insurance_amount && `Ins: ₹${vehicle.insurance_amount.toLocaleString()}`}
                         </div>
                       </td>
@@ -781,22 +779,22 @@ export default function VehicleManagementPage() {
                         <StatusBadge isActive={vehicle.is_active} isDiscontinued={vehicle.is_discontinued} />
                       </td>
                       <td className="px-6 py-4">
-                        <div className="text-xs">
-                          <span className="text-gray-500">Vehicle:</span> {vehicle.vehicle_warranty_years}y/{vehicle.vehicle_warranty_km}km
+                        <div className="text-xs text-foreground">
+                          <span className="text-muted-foreground">Vehicle:</span> {vehicle.vehicle_warranty_years}y/{vehicle.vehicle_warranty_km}km
                         </div>
-                        <div className="text-xs">
-                          <span className="text-gray-500">Battery:</span> {vehicle.battery_warranty_years}y/{vehicle.battery_warranty_km}km
+                        <div className="text-xs text-foreground">
+                          <span className="text-muted-foreground">Battery:</span> {vehicle.battery_warranty_years}y/{vehicle.battery_warranty_km}km
                         </div>
                       </td>
                       <td className="px-6 py-4">
-                        <div className="flex space-x-2">
-                          <button onClick={() => viewVehicle(vehicle.id)} className="text-blue-600 hover:text-blue-800 transition-colors p-1" title="View">
+                        <div className="flex gap-0.5">
+                          <button onClick={() => viewVehicle(vehicle.id)} className="p-1.5 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-lg transition-colors" title="View">
                             <Eye className="w-4 h-4" />
                           </button>
-                          <button onClick={() => handleEdit(vehicle)} className="text-green-600 hover:text-green-800 transition-colors p-1" title="Edit">
+                          <button onClick={() => handleEdit(vehicle)} className="p-1.5 text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg transition-colors" title="Edit">
                             <Edit className="w-4 h-4" />
                           </button>
-                          <button onClick={() => deleteVehicle(vehicle.id)} className="text-red-600 hover:text-red-800 transition-colors p-1" title="Delete">
+                          <button onClick={() => deleteVehicle(vehicle.id)} className="p-1.5 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-lg transition-colors" title="Delete">
                             <Trash2 className="w-4 h-4" />
                           </button>
                         </div>
@@ -810,24 +808,24 @@ export default function VehicleManagementPage() {
 
           {/* Pagination */}
           {!loading && vehicles.length > 0 && (
-            <div className="px-6 py-4 border-t flex justify-between items-center">
-              <div className="text-sm text-gray-700">
+            <div className="px-6 py-4 border-t border-border/40 flex justify-between items-center">
+              <div className="text-sm text-muted-foreground">
                 Showing {((currentPage - 1) * 20) + 1} to {Math.min(currentPage * 20, totalVehicles)} of {totalVehicles} vehicles
               </div>
               <div className="flex gap-2">
                 <button
                   onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
                   disabled={currentPage === 1}
-                  className="px-3 py-1 border rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors flex items-center gap-1"
+                  className="px-3 py-1.5 border border-border rounded-xl text-sm bg-card disabled:opacity-40 disabled:cursor-not-allowed hover:bg-muted transition-colors flex items-center gap-1 text-foreground"
                 >
                   <ChevronLeft className="w-4 h-4" />
                   Previous
                 </button>
-                <span className="px-3 py-1 text-sm">Page {currentPage} of {totalPages}</span>
+                <span className="px-3 py-1.5 text-sm text-muted-foreground">Page {currentPage} of {totalPages}</span>
                 <button
                   onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
                   disabled={currentPage === totalPages}
-                  className="px-3 py-1 border rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors flex items-center gap-1"
+                  className="px-3 py-1.5 border border-border rounded-xl text-sm bg-card disabled:opacity-40 disabled:cursor-not-allowed hover:bg-muted transition-colors flex items-center gap-1 text-foreground"
                 >
                   Next
                   <ChevronRight className="w-4 h-4" />
@@ -855,14 +853,14 @@ export default function VehicleManagementPage() {
 
       {/* Vehicle Detail Modal - WITH BLUR EFFECT */}
       {showDetailModal && selectedVehicle && (
-        <div className="fixed inset-0 backdrop-blur-md bg-white/30 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] flex flex-col animate-fade-in">
-            <div className="flex-shrink-0 bg-white border-b px-6 py-4 flex justify-between items-center rounded-t-lg">
-              <h2 className="text-xl font-bold flex items-center gap-2">
+        <div className="fixed inset-0 backdrop-blur-md bg-background/60 flex items-center justify-center z-50 p-4">
+          <div className="bg-card rounded-2xl shadow-xl border border-border w-full max-w-4xl max-h-[90vh] flex flex-col animate-fade-in">
+            <div className="flex-shrink-0 bg-card border-b border-border/60 px-6 py-4 flex justify-between items-center rounded-t-2xl">
+              <h2 className="text-xl font-bold flex items-center gap-2 text-foreground">
                 <Eye className="w-5 h-5" />
                 Vehicle Details
               </h2>
-              <button onClick={() => setShowDetailModal(false)} className="text-gray-400 hover:text-gray-600 transition-colors">
+              <button onClick={() => setShowDetailModal(false)} className="text-muted-foreground hover:text-foreground transition-colors p-1 rounded-lg hover:bg-muted">
                 <X className="w-5 h-5" />
               </button>
             </div>
@@ -870,9 +868,9 @@ export default function VehicleManagementPage() {
               <div className="mb-6 flex justify-between items-start">
                 <div>
                   <h3 className="text-2xl font-bold">{selectedVehicle.model_name}</h3>
-                  <p className="text-gray-500">{selectedVehicle.brand?.brand_name || 'Unknown Brand'}</p>
+                  <p className="text-muted-foreground">{selectedVehicle.brand?.brand_name || 'Unknown Brand'}</p>
                   {selectedVehicle.variant_name && (
-                    <p className="text-sm text-gray-500">Variant: {selectedVehicle.variant_name}</p>
+                    <p className="text-sm text-muted-foreground">Variant: {selectedVehicle.variant_name}</p>
                   )}
                 </div>
                 <div className="flex space-x-2">
@@ -954,7 +952,7 @@ export default function VehicleManagementPage() {
                   <p><strong>Battery:</strong> {selectedVehicle.battery_warranty_years} years / {selectedVehicle.battery_warranty_km.toLocaleString()} km</p>
                 </div>
               </div>
-              <div className="text-sm text-gray-500 border-t mt-4 pt-4">
+              <div className="text-sm text-muted-foreground border-t border-border/40 mt-4 pt-4">
                 <p>Created: {new Date(selectedVehicle.created_at).toLocaleString()}</p>
                 <p>Last Updated: {new Date(selectedVehicle.updated_at).toLocaleString()}</p>
               </div>

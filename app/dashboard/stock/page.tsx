@@ -172,11 +172,11 @@ const CategoryBadge = ({ category }: { category: string }) => {
     'Body Parts': 'bg-pink-100 text-pink-800',
     'Brakes': 'bg-red-100 text-red-800',
     'Suspension': 'bg-teal-100 text-teal-800',
-    'Tyres': 'bg-gray-100 text-gray-800',
+    'Tyres': 'bg-muted text-muted-foreground',
     'Lighting': 'bg-yellow-100 text-yellow-800',
     'Accessories': 'bg-violet-100 text-violet-800',
     'Consumables': 'bg-orange-100 text-orange-800',
-    'Other': 'bg-gray-100 text-gray-800',
+    'Other': 'bg-muted text-muted-foreground',
   };
 
   const icons: Record<string, React.ReactNode> = {
@@ -196,7 +196,7 @@ const CategoryBadge = ({ category }: { category: string }) => {
   };
 
   return (
-    <span className={`px-2 py-1 rounded-full text-xs font-medium inline-flex items-center gap-1 ${colors[category] || 'bg-gray-100 text-gray-800'}`}>
+    <span className={`px-2.5 py-1 rounded-full text-xs font-medium inline-flex items-center gap-1 ${colors[category] || 'bg-muted text-muted-foreground'}`}>
       {icons[category]}
       {category}
     </span>
@@ -208,10 +208,10 @@ const LoadingSkeleton = () => (
   <div className="space-y-4">
     <div className="grid grid-cols-6 gap-4">
       {[...Array(6)].map((_, i) => (
-        <div key={i} className="h-20 bg-gray-100 rounded-lg animate-pulse"></div>
+        <div key={i} className="h-20 bg-muted rounded-lg animate-pulse"></div>
       ))}
     </div>
-    <div className="h-96 bg-gray-100 rounded-lg animate-pulse"></div>
+    <div className="h-96 bg-muted rounded-lg animate-pulse"></div>
   </div>
 );
 
@@ -794,12 +794,12 @@ export default function PartsManagementPage() {
                   </tr>
                 ) : (
                   parts.map((part) => (
-                    <tr key={part.id} className="hover:bg-gray-50 transition-colors">
+                    <tr key={part.id} className="hover:bg-muted/20 transition-colors">
                       <td className="px-6 py-4">
-                        <div className="font-medium text-gray-900">{part.part_name}</div>
-                        <div className="text-xs text-gray-500">Code: {part.part_code || 'N/A'}</div>
+                        <div className="font-medium text-foreground">{part.part_name}</div>
+                        <div className="text-xs text-muted-foreground">Code: {part.part_code || 'N/A'}</div>
                         {part.manufacturer && (
-                          <div className="text-xs text-gray-400 flex items-center gap-1">
+                          <div className="text-xs text-muted-foreground/70 flex items-center gap-1">
                             <Factory className="w-3 h-3" />
                             {part.manufacturer}
                           </div>
@@ -807,12 +807,12 @@ export default function PartsManagementPage() {
                       </td>
                       <td className="px-6 py-4">
                         <CategoryBadge category={part.category} />
-                        {part.sub_category && <div className="text-xs text-gray-500 mt-1">{part.sub_category}</div>}
+                        {part.sub_category && <div className="text-xs text-muted-foreground mt-1">{part.sub_category}</div>}
                       </td>
                       <td className="px-6 py-4">
                         <div className="flex items-center space-x-2">
-                          <span className="font-medium">{part.current_stock?.quantity_available ?? 0}</span>
-                          <span className="text-xs text-gray-500">{part.unit_of_measure}</span>
+                          <span className="font-medium text-foreground">{part.current_stock?.quantity_available ?? 0}</span>
+                          <span className="text-xs text-muted-foreground">{part.unit_of_measure}</span>
                         </div>
                         <StockBadge 
                           available={part.current_stock?.quantity_available ?? 0} 
@@ -820,70 +820,70 @@ export default function PartsManagementPage() {
                           reorderPoint={part.reorder_point} 
                         />
                         {part.current_stock && part.current_stock.quantity_allocated > 0 && (
-                          <div className="text-xs text-blue-600 mt-1">
+                          <div className="text-xs text-primary/80 mt-1">
                             {part.current_stock.quantity_allocated} allocated
                           </div>
                         )}
                       </td>
                       <td className="px-6 py-4">
-                        <div className="text-sm flex items-center gap-1">
-                          <MapPin className="w-3 h-3 text-gray-400" />
+                        <div className="text-sm flex items-center gap-1 text-foreground">
+                          <MapPin className="w-3 h-3 text-muted-foreground" />
                           {part.current_stock?.location_in_store || 'Not assigned'}
                         </div>
                         {part.current_stock?.bin_number && (
-                          <div className="text-xs text-gray-500 flex items-center gap-1">
+                          <div className="text-xs text-muted-foreground flex items-center gap-1">
                             <Hash className="w-3 h-3" />
                             Bin: {part.current_stock.bin_number}
                           </div>
                         )}
                       </td>
                       <td className="px-6 py-4">
-                        <div className="text-sm font-medium">
+                        <div className="text-sm font-medium text-foreground">
                           {part.current_stock?.selling_price 
                             ? `₹${part.current_stock.selling_price.toLocaleString()}`
                             : 'Not set'}
                         </div>
                         {part.current_stock?.mrp && (
-                          <div className="text-xs text-gray-500">MRP: ₹{part.current_stock.mrp.toLocaleString()}</div>
+                          <div className="text-xs text-muted-foreground">MRP: ₹{part.current_stock.mrp.toLocaleString()}</div>
                         )}
                       </td>
                       <td className="px-6 py-4">
-                        <div className="text-sm flex items-center gap-1">
-                          <Truck className="w-3 h-3 text-gray-400" />
+                        <div className="text-sm flex items-center gap-1 text-foreground">
+                          <Truck className="w-3 h-3 text-muted-foreground" />
                           {part.supplier_name || 'N/A'}
                         </div>
                         {part.supplier_part_code && (
-                          <div className="text-xs text-gray-500">{part.supplier_part_code}</div>
+                          <div className="text-xs text-muted-foreground">{part.supplier_part_code}</div>
                         )}
                       </td>
                       <td className="px-6 py-4">
                         {part.is_active ? (
-                          <span className="px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 inline-flex items-center gap-1">
+                          <span className="px-2.5 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 inline-flex items-center gap-1">
                             <CheckCircle className="w-3 h-3" />
                             Active
                           </span>
                         ) : (
-                          <span className="px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800 inline-flex items-center gap-1">
+                          <span className="px-2.5 py-1 rounded-full text-xs font-medium bg-muted text-muted-foreground inline-flex items-center gap-1">
                             <X className="w-3 h-3" />
                             Inactive
                           </span>
                         )}
                       </td>
                       <td className="px-6 py-4">
-                        <div className="flex space-x-2">
-                          <button onClick={() => viewPart(part.id)} className="text-blue-600 hover:text-blue-800 transition-colors p-1" title="View">
+                        <div className="flex gap-0.5">
+                          <button onClick={() => viewPart(part.id)} className="p-1.5 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-lg transition-colors" title="View">
                             <Eye className="w-4 h-4" />
                           </button>
-                          <button onClick={() => handleEdit(part)} className="text-green-600 hover:text-green-800 transition-colors p-1" title="Edit">
+                          <button onClick={() => handleEdit(part)} className="p-1.5 text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg transition-colors" title="Edit">
                             <Edit className="w-4 h-4" />
                           </button>
-                          <button onClick={() => openStockAdjustment(part)} className="text-purple-600 hover:text-purple-800 transition-colors p-1" title="Adjust Stock">
+                          <button onClick={() => openStockAdjustment(part)} className="p-1.5 text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg transition-colors" title="Adjust Stock">
                             <Box className="w-4 h-4" />
                           </button>
-                          <button onClick={() => openTransactionHistory(part)} className="text-indigo-600 hover:text-indigo-800 transition-colors p-1" title="History">
+                          <button onClick={() => openTransactionHistory(part)} className="p-1.5 text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg transition-colors" title="History">
                             <ClipboardList className="w-4 h-4" />
                           </button>
-                          <button onClick={() => deletePart(part.id)} className="text-red-600 hover:text-red-800 transition-colors p-1" title="Delete">
+                          <button onClick={() => deletePart(part.id)} className="p-1.5 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-lg transition-colors" title="Delete">
                             <Trash2 className="w-4 h-4" />
                           </button>
                         </div>
@@ -897,24 +897,24 @@ export default function PartsManagementPage() {
 
           {/* Pagination */}
           {!loading && parts.length > 0 && (
-            <div className="px-6 py-4 border-t flex justify-between items-center">
-              <div className="text-sm text-gray-700">
+            <div className="px-6 py-4 border-t border-border/40 flex justify-between items-center">
+              <div className="text-sm text-muted-foreground">
                 Showing {((currentPage - 1) * 20) + 1} to {Math.min(currentPage * 20, totalParts)} of {totalParts} parts
               </div>
               <div className="flex gap-2">
                 <button
                   onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
                   disabled={currentPage === 1}
-                  className="px-3 py-1 border rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors flex items-center gap-1"
+                  className="px-3 py-1.5 border border-border rounded-xl text-sm bg-card disabled:opacity-40 disabled:cursor-not-allowed hover:bg-muted transition-colors flex items-center gap-1 text-foreground"
                 >
                   <ChevronLeft className="w-4 h-4" />
                   Previous
                 </button>
-                <span className="px-3 py-1 text-sm">Page {currentPage} of {totalPages}</span>
+                <span className="px-3 py-1.5 text-sm text-muted-foreground">Page {currentPage} of {totalPages}</span>
                 <button
                   onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
                   disabled={currentPage === totalPages}
-                  className="px-3 py-1 border rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors flex items-center gap-1"
+                  className="px-3 py-1.5 border border-border rounded-xl text-sm bg-card disabled:opacity-40 disabled:cursor-not-allowed hover:bg-muted transition-colors flex items-center gap-1 text-foreground"
                 >
                   Next
                   <ChevronRight className="w-4 h-4" />
@@ -927,28 +927,28 @@ export default function PartsManagementPage() {
 
       {/* Part Form Modal */}
       {showFormModal && (
-        <div className="fixed inset-0 backdrop-blur-md bg-white/30 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg shadow-xl w-full max-w-5xl max-h-[90vh] flex flex-col animate-fade-in">
-            <div className="flex-shrink-0 bg-white border-b px-6 py-4 flex justify-between items-center rounded-t-lg">
+        <div className="fixed inset-0 backdrop-blur-md bg-background/60 flex items-center justify-center z-50 p-4">
+          <div className="bg-card rounded-2xl shadow-xl border border-border w-full max-w-5xl max-h-[90vh] flex flex-col animate-fade-in">
+            <div className="flex-shrink-0 bg-card border-b border-border/60 px-6 py-4 flex justify-between items-center rounded-t-2xl">
               <div>
-                <h2 className="text-xl font-bold flex items-center gap-2">
+                <h2 className="text-xl font-bold flex items-center gap-2 text-foreground">
                   <Package className="w-5 h-5" />
                   {editingPart ? 'Edit Part' : 'Add New Part'}
                 </h2>
-                <p className="text-sm text-gray-500 mt-0.5">
+                <p className="text-sm text-muted-foreground mt-0.5">
                   Section {currentTabIndex + 1} of {tabs.length}: {tabs[currentTabIndex].label}
                   {tabs[currentTabIndex].mandatoryFields.length > 0 && (
                     <span className="text-red-500 ml-2">* Required fields</span>
                   )}
                 </p>
               </div>
-              <button onClick={() => { setShowFormModal(false); setEditingPart(null); resetForm(); }} className="text-gray-400 hover:text-gray-600 transition-colors">
+              <button onClick={() => { setShowFormModal(false); setEditingPart(null); resetForm(); }} className="text-muted-foreground hover:text-foreground p-1 rounded-lg hover:bg-muted transition-colors">
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            <div className="w-full bg-gray-200 h-1.5">
-              <div className="bg-blue-600 h-1.5 transition-all duration-300 ease-in-out" style={{ width: `${((currentTabIndex + 1) / tabs.length) * 100}%` }}></div>
+            <div className="w-full bg-muted h-1.5">
+              <div className="bg-primary h-1.5 transition-all duration-300 ease-in-out" style={{ width: `${((currentTabIndex + 1) / tabs.length) * 100}%` }}></div>
             </div>
 
             <div className="flex-1 overflow-y-auto p-6">
@@ -971,7 +971,7 @@ export default function PartsManagementPage() {
                           ? 'bg-blue-50 text-blue-600 border-b-2 border-blue-600'
                           : index < currentTabIndex
                           ? 'text-green-600 hover:bg-green-50'
-                          : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+                          : 'text-muted-foreground hover:text-foreground hover:bg-muted'
                       }`}
                     >
                       {tab.icon}
@@ -1168,18 +1168,18 @@ export default function PartsManagementPage() {
                         className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" 
                         placeholder="Comma separated vehicle model IDs or names"
                       />
-                      <p className="text-xs text-gray-500 mt-1">Enter vehicle model IDs or names separated by commas</p>
+                      <p className="text-xs text-muted-foreground mt-1">Enter vehicle model IDs or names separated by commas</p>
                     </div>
                   </div>
                 )}
 
                 {/* Navigation Buttons */}
-                <div className="sticky bottom-0 bg-white border-t mt-8 pt-4 flex justify-between items-center">
+                <div className="sticky bottom-0 bg-card border-t border-border/60 mt-8 pt-4 flex justify-between items-center">
                   <div className="flex items-center space-x-3">
                     <button
                       type="button"
                       onClick={() => { setShowFormModal(false); setEditingPart(null); resetForm(); }}
-                      className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 transition-colors"
+                      className="px-4 py-2 border border-border rounded-xl text-foreground hover:bg-muted transition-colors"
                     >
                       Cancel
                     </button>
@@ -1187,7 +1187,7 @@ export default function PartsManagementPage() {
                       <button
                         type="button"
                         onClick={goToPreviousTab}
-                        className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 transition-colors flex items-center space-x-2"
+                        className="px-4 py-2 border border-border rounded-xl text-foreground hover:bg-muted transition-colors flex items-center space-x-2"
                       >
                         <ChevronLeft className="w-4 h-4" />
                         <span>Previous</span>
@@ -1196,12 +1196,12 @@ export default function PartsManagementPage() {
                   </div>
 
                   <div className="flex items-center space-x-3">
-                    <span className="text-sm text-gray-500">{currentTabIndex + 1} of {tabs.length}</span>
+                    <span className="text-sm text-muted-foreground">{currentTabIndex + 1} of {tabs.length}</span>
                     {!isLastTab ? (
                       <button
                         type="button"
                         onClick={goToNextTab}
-                        className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors flex items-center space-x-2"
+                        className="px-4 py-2 bg-primary text-primary-foreground rounded-xl hover:bg-primary/90 transition-colors flex items-center space-x-2"
                       >
                         <span>Next: {tabs[currentTabIndex + 1].label}</span>
                         <ChevronRight className="w-4 h-4" />
@@ -1226,20 +1226,20 @@ export default function PartsManagementPage() {
 
       {/* Stock Adjustment Modal */}
       {showStockModal && selectedPart && (
-        <div className="fixed inset-0 backdrop-blur-md bg-white/30 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg shadow-xl w-full max-w-lg animate-fade-in">
-            <div className="px-6 py-4 border-b flex justify-between items-center">
+        <div className="fixed inset-0 backdrop-blur-md bg-background/60 flex items-center justify-center z-50 p-4">
+          <div className="bg-card rounded-2xl shadow-xl border border-border w-full max-w-lg animate-fade-in">
+            <div className="px-6 py-4 border-b border-border/60 flex justify-between items-center">
               <div>
-                <h2 className="text-xl font-bold flex items-center gap-2">
+                <h2 className="text-xl font-bold flex items-center gap-2 text-foreground">
                   <Box className="w-5 h-5" />
                   Stock Adjustment
                 </h2>
-                <p className="text-sm text-gray-500">{selectedPart.part_name} ({selectedPart.part_code})</p>
-                <p className="text-sm font-medium mt-1">
-                  Current Stock: <span className="text-blue-600">{selectedPart.current_stock?.quantity_available ?? 0} {selectedPart.unit_of_measure}</span>
+                <p className="text-sm text-muted-foreground">{selectedPart.part_name} ({selectedPart.part_code})</p>
+                <p className="text-sm font-medium mt-1 text-foreground">
+                  Current Stock: <span className="text-primary">{selectedPart.current_stock?.quantity_available ?? 0} {selectedPart.unit_of_measure}</span>
                 </p>
               </div>
-              <button onClick={() => setShowStockModal(false)} className="text-gray-400 hover:text-gray-600 transition-colors">
+              <button onClick={() => setShowStockModal(false)} className="text-muted-foreground hover:text-foreground p-1 rounded-lg hover:bg-muted transition-colors">
                 <X className="w-5 h-5" />
               </button>
             </div>
@@ -1266,8 +1266,8 @@ export default function PartsManagementPage() {
                 <textarea rows={3} value={stockForm.notes} onChange={(e) => setStockForm({...stockForm, notes: e.target.value})} className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" />
               </div>
               <div className="flex justify-end space-x-3 pt-4">
-                <button onClick={() => setShowStockModal(false)} className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 transition-colors">Cancel</button>
-                <button onClick={handleStockAdjustment} disabled={isSubmitting} className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50">
+                <button onClick={() => setShowStockModal(false)} className="px-4 py-2 border border-border rounded-xl text-foreground hover:bg-muted transition-colors">Cancel</button>
+                <button onClick={handleStockAdjustment} disabled={isSubmitting} className="px-6 py-2 bg-primary text-primary-foreground rounded-xl hover:bg-primary/90 transition-colors disabled:opacity-50">
                   {isSubmitting ? 'Processing...' : 'Confirm Adjustment'}
                 </button>
               </div>
@@ -1278,50 +1278,50 @@ export default function PartsManagementPage() {
 
       {/* Transaction History Modal */}
       {showTransactionModal && selectedPart && (
-        <div className="fixed inset-0 backdrop-blur-md bg-white/30 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] flex flex-col animate-fade-in">
-            <div className="flex-shrink-0 bg-white border-b px-6 py-4 flex justify-between items-center rounded-t-lg">
+        <div className="fixed inset-0 backdrop-blur-md bg-background/60 flex items-center justify-center z-50 p-4">
+          <div className="bg-card rounded-2xl shadow-xl border border-border w-full max-w-4xl max-h-[90vh] flex flex-col animate-fade-in">
+            <div className="flex-shrink-0 bg-card border-b border-border/60 px-6 py-4 flex justify-between items-center rounded-t-2xl">
               <div>
-                <h2 className="text-xl font-bold flex items-center gap-2">
+                <h2 className="text-xl font-bold flex items-center gap-2 text-foreground">
                   <ClipboardList className="w-5 h-5" />
                   Transaction History
                 </h2>
-                <p className="text-sm text-gray-500">{selectedPart.part_name} ({selectedPart.part_code})</p>
+                <p className="text-sm text-muted-foreground">{selectedPart.part_name} ({selectedPart.part_code})</p>
               </div>
-              <button onClick={() => setShowTransactionModal(false)} className="text-gray-400 hover:text-gray-600 transition-colors">
+              <button onClick={() => setShowTransactionModal(false)} className="text-muted-foreground hover:text-foreground p-1 rounded-lg hover:bg-muted transition-colors">
                 <X className="w-5 h-5" />
               </button>
             </div>
             <div className="flex-1 overflow-y-auto p-6">
               {transactions.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-12 text-gray-500">
-                  <ClipboardList className="w-12 h-12 mb-4 text-gray-300" />
+                <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
+                  <ClipboardList className="w-12 h-12 mb-4 text-muted-foreground/30" />
                   <p>No transactions found</p>
                 </div>
               ) : (
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-50">
+                <table className="min-w-full divide-y divide-border/40">
+                  <thead className="bg-muted/30">
                     <tr>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                      <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase">
                         <div className="flex items-center gap-1"><Calendar className="w-3 h-3" /> Date</div>
                       </th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                      <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase">
                         <div className="flex items-center gap-1"><Activity className="w-3 h-3" /> Type</div>
                       </th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                      <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase">
                         <div className="flex items-center gap-1"><BarChart3 className="w-3 h-3" /> Quantity</div>
                       </th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                      <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase">
                         <div className="flex items-center gap-1"><DollarSign className="w-3 h-3" /> Cost</div>
                       </th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">By</th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Notes</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase">By</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Notes</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-gray-200">
+                  <tbody className="divide-y divide-border/40">
                     {transactions.map((trans) => (
-                      <tr key={trans.id} className="hover:bg-gray-50">
-                        <td className="px-4 py-3 text-sm">{new Date(trans.transaction_date).toLocaleDateString()}</td>
+                      <tr key={trans.id} className="hover:bg-muted/20 transition-colors">
+                        <td className="px-4 py-3 text-sm text-foreground">{new Date(trans.transaction_date).toLocaleDateString()}</td>
                         <td className="px-4 py-3">
                           <span className={`px-2 py-1 rounded-full text-xs font-medium inline-flex items-center gap-1 ${
                             trans.transaction_type.includes('Add') || trans.transaction_type === 'Purchase'
@@ -1337,7 +1337,7 @@ export default function PartsManagementPage() {
                         <td className="px-4 py-3 text-sm font-medium">{trans.quantity}</td>
                         <td className="px-4 py-3 text-sm">{trans.total_amount ? `₹${trans.total_amount.toLocaleString()}` : '-'}</td>
                         <td className="px-4 py-3 text-sm">{trans.performed_by_user?.full_name || 'System'}</td>
-                        <td className="px-4 py-3 text-sm text-gray-500">{trans.notes || '-'}</td>
+                        <td className="px-4 py-3 text-sm text-muted-foreground">{trans.notes || '-'}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -1350,24 +1350,24 @@ export default function PartsManagementPage() {
 
       {/* Detail Modal */}
       {showDetailModal && selectedPart && (
-        <div className="fixed inset-0 backdrop-blur-md bg-white/30 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] flex flex-col animate-fade-in">
-            <div className="flex-shrink-0 bg-white border-b px-6 py-4 flex justify-between items-center rounded-t-lg">
-              <h2 className="text-xl font-bold flex items-center gap-2">
+        <div className="fixed inset-0 backdrop-blur-md bg-background/60 flex items-center justify-center z-50 p-4">
+          <div className="bg-card rounded-2xl shadow-xl border border-border w-full max-w-4xl max-h-[90vh] flex flex-col animate-fade-in">
+            <div className="flex-shrink-0 bg-card border-b border-border/60 px-6 py-4 flex justify-between items-center rounded-t-2xl">
+              <h2 className="text-xl font-bold flex items-center gap-2 text-foreground">
                 <Eye className="w-5 h-5" />
                 Part Details
               </h2>
-              <button onClick={() => setShowDetailModal(false)} className="text-gray-400 hover:text-gray-600 transition-colors">
+              <button onClick={() => setShowDetailModal(false)} className="text-muted-foreground hover:text-foreground p-1 rounded-lg hover:bg-muted transition-colors">
                 <X className="w-5 h-5" />
               </button>
             </div>
             <div className="flex-1 overflow-y-auto p-6">
               <div className="mb-6 flex justify-between items-start">
                 <div>
-                  <h3 className="text-2xl font-bold">{selectedPart.part_name}</h3>
-                  <p className="text-gray-500">Code: {selectedPart.part_code || 'N/A'}</p>
+                  <h3 className="text-2xl font-bold text-foreground">{selectedPart.part_name}</h3>
+                  <p className="text-muted-foreground">Code: {selectedPart.part_code || 'N/A'}</p>
                   {selectedPart.manufacturer && (
-                    <p className="text-gray-500 flex items-center gap-1">
+                    <p className="text-muted-foreground flex items-center gap-1">
                       <Factory className="w-4 h-4" />
                       {selectedPart.manufacturer}
                     </p>
@@ -1427,7 +1427,7 @@ export default function PartsManagementPage() {
               {selectedPart.description && (
                 <div className="mt-4">
                   <h4 className="font-semibold border-b pb-1">Description</h4>
-                  <p className="mt-2 text-gray-600">{selectedPart.description}</p>
+                  <p className="mt-2 text-muted-foreground">{selectedPart.description}</p>
                 </div>
               )}
             </div>

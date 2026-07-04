@@ -179,7 +179,7 @@ const StatusBadge = ({ status, type }: { status: string; type: 'appointment' | '
     'In Progress': 'bg-yellow-100 text-yellow-800',
     'Completed': 'bg-green-100 text-green-800',
     'Cancelled': 'bg-red-100 text-red-800',
-    'No Show': 'bg-gray-100 text-gray-800',
+    'No Show': 'bg-muted text-muted-foreground',
     'Delayed': 'bg-orange-100 text-orange-800',
     'Pending': 'bg-yellow-100 text-yellow-800',
     'Paid': 'bg-green-100 text-green-800',
@@ -202,7 +202,7 @@ const StatusBadge = ({ status, type }: { status: string; type: 'appointment' | '
   };
 
   return (
-    <span className={`px-2 py-1 rounded-full text-xs font-medium inline-flex items-center ${colors[status] || 'bg-gray-100 text-gray-800'}`}>
+    <span className={`px-2.5 py-1 rounded-full text-xs font-medium inline-flex items-center ${colors[status] || 'bg-muted text-muted-foreground'}`}>
       {icons[status]}
       {status}
     </span>
@@ -232,7 +232,7 @@ const ServiceTypeBadge = ({ type }: { type: string }) => {
   };
 
   return (
-    <span className={`px-2 py-1 rounded-full text-xs font-medium inline-flex items-center ${colors[type] || 'bg-gray-100 text-gray-800'}`}>
+    <span className={`px-2.5 py-1 rounded-full text-xs font-medium inline-flex items-center ${colors[type] || 'bg-muted text-muted-foreground'}`}>
       {icons[type]}
       {type}
     </span>
@@ -244,10 +244,10 @@ const LoadingSkeleton = () => (
   <div className="space-y-4">
     <div className="grid grid-cols-6 gap-4">
       {[...Array(6)].map((_, i) => (
-        <div key={i} className="h-20 bg-gray-100 rounded-lg animate-pulse"></div>
+        <div key={i} className="h-20 bg-muted rounded-lg animate-pulse"></div>
       ))}
     </div>
-    <div className="h-96 bg-gray-100 rounded-lg animate-pulse"></div>
+    <div className="h-96 bg-muted rounded-lg animate-pulse"></div>
   </div>
 );
 
@@ -700,7 +700,7 @@ export default function ServiceManagementPage() {
   };
 
   if (loading && appointments.length === 0 && records.length === 0) {
-    return <div className="min-h-screen bg-gray-50"><div className="max-w-7xl mx-auto px-4 py-8"><LoadingSkeleton /></div></div>;
+    return <div><LoadingSkeleton /></div>;
   }
 
   return (
@@ -826,40 +826,40 @@ export default function ServiceManagementPage() {
                       </td>
                     </tr>
                   ) : appointments.map((appt) => (
-                    <tr key={appt.id} className="hover:bg-gray-50">
+                    <tr key={appt.id} className="hover:bg-muted/20 transition-colors">
                       <td className="px-6 py-4">
-                        <div className="font-medium">{appt.customer?.first_name} {appt.customer?.last_name || ''}</div>
-                        <div className="text-sm text-gray-500 flex items-center gap-1">
+                        <div className="font-medium text-foreground">{appt.customer?.first_name} {appt.customer?.last_name || ''}</div>
+                        <div className="text-sm text-muted-foreground flex items-center gap-1">
                           <Phone className="w-3 h-3" />
                           {appt.customer?.mobile}
                         </div>
                       </td>
                       <td className="px-6 py-4">
-                        <div className="text-sm">{appt.vehicle?.vehicle_model?.brand?.brand_name} {appt.vehicle?.vehicle_model?.model_name}</div>
-                        <div className="text-xs text-gray-500">{appt.vehicle?.registration_number || appt.vehicle?.chassis_number}</div>
+                        <div className="text-sm text-foreground">{appt.vehicle?.vehicle_model?.brand?.brand_name} {appt.vehicle?.vehicle_model?.model_name}</div>
+                        <div className="text-xs text-muted-foreground">{appt.vehicle?.registration_number || appt.vehicle?.chassis_number}</div>
                       </td>
                       <td className="px-6 py-4">
-                        <div className="text-sm">{new Date(appt.appointment_date).toLocaleDateString()}</div>
-                        <div className="text-xs text-gray-500 flex items-center gap-1">
+                        <div className="text-sm text-foreground">{new Date(appt.appointment_date).toLocaleDateString()}</div>
+                        <div className="text-xs text-muted-foreground flex items-center gap-1">
                           <Clock className="w-3 h-3" />
                           {appt.appointment_time}
                         </div>
                       </td>
-                      <td className="px-6 py-4 text-sm">{appt.service_type || 'General'}</td>
-                      <td className="px-6 py-4 text-sm">{appt.technician?.full_name || 'Unassigned'}</td>
+                      <td className="px-6 py-4 text-sm text-foreground">{appt.service_type || 'General'}</td>
+                      <td className="px-6 py-4 text-sm text-foreground">{appt.technician?.full_name || 'Unassigned'}</td>
                       <td className="px-6 py-4"><StatusBadge status={appt.status} type="appointment" /></td>
                       <td className="px-6 py-4">
-                        <div className="flex space-x-2">
+                        <div className="flex gap-0.5">
                           <button 
                             onClick={() => { setEditingAppointment(appt); setAppointmentFormFromData(appt); setShowAppointmentModal(true); }} 
-                            className="text-green-600 hover:text-green-800 p-1" 
+                            className="p-1.5 text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg transition-colors" 
                             title="Edit"
                           >
                             <Edit className="w-4 h-4" />
                           </button>
                           <button 
                             onClick={() => { setServiceFormFromAppointment(appt); setShowServiceModal(true); }} 
-                            className="text-blue-600 hover:text-blue-800 p-1" 
+                            className="p-1.5 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-lg transition-colors" 
                             title="Convert to Service"
                           >
                             <ArrowRight className="w-4 h-4" />
@@ -888,9 +888,9 @@ export default function ServiceManagementPage() {
                 <tbody className="divide-y divide-border/40">
                   {records.length === 0 ? (
                     <tr>
-                      <td colSpan={9} className="px-6 py-12 text-center text-gray-500">
+                      <td colSpan={9} className="px-6 py-12 text-center text-muted-foreground">
                         <div className="flex flex-col items-center gap-2">
-                          <Wrench className="w-8 h-8 text-gray-300" />
+                          <Wrench className="w-8 h-8 text-muted-foreground/30" />
                           <span>No service records found</span>
                         </div>
                       </td>
@@ -898,44 +898,44 @@ export default function ServiceManagementPage() {
                   ) : records.map((record) => {
                     const totalAmount = getTotalAmount(record);
                     return (
-                      <tr key={record.id} className="hover:bg-gray-50">
-                        <td className="px-6 py-4 text-sm">{new Date(record.service_date).toLocaleDateString()}</td>
+                      <tr key={record.id} className="hover:bg-muted/20 transition-colors">
+                        <td className="px-6 py-4 text-sm text-foreground">{new Date(record.service_date).toLocaleDateString()}</td>
                         <td className="px-6 py-4">
-                          <div className="font-medium">{record.customer?.first_name} {record.customer?.last_name || ''}</div>
-                          <div className="text-xs text-gray-500 flex items-center gap-1">
+                          <div className="font-medium text-foreground">{record.customer?.first_name} {record.customer?.last_name || ''}</div>
+                          <div className="text-xs text-muted-foreground flex items-center gap-1">
                             <Phone className="w-3 h-3" />
                             {record.customer?.mobile}
                           </div>
                         </td>
                         <td className="px-6 py-4">
-                          <div className="text-sm">{record.vehicle?.registration_number || 'N/A'}</div>
-                          <div className="text-xs text-gray-500 flex items-center gap-1">
+                          <div className="text-sm text-foreground">{record.vehicle?.registration_number || 'N/A'}</div>
+                          <div className="text-xs text-muted-foreground flex items-center gap-1">
                             <Gauge className="w-3 h-3" />
                             {record.odometer_reading} km
                           </div>
                         </td>
                         <td className="px-6 py-4"><ServiceTypeBadge type={record.service_type} /></td>
-                        <td className="px-6 py-4 text-sm font-medium">₹{totalAmount.toLocaleString()}</td>
+                        <td className="px-6 py-4 text-sm font-medium text-foreground">₹{totalAmount.toLocaleString()}</td>
                         <td className="px-6 py-4"><StatusBadge status={record.payment_status} type="payment" /></td>
                         <td className="px-6 py-4"><StatusBadge status={record.status} type="service" /></td>
-                        <td className="px-6 py-4 text-sm">
+                        <td className="px-6 py-4 text-sm text-foreground">
                           {record.customer_rating ? (
                             <span className="flex items-center gap-1">
                               <Star className="w-4 h-4 text-yellow-400 fill-current" />
                               {record.customer_rating}
                             </span>
-                          ) : '-'}
+                          ) : <span className="text-muted-foreground">-</span>}
                         </td>
                         <td className="px-6 py-4">
-                          <div className="flex space-x-2">
-                            <button onClick={() => viewRecord(record.id)} className="text-blue-600 hover:text-blue-800 p-1" title="View">
+                          <div className="flex gap-0.5">
+                            <button onClick={() => viewRecord(record.id)} className="p-1.5 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-lg transition-colors" title="View">
                               <Eye className="w-4 h-4" />
                             </button>
-                            <button onClick={() => handleEditServiceRecord(record.id)} className="text-green-600 hover:text-green-800 p-1" title="Edit">
+                            <button onClick={() => handleEditServiceRecord(record.id)} className="p-1.5 text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg transition-colors" title="Edit">
                               <Edit className="w-4 h-4" />
                             </button>
                             {record.status === 'In Progress' && (
-                              <button onClick={() => updateServiceStatus(record.id, 'Completed')} className="text-emerald-600 hover:text-emerald-800 p-1" title="Mark Completed">
+                              <button onClick={() => updateServiceStatus(record.id, 'Completed')} className="p-1.5 text-muted-foreground hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors" title="Mark Completed">
                                 <CheckCircle className="w-4 h-4" />
                               </button>
                             )}
@@ -949,20 +949,20 @@ export default function ServiceManagementPage() {
             )}
           </div>
           {!loading && (appointments.length > 0 || records.length > 0) && (
-            <div className="px-6 py-4 border-t flex justify-between items-center">
+            <div className="px-6 py-4 border-t border-border/40 flex justify-between items-center">
               <button 
                 onClick={() => setCurrentPage(p => Math.max(1, p - 1))} 
                 disabled={currentPage === 1} 
-                className="px-3 py-1 border rounded-md disabled:opacity-50 flex items-center gap-1"
+                className="px-3 py-1.5 border border-border rounded-xl text-sm bg-card disabled:opacity-40 disabled:cursor-not-allowed hover:bg-muted transition-colors flex items-center gap-1 text-foreground"
               >
                 <ChevronLeft className="w-4 h-4" />
                 Previous
               </button>
-              <span className="text-sm">Page {currentPage} of {totalPages}</span>
+              <span className="text-sm text-muted-foreground">Page {currentPage} of {totalPages}</span>
               <button 
                 onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} 
                 disabled={currentPage === totalPages} 
-                className="px-3 py-1 border rounded-md disabled:opacity-50 flex items-center gap-1"
+                className="px-3 py-1.5 border border-border rounded-xl text-sm bg-card disabled:opacity-40 disabled:cursor-not-allowed hover:bg-muted transition-colors flex items-center gap-1 text-foreground"
               >
                 Next
                 <ChevronRight className="w-4 h-4" />
@@ -974,16 +974,16 @@ export default function ServiceManagementPage() {
 
       {/* Appointment Modal */}
       {showAppointmentModal && (
-        <div className="fixed inset-0 backdrop-blur-md bg-white/30 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto animate-fade-in">
-            <div className="px-6 py-4 border-b flex justify-between items-center">
-              <h2 className="text-xl font-bold flex items-center gap-2">
+        <div className="fixed inset-0 backdrop-blur-md bg-background/60 flex items-center justify-center z-50 p-4">
+          <div className="bg-card rounded-2xl shadow-xl border border-border w-full max-w-2xl max-h-[90vh] overflow-y-auto animate-fade-in">
+            <div className="px-6 py-4 border-b border-border/60 flex justify-between items-center">
+              <h2 className="text-xl font-bold flex items-center gap-2 text-foreground">
                 <Calendar className="w-5 h-5" />
                 {editingAppointment ? 'Edit Appointment' : 'New Appointment'}
               </h2>
               <button 
                 onClick={() => { setShowAppointmentModal(false); setEditingAppointment(null); resetAppointmentForm(); }} 
-                className="text-gray-400 hover:text-gray-600"
+                className="text-muted-foreground hover:text-foreground p-1 rounded-lg hover:bg-muted transition-colors"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -1100,16 +1100,16 @@ export default function ServiceManagementPage() {
 
       {/* New Service Record Modal */}
       {showServiceModal && (
-        <div className="fixed inset-0 backdrop-blur-md bg-white/30 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg shadow-xl w-full max-w-5xl max-h-[90vh] overflow-y-auto animate-fade-in">
-            <div className="px-6 py-4 border-b flex justify-between items-center">
-              <h2 className="text-xl font-bold flex items-center gap-2">
+        <div className="fixed inset-0 backdrop-blur-md bg-background/60 flex items-center justify-center z-50 p-4">
+          <div className="bg-card rounded-2xl shadow-xl border border-border w-full max-w-5xl max-h-[90vh] overflow-y-auto animate-fade-in">
+            <div className="px-6 py-4 border-b border-border/60 flex justify-between items-center">
+              <h2 className="text-xl font-bold flex items-center gap-2 text-foreground">
                 <Wrench className="w-5 h-5" />
                 New Service Record
               </h2>
               <button 
                 onClick={() => { setShowServiceModal(false); resetServiceForm(); }} 
-                className="text-gray-400 hover:text-gray-600"
+                className="text-muted-foreground hover:text-foreground p-1 rounded-lg hover:bg-muted transition-colors"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -1130,16 +1130,16 @@ export default function ServiceManagementPage() {
 
       {/* Edit Service Record Modal */}
       {showEditServiceModal && (
-        <div className="fixed inset-0 backdrop-blur-md bg-white/30 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg shadow-xl w-full max-w-5xl max-h-[90vh] overflow-y-auto animate-fade-in">
-            <div className="px-6 py-4 border-b flex justify-between items-center">
-              <h2 className="text-xl font-bold flex items-center gap-2">
+        <div className="fixed inset-0 backdrop-blur-md bg-background/60 flex items-center justify-center z-50 p-4">
+          <div className="bg-card rounded-2xl shadow-xl border border-border w-full max-w-5xl max-h-[90vh] overflow-y-auto animate-fade-in">
+            <div className="px-6 py-4 border-b border-border/60 flex justify-between items-center">
+              <h2 className="text-xl font-bold flex items-center gap-2 text-foreground">
                 <Edit className="w-5 h-5" />
                 Edit Service Record
               </h2>
               <button 
                 onClick={() => { setShowEditServiceModal(false); setEditingServiceRecord(null); resetServiceForm(); }} 
-                className="text-gray-400 hover:text-gray-600"
+                className="text-muted-foreground hover:text-foreground p-1 rounded-lg hover:bg-muted transition-colors"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -1160,22 +1160,22 @@ export default function ServiceManagementPage() {
 
       {/* Detail Modal */}
       {showDetailModal && selectedRecord && (
-        <div className="fixed inset-0 backdrop-blur-md bg-white/30 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] overflow-y-auto animate-fade-in">
-            <div className="px-6 py-4 border-b flex justify-between items-center">
-              <h2 className="text-xl font-bold flex items-center gap-2">
+        <div className="fixed inset-0 backdrop-blur-md bg-background/60 flex items-center justify-center z-50 p-4">
+          <div className="bg-card rounded-2xl shadow-xl border border-border w-full max-w-4xl max-h-[90vh] overflow-y-auto animate-fade-in">
+            <div className="px-6 py-4 border-b border-border/60 flex justify-between items-center">
+              <h2 className="text-xl font-bold flex items-center gap-2 text-foreground">
                 <FileText className="w-5 h-5" />
                 Service Record Details
               </h2>
-              <button onClick={() => setShowDetailModal(false)} className="text-gray-400 hover:text-gray-600">
+              <button onClick={() => setShowDetailModal(false)} className="text-muted-foreground hover:text-foreground p-1 rounded-lg hover:bg-muted transition-colors">
                 <X className="w-5 h-5" />
               </button>
             </div>
             <div className="p-6 space-y-4">
               <div className="flex justify-between">
                 <div>
-                  <h3 className="text-lg font-bold">{selectedRecord.customer?.first_name} {selectedRecord.customer?.last_name}</h3>
-                  <p className="text-gray-500">{selectedRecord.vehicle?.registration_number || selectedRecord.vehicle?.chassis_number}</p>
+                  <h3 className="text-lg font-bold text-foreground">{selectedRecord.customer?.first_name} {selectedRecord.customer?.last_name}</h3>
+                  <p className="text-muted-foreground">{selectedRecord.vehicle?.registration_number || selectedRecord.vehicle?.chassis_number}</p>
                 </div>
                 <div className="flex space-x-2">
                   <ServiceTypeBadge type={selectedRecord.service_type} />
@@ -1203,36 +1203,36 @@ export default function ServiceManagementPage() {
               {selectedRecord.customer_complaint && (
                 <div>
                   <h4 className="font-semibold border-b pb-1">Customer Complaint</h4>
-                  <p className="text-gray-600 mt-1">{selectedRecord.customer_complaint}</p>
+                  <p className="text-muted-foreground mt-1">{selectedRecord.customer_complaint}</p>
                 </div>
               )}
               {selectedRecord.work_done && (
                 <div>
                   <h4 className="font-semibold border-b pb-1">Work Done</h4>
-                  <p className="text-gray-600 mt-1">{selectedRecord.work_done}</p>
+                  <p className="text-muted-foreground mt-1">{selectedRecord.work_done}</p>
                 </div>
               )}
-              <div className="grid grid-cols-4 gap-4 bg-gray-50 p-4 rounded">
+              <div className="grid grid-cols-4 gap-4 bg-muted/30 p-4 rounded-xl">
                 <div className="text-center">
-                  <div className="text-xs text-gray-500">Labor</div>
-                  <div className="font-bold">₹{selectedRecord.labor_cost.toLocaleString()}</div>
+                  <div className="text-xs text-muted-foreground">Labor</div>
+                  <div className="font-bold text-foreground">₹{selectedRecord.labor_cost.toLocaleString()}</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-xs text-gray-500">Parts</div>
-                  <div className="font-bold">₹{selectedRecord.parts_cost.toLocaleString()}</div>
+                  <div className="text-xs text-muted-foreground">Parts</div>
+                  <div className="font-bold text-foreground">₹{selectedRecord.parts_cost.toLocaleString()}</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-xs text-gray-500">Tax</div>
-                  <div className="font-bold">₹{selectedRecord.tax_amount.toLocaleString()}</div>
+                  <div className="text-xs text-muted-foreground">Tax</div>
+                  <div className="font-bold text-foreground">₹{selectedRecord.tax_amount.toLocaleString()}</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-xs text-gray-500">Discount</div>
-                  <div className="font-bold">-₹{selectedRecord.discount_amount.toLocaleString()}</div>
+                  <div className="text-xs text-muted-foreground">Discount</div>
+                  <div className="font-bold text-foreground">-₹{selectedRecord.discount_amount.toLocaleString()}</div>
                 </div>
               </div>
-              <div className="text-center bg-blue-50 p-3 rounded">
-                <span className="text-sm text-gray-600">Total Amount: </span>
-                <span className="text-xl font-bold text-blue-600">₹{getTotalAmount(selectedRecord).toLocaleString()}</span>
+              <div className="text-center bg-primary/10 p-3 rounded-xl">
+                <span className="text-sm text-muted-foreground">Total Amount: </span>
+                <span className="text-xl font-bold text-primary">₹{getTotalAmount(selectedRecord).toLocaleString()}</span>
               </div>
             </div>
           </div>
@@ -1436,8 +1436,8 @@ function ServiceFormContent({
           />
         </div>
         <div className="flex items-end">
-          <div className="w-full bg-gray-100 rounded px-3 py-2 text-center">
-            <div className="text-xs text-gray-500">Total</div>
+          <div className="w-full bg-muted rounded-xl px-3 py-2 text-center">
+            <div className="text-xs text-muted-foreground">Total</div>
             <div className="text-lg font-bold">
               ₹{(parseFloat(serviceForm.labor_cost || '0') + partsUsed.reduce((sum: number, p: any) => sum + p.total, 0) + parseFloat(serviceForm.tax_amount || '0') - parseFloat(serviceForm.discount_amount || '0')).toLocaleString()}
             </div>

@@ -168,7 +168,7 @@ type ModalMode = 'add' | 'edit' | 'view' | null;
 const STOCK_STATUS_OPTIONS: { value: StockStatus; label: string; color: string }[] = [
   { value: 'Available', label: 'Available', color: 'bg-green-100 text-green-800' },
   { value: 'Booked', label: 'Booked', color: 'bg-blue-100 text-blue-800' },
-  { value: 'Sold', label: 'Sold', color: 'bg-gray-100 text-gray-800' },
+  { value: 'Sold', label: 'Sold', color: 'bg-muted text-muted-foreground' },
   { value: 'Reserved', label: 'Reserved', color: 'bg-yellow-100 text-yellow-800' },
   { value: 'In Transit', label: 'In Transit', color: 'bg-purple-100 text-purple-800' },
   { value: 'Damaged', label: 'Damaged', color: 'bg-red-100 text-red-800' },
@@ -667,7 +667,7 @@ export default function InventoryManagementPage() {
   // ============================================================================
 
   const getStatusColor = (status: StockStatus): string =>
-    STOCK_STATUS_OPTIONS.find(s => s.value === status)?.color || 'bg-gray-100 text-gray-800';
+    STOCK_STATUS_OPTIONS.find(s => s.value === status)?.color || 'bg-muted text-muted-foreground';
 
   const getVehicleIcon = (type: VehicleType): string => {
     switch (type) {
