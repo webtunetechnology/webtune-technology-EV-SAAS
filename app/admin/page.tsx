@@ -26,7 +26,7 @@ export default function AdminDashboardPage() {
   return (
     <>
       <AdminHeader title="Platform Overview" />
-      <main className="flex-1 p-4 md:p-6">
+      <main className="flex-1">
         {isLoading && <LoadingState label="Loading platform stats..." />}
         {error && <ErrorState message="Failed to load platform statistics." />}
 

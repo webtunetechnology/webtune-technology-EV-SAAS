@@ -16,7 +16,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       <div className="hidden md:block sticky top-0 h-screen">
         <AdminSidebar />
       </div>
-      <div className="flex min-w-0 flex-1 flex-col">{children}</div>
+      <div className="flex min-w-0 flex-1 flex-col px-4 py-6 md:px-8 md:py-8">{children}</div>
     </div>
   )
 }
