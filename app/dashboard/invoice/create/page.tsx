@@ -526,7 +526,7 @@ export default function CreateInvoicePage() {
       
       if (result.success) {
         alert(`Invoice ${result.data.invoice_number} created successfully!`);
-        router.push('/billing');
+        router.push('/dashboard/invoice');
       } else {
         alert('Error: ' + result.error);
       }

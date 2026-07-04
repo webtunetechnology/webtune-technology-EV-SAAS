@@ -2,6 +2,7 @@ import { createApiClient } from '@/lib/supabase/api-client'
 import { NextResponse } from 'next/server'
 import bcrypt from 'bcryptjs'
 import crypto from 'crypto'
+import { TRIAL_DAYS } from '@/lib/subscription'
 
 export async function POST(request: Request) {
   try {
@@ -193,12 +194,35 @@ export async function POST(request: Request) {
       .select('*')
       .eq('showroom_id', newShowroom.id)
     
-    // Fetch subscription (none yet, but structure for consistency)
-    const { data: subscription } = await supabase
+    // Auto-start a free trial subscription so the vendor can use the dashboard immediately.
+    const trialStart = new Date(now)
+    const trialExpiry = new Date(trialStart)
+    trialExpiry.setDate(trialExpiry.getDate() + TRIAL_DAYS)
+
+    let subscription = null
+    const { data: newSubscription, error: subscriptionError } = await supabase
       .from('showroom_subscriptions')
+      .insert({
+        showroom_id: newShowroom.id,
+        plan_id: null,
+        billing_cycle: null,
+        payment_status: 'trial',
+        is_trial: true,
+        amount: 0,
+        subscription_start: trialStart.toISOString(),
+        subscription_expiry: trialExpiry.toISOString(),
+        created_at: now,
+        updated_at: now,
+      })
       .select('*')
-      .eq('showroom_id', newShowroom.id)
-      .maybeSingle()
+      .single()
+
+    if (subscriptionError) {
+      console.error('Error creating trial subscription:', subscriptionError)
+      // Don't fail the registration, just log the error
+    } else {
+      subscription = newSubscription
+    }
     
     // Mark OTP as used
     await supabase
@@ -251,7 +275,9 @@ export async function POST(request: Request) {
       login_timestamp: loginTimestamp
     }
     
-    return NextResponse.json({ 
+    const authToken = crypto.randomBytes(64).toString('hex')
+
+    const response = NextResponse.json({ 
       success: true, 
       user_id: newUser.id,
       showroom_id: newShowroom.id,
@@ -261,11 +287,30 @@ export async function POST(request: Request) {
       showroom: completeShowroomData, // ← Backward compatibility
       message: 'Registration successful' 
     })
+
+    // Set auth cookies so the dashboard and all data routes work immediately after signup
+    const cookieOptions = {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax' as const,
+      maxAge: 60 * 60 * 24 * 7,
+      path: '/'
+    }
+    response.cookies.set('auth_token', authToken, cookieOptions)
+    response.cookies.set('user_id', newUser.id, { ...cookieOptions, httpOnly: false })
+    response.cookies.set('user_name', newUser.full_name, { ...cookieOptions, httpOnly: false })
+    response.cookies.set('user_email', newUser.email, { ...cookieOptions, httpOnly: false })
+    response.cookies.set('user_logged_in', 'true', { ...cookieOptions, httpOnly: false })
+    response.cookies.set('showroom_id', newShowroom.id, { ...cookieOptions, httpOnly: false })
+    response.cookies.set('showroom_name', newShowroom.showroom_name, { ...cookieOptions, httpOnly: false })
+
+    return response
     
   } catch (error) {
     console.error('Registration error:', error)
+    const message = error instanceof Error ? error.message : 'Unknown error'
     return NextResponse.json(
-      { error: `Failed to create account: ${error.message}` },
+      { error: `Failed to create account: ${message}` },
       { status: 500 }
     )
   }

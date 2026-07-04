@@ -248,9 +248,13 @@ export function Header({ activeSection = 'dashboard', onMenuClick }: HeaderProps
           </button>
 
           {/* Settings */}
-          <button className="hidden sm:block p-2 hover:bg-gray-100 rounded-lg transition-colors">
+          <a
+            href="/dashboard/profile"
+            className="hidden sm:block p-2 hover:bg-gray-100 rounded-lg transition-colors"
+            aria-label="Settings"
+          >
             <Settings className="w-5 h-5 text-gray-600" />
-          </button>
+          </a>
 
           {/* User Profile Dropdown with Showroom Logo */}
           <div className="relative">
@@ -350,7 +354,7 @@ export function Header({ activeSection = 'dashboard', onMenuClick }: HeaderProps
                       <span>My Profile</span>
                     </a>
                     <a
-                      href="/dashboard/settings"
+                      href="/dashboard/profile"
                       className="w-full flex items-center gap-3 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-lg transition-colors"
                     >
                       <Settings className="w-4 h-4" />
