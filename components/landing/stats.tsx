@@ -1,11 +1,6 @@
-const stats = [
-  { value: '5,000+', label: 'Vehicles managed per showroom' },
-  { value: 'GST-ready', label: 'Compliant invoices in seconds' },
-  { value: '100', label: 'Team members on Enterprise' },
-  { value: '14 days', label: 'Free trial, no card needed' },
-]
+import type { LandingContent } from '@/lib/landing-content'
 
-export function Stats() {
+export function Stats({ stats }: { stats: LandingContent['stats'] }) {
   return (
     <section className="border-b border-border bg-card">
       <div className="mx-auto grid max-w-6xl grid-cols-2 gap-px px-4 sm:px-6 md:grid-cols-4">

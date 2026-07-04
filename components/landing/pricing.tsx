@@ -1,84 +1,29 @@
 import Link from 'next/link'
 import { Check } from 'lucide-react'
+import type { LandingContent } from '@/lib/landing-content'
 
-const plans = [
-  {
-    name: 'Free Trial',
-    price: '₹0',
-    period: 'for 14 days',
-    desc: 'Core features to explore the platform.',
-    meta: '2 users · 25 vehicles',
-    features: ['Customer management', 'Inventory tracking', 'Basic invoicing'],
-    cta: 'Start free trial',
-    highlight: false,
-  },
-  {
-    name: 'Starter',
-    price: '₹1,999',
-    period: 'per month',
-    desc: 'For small single-location showrooms.',
-    meta: '5 users · 100 vehicles',
-    features: [
-      'Customer management',
-      'Inventory tracking',
-      'GST invoicing',
-      'Service records',
-      'Parts inventory',
-    ],
-    cta: 'Choose Starter',
-    highlight: false,
-  },
-  {
-    name: 'Professional',
-    price: '₹4,999',
-    period: 'per month',
-    desc: 'For growing dealerships.',
-    meta: '20 users · 500 vehicles',
-    features: [
-      'Everything in Starter',
-      'Multi-user roles',
-      'Advanced analytics',
-      'Purchase orders',
-      'Test ride management',
-    ],
-    cta: 'Choose Professional',
-    highlight: true,
-  },
-  {
-    name: 'Enterprise',
-    price: '₹9,999',
-    period: 'per month',
-    desc: 'For multi-brand, high-volume dealers.',
-    meta: '100 users · 5,000 vehicles',
-    features: [
-      'Everything in Professional',
-      'Unlimited brands',
-      'Priority support',
-      'Custom branding',
-      'API access',
-    ],
-    cta: 'Choose Enterprise',
-    highlight: false,
-  },
-]
-
-export function Pricing() {
+export function Pricing({ content }: { content: LandingContent['pricing'] }) {
+  const gridCols =
+    content.plans.length >= 4
+      ? 'lg:grid-cols-4'
+      : content.plans.length === 3
+      ? 'lg:grid-cols-3'
+      : 'sm:grid-cols-2'
   return (
     <section id="pricing" className="scroll-mt-20 border-b border-border bg-card">
       <div className="mx-auto max-w-6xl px-4 py-20 sm:px-6 sm:py-24">
         <div className="mx-auto max-w-2xl text-center">
-          <p className="text-sm font-semibold uppercase tracking-wide text-primary">Pricing</p>
+          <p className="text-sm font-semibold uppercase tracking-wide text-primary">{content.eyebrow}</p>
           <h2 className="mt-3 text-balance text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">
-            Simple, transparent plans
+            {content.title}
           </h2>
           <p className="mt-4 text-pretty text-lg leading-relaxed text-muted-foreground">
-            Start free, upgrade when you grow. Every plan includes GST-ready invoicing and secure
-            cloud storage.
+            {content.subtitle}
           </p>
         </div>
 
-        <div className="mt-14 grid gap-6 lg:grid-cols-4">
-          {plans.map((plan) => (
+        <div className={`mt-14 grid gap-6 ${gridCols}`}>
+          {content.plans.map((plan) => (
             <div
               key={plan.name}
               className={`relative flex flex-col rounded-2xl border bg-background p-6 ${

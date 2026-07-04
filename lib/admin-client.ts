@@ -11,7 +11,7 @@ export const fetcher = async (url: string) => {
 
 export async function adminMutate(
   url: string,
-  method: 'POST' | 'PATCH' | 'DELETE',
+  method: 'POST' | 'PUT' | 'PATCH' | 'DELETE',
   body?: any
 ) {
   const res = await fetch(url, {

@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { Zap } from 'lucide-react'
+import type { LandingContent } from '@/lib/landing-content'
 
 const columns = [
   {
@@ -29,7 +30,7 @@ const columns = [
   },
 ]
 
-export function SiteFooter() {
+export function SiteFooter({ brand }: { brand: LandingContent['brand'] }) {
   return (
     <footer className="border-t border-border bg-card">
       <div className="mx-auto max-w-6xl px-4 py-14 sm:px-6">
@@ -39,10 +40,10 @@ export function SiteFooter() {
               <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-primary-foreground">
                 <Zap className="h-5 w-5" aria-hidden="true" />
               </span>
-              <span className="text-lg font-semibold tracking-tight text-foreground">Voltline</span>
+              <span className="text-lg font-semibold tracking-tight text-foreground">{brand.name}</span>
             </Link>
             <p className="mt-4 max-w-xs text-sm leading-relaxed text-muted-foreground">
-              The operating system for electric vehicle dealerships.
+              {brand.tagline}
             </p>
           </div>
 
@@ -67,7 +68,7 @@ export function SiteFooter() {
 
         <div className="mt-12 flex flex-col items-center justify-between gap-3 border-t border-border pt-6 sm:flex-row">
           <p className="text-sm text-muted-foreground">
-            © {new Date().getFullYear()} Voltline. All rights reserved.
+            © {new Date().getFullYear()} {brand.name}. All rights reserved.
           </p>
           <div className="flex gap-6">
             <Link href="#" className="text-sm text-muted-foreground hover:text-foreground">

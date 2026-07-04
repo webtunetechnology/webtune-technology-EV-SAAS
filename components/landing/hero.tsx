@@ -1,7 +1,14 @@
 import Link from 'next/link'
 import { ArrowRight, BadgeCheck, TrendingUp, Package, IndianRupee } from 'lucide-react'
+import type { LandingContent } from '@/lib/landing-content'
 
-export function Hero() {
+export function Hero({
+  content,
+  brand,
+}: {
+  content: LandingContent['hero']
+  brand: LandingContent['brand']
+}) {
   return (
     <section className="relative overflow-hidden border-b border-border">
       {/* subtle brand wash */}
@@ -13,39 +20,37 @@ export function Hero() {
         <div className="mx-auto max-w-3xl text-center">
           <span className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-3 py-1 text-xs font-medium text-muted-foreground">
             <span className="flex h-2 w-2 rounded-full bg-secondary" aria-hidden="true" />
-            Built for India&apos;s EV retail boom
+            {content.badge}
           </span>
 
           <h1 className="mt-6 text-balance text-4xl font-semibold tracking-tight text-foreground sm:text-5xl md:text-6xl">
-            The operating system for{' '}
-            <span className="text-primary">EV dealerships</span>
+            {content.titleLead}{' '}
+            <span className="text-primary">{content.titleHighlight}</span>
           </h1>
 
           <p className="mx-auto mt-6 max-w-2xl text-pretty text-lg leading-relaxed text-muted-foreground">
-            Manage your vehicle catalog, live inventory, customers, GST invoicing, service
-            records and sales analytics — all from one showroom dashboard built for electric
-            vehicles.
+            {content.subtitle}
           </p>
 
           <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
             <Link
-              href="/register"
+              href={content.primaryCta.href}
               className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90 sm:w-auto"
             >
-              Start 14-day free trial
+              {content.primaryCta.label}
               <ArrowRight className="h-4 w-4" aria-hidden="true" />
             </Link>
             <Link
-              href="/login"
+              href={content.secondaryCta.href}
               className="inline-flex w-full items-center justify-center rounded-full border border-border bg-card px-6 py-3 text-sm font-semibold text-foreground transition-colors hover:bg-muted sm:w-auto"
             >
-              Sign in to dashboard
+              {content.secondaryCta.label}
             </Link>
           </div>
 
           <p className="mt-4 inline-flex items-center gap-1.5 text-sm text-muted-foreground">
             <BadgeCheck className="h-4 w-4 text-secondary" aria-hidden="true" />
-            No credit card required · Cancel anytime
+            {content.note}
           </p>
         </div>
 
@@ -59,7 +64,7 @@ export function Hero() {
                 <span className="h-3 w-3 rounded-full bg-secondary/60" />
                 <span className="h-3 w-3 rounded-full bg-muted-foreground/30" />
                 <span className="ml-3 text-xs text-muted-foreground">
-                  Voltline · WEB EV Showroom
+                  {brand.name} · Showroom dashboard
                 </span>
               </div>
 

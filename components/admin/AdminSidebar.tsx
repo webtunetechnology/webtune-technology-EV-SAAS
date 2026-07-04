@@ -14,6 +14,7 @@ import {
   Car,
   Tags,
   CreditCard,
+  LayoutTemplate,
   ShieldCheck,
   ChevronLeft,
   LogOut,
@@ -38,6 +39,7 @@ const navItems: NavItem[] = [
   { href: '/admin/vehicle-catalog', label: 'Vehicle Catalog', icon: Car },
   { href: '/admin/brands', label: 'Brands', icon: Tags },
   { href: '/admin/plans', label: 'Plans', icon: CreditCard },
+  { href: '/admin/landing', label: 'Landing Page', icon: LayoutTemplate },
 ]
 
 export function AdminSidebar({ onNavigate }: { onNavigate?: () => void }) {

@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { Zap, Menu, X } from 'lucide-react'
+import type { LandingContent } from '@/lib/landing-content'
 
 const navLinks = [
   { label: 'Features', href: '#features' },
@@ -11,8 +12,15 @@ const navLinks = [
   { label: 'FAQ', href: '#faq' },
 ]
 
-export function SiteHeader() {
+export function SiteHeader({
+  brand,
+  hero,
+}: {
+  brand: LandingContent['brand']
+  hero: LandingContent['hero']
+}) {
   const [open, setOpen] = useState(false)
+  const trialCta = hero.primaryCta
 
   return (
     <header className="sticky top-0 z-50 border-b border-border/70 bg-background/80 backdrop-blur-md">
@@ -21,7 +29,7 @@ export function SiteHeader() {
           <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-primary-foreground">
             <Zap className="h-5 w-5" aria-hidden="true" />
           </span>
-          <span className="text-lg font-semibold tracking-tight text-foreground">Voltline</span>
+          <span className="text-lg font-semibold tracking-tight text-foreground">{brand.name}</span>
         </Link>
 
         <nav className="hidden items-center gap-8 md:flex" aria-label="Primary">
@@ -44,10 +52,10 @@ export function SiteHeader() {
             Log in
           </Link>
           <Link
-            href="/register"
+            href={trialCta.href}
             className="inline-flex items-center rounded-full bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
           >
-            Start free trial
+            {trialCta.label}
           </Link>
         </div>
 
@@ -84,11 +92,11 @@ export function SiteHeader() {
                 Log in
               </Link>
               <Link
-                href="/register"
+                href={trialCta.href}
                 onClick={() => setOpen(false)}
                 className="inline-flex items-center justify-center rounded-full bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground"
               >
-                Start free trial
+                {trialCta.label}
               </Link>
             </div>
           </nav>
