@@ -28,7 +28,7 @@ export type PlanItem = {
 export type FaqItem = { q: string; a: string }
 
 export type LandingContent = {
-  brand: { name: string; tagline: string }
+  brand: { name: string; tagline: string; logo: string }
   hero: {
     badge: string
     titleLead: string
@@ -98,6 +98,7 @@ export const DEFAULT_LANDING_CONTENT: LandingContent = {
   brand: {
     name: 'Voltline',
     tagline: 'The operating system for electric vehicle dealerships in India.',
+    logo: '/brand-logo.jpg',
   },
   hero: {
     badge: "Built for India's EV retail boom",

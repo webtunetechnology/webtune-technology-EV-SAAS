@@ -124,6 +124,7 @@ export function LandingEditor() {
           <Section value="brand" title="Brand">
             <TextField label="Brand name" value={content.brand.name} onChange={(v) => set((d) => { d.brand.name = v })} />
             <TextField label="Footer tagline" value={content.brand.tagline} onChange={(v) => set((d) => { d.brand.tagline = v })} />
+            <TextField label="Logo image URL" value={content.brand.logo} onChange={(v) => set((d) => { d.brand.logo = v })} placeholder="/brand-logo.jpg" />
           </Section>
 
           {/* HERO */}

@@ -2,7 +2,8 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { Zap, Menu, X } from 'lucide-react'
+import Image from 'next/image'
+import { Menu, X } from 'lucide-react'
 import type { LandingContent } from '@/lib/landing-content'
 
 const navLinks = [
@@ -26,8 +27,15 @@ export function SiteHeader({
     <header className="sticky top-0 z-50 border-b border-border/70 bg-background/80 backdrop-blur-md">
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6">
         <Link href="/" className="flex items-center gap-2">
-          <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-            <Zap className="h-5 w-5" aria-hidden="true" />
+          <span className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-lg bg-white">
+            <Image
+              src={brand.logo || '/brand-logo.jpg'}
+              alt={`${brand.name} logo`}
+              width={36}
+              height={36}
+              className="h-full w-full object-contain"
+              priority
+            />
           </span>
           <span className="text-lg font-semibold tracking-tight text-foreground">{brand.name}</span>
         </Link>
