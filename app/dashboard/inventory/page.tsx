@@ -700,6 +700,7 @@ export default function InventoryManagementPage() {
   // ============================================================================
 
   return (
+    <>
     <div>
       {/* Header */}
       <div className="flex items-start justify-between mb-6">
@@ -1143,6 +1144,6 @@ export default function InventoryManagementPage() {
           </div>
         </div>
       )}
-    </div>
+    </>
   );
 }
