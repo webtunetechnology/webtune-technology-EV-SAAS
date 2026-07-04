@@ -39,19 +39,31 @@ export async function POST(request: Request) {
   if (!body.model_name || !body.brand_id) {
     return NextResponse.json({ error: 'Brand and model name are required' }, { status: 400 })
   }
+  if (!body.vehicle_type) {
+    return NextResponse.json({ error: 'Vehicle type is required' }, { status: 400 })
+  }
 
   const insert = {
     brand_id: body.brand_id,
     model_name: body.model_name,
     variant_name: body.variant_name || null,
-    vehicle_type: body.vehicle_type || null,
+    vehicle_type: body.vehicle_type,
     ex_showroom_price: body.ex_showroom_price ?? null,
     battery_capacity_kwh: body.battery_capacity_kwh ?? null,
     range_per_charge_km: body.range_per_charge_km ?? null,
     motor_power_kw: body.motor_power_kw ?? null,
+    charging_time_standard_hrs: body.charging_time_standard_hrs ?? null,
+    charging_time_fast_hrs: body.charging_time_fast_hrs ?? null,
     top_speed_kmph: body.top_speed_kmph ?? null,
     seating_capacity: body.seating_capacity ?? null,
+    insurance_amount: body.insurance_amount ?? null,
+    rto_charges: body.rto_charges ?? null,
+    vehicle_warranty_years: body.vehicle_warranty_years ?? null,
+    vehicle_warranty_km: body.vehicle_warranty_km ?? null,
+    battery_warranty_years: body.battery_warranty_years ?? null,
+    battery_warranty_km: body.battery_warranty_km ?? null,
     is_active: body.is_active ?? true,
+    is_discontinued: body.is_discontinued ?? false,
   }
 
   const { data, error: iErr } = await supabase.from('vehicles').insert(insert).select().single()

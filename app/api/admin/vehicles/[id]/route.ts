@@ -14,7 +14,9 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   for (const key of [
     'brand_id', 'model_name', 'variant_name', 'vehicle_type', 'ex_showroom_price',
     'battery_capacity_kwh', 'range_per_charge_km', 'motor_power_kw', 'top_speed_kmph',
-    'seating_capacity', 'is_active', 'is_discontinued',
+    'seating_capacity', 'charging_time_standard_hrs', 'charging_time_fast_hrs',
+    'insurance_amount', 'rto_charges', 'vehicle_warranty_years', 'vehicle_warranty_km',
+    'battery_warranty_years', 'battery_warranty_km', 'is_active', 'is_discontinued',
   ]) {
     if (key in body) updates[key] = body[key]
   }
