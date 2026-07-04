@@ -172,11 +172,11 @@ const CategoryBadge = ({ category }: { category: string }) => {
     'Body Parts': 'bg-pink-100 text-pink-800',
     'Brakes': 'bg-red-100 text-red-800',
     'Suspension': 'bg-teal-100 text-teal-800',
-    'Tyres': 'bg-gray-100 text-gray-800',
+    'Tyres': 'bg-muted text-muted-foreground',
     'Lighting': 'bg-yellow-100 text-yellow-800',
     'Accessories': 'bg-violet-100 text-violet-800',
     'Consumables': 'bg-orange-100 text-orange-800',
-    'Other': 'bg-gray-100 text-gray-800',
+    'Other': 'bg-muted text-muted-foreground',
   };
 
   const icons: Record<string, React.ReactNode> = {
@@ -196,7 +196,7 @@ const CategoryBadge = ({ category }: { category: string }) => {
   };
 
   return (
-    <span className={`px-2 py-1 rounded-full text-xs font-medium inline-flex items-center gap-1 ${colors[category] || 'bg-gray-100 text-gray-800'}`}>
+    <span className={`px-2.5 py-1 rounded-full text-xs font-medium inline-flex items-center gap-1 ${colors[category] || 'bg-muted text-muted-foreground'}`}>
       {icons[category]}
       {category}
     </span>
@@ -208,10 +208,10 @@ const LoadingSkeleton = () => (
   <div className="space-y-4">
     <div className="grid grid-cols-6 gap-4">
       {[...Array(6)].map((_, i) => (
-        <div key={i} className="h-20 bg-gray-100 rounded-lg animate-pulse"></div>
+        <div key={i} className="h-20 bg-muted rounded-lg animate-pulse"></div>
       ))}
     </div>
-    <div className="h-96 bg-gray-100 rounded-lg animate-pulse"></div>
+    <div className="h-96 bg-muted rounded-lg animate-pulse"></div>
   </div>
 );
 
@@ -668,127 +668,58 @@ export default function PartsManagementPage() {
 
   if (loading && parts.length === 0) {
     return (
-      <div className="min-h-screen bg-gray-50">
-        <div className="max-w-7xl mx-auto px-4 py-8">
-          <LoadingSkeleton />
-        </div>
+      <div>
+        <LoadingSkeleton />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div>
       {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
 
       {/* Header */}
-      <div className="bg-white border-b shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 py-4">
-          <div className="flex justify-between items-center">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-                <Package className="w-6 h-6" />
-                Spare Parts & Stock Management
-              </h1>
-              <p className="text-sm text-gray-500 mt-1">Manage parts inventory, stock levels, and transactions</p>
-            </div>
-            <button
-              onClick={() => { resetForm(); setEditingPart(null); setShowFormModal(true); }}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
-            >
-              <Plus className="w-4 h-4" />
-              Add Part
-            </button>
-          </div>
+      <div className="flex items-start justify-between mb-6">
+        <div>
+          <h1 className="text-2xl font-bold text-foreground">Spare Parts & Stock</h1>
+          <p className="text-sm text-muted-foreground mt-0.5">
+            {loading ? 'Loading…' : `${stats.totalParts} part${stats.totalParts !== 1 ? 's' : ''} in catalog`}
+          </p>
         </div>
-      </div>
-
-      {/* Stats Cards */}
-      <div className="max-w-7xl mx-auto px-4 py-6">
-        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-4">
-          <div className="bg-white rounded-lg shadow p-4 hover:shadow-md transition-shadow">
-            <div className="flex items-center justify-between mb-2">
-              <p className="text-sm text-gray-500">Total Parts</p>
-              <Package className="w-4 h-4 text-gray-400" />
-            </div>
-            <p className="text-2xl font-bold">{stats.totalParts}</p>
-          </div>
-          <div className="bg-white rounded-lg shadow p-4 hover:shadow-md transition-shadow">
-            <div className="flex items-center justify-between mb-2">
-              <p className="text-sm text-gray-500">Active</p>
-              <CheckCircle className="w-4 h-4 text-green-400" />
-            </div>
-            <p className="text-2xl font-bold text-green-600">{stats.activeParts}</p>
-          </div>
-          <div className="bg-white rounded-lg shadow p-4 hover:shadow-md transition-shadow">
-            <div className="flex items-center justify-between mb-2">
-              <p className="text-sm text-gray-500">Low Stock</p>
-              <TrendingDown className="w-4 h-4 text-yellow-400" />
-            </div>
-            <p className="text-2xl font-bold text-yellow-600">{stats.lowStock}</p>
-          </div>
-          <div className="bg-white rounded-lg shadow p-4 hover:shadow-md transition-shadow">
-            <div className="flex items-center justify-between mb-2">
-              <p className="text-sm text-gray-500">Out of Stock</p>
-              <AlertCircle className="w-4 h-4 text-red-400" />
-            </div>
-            <p className="text-2xl font-bold text-red-600">{stats.outOfStock}</p>
-          </div>
-          <div className="bg-white rounded-lg shadow p-4 hover:shadow-md transition-shadow">
-            <div className="flex items-center justify-between mb-2">
-              <p className="text-sm text-gray-500">Reorder Needed</p>
-              <ShoppingCart className="w-4 h-4 text-orange-400" />
-            </div>
-            <p className="text-2xl font-bold text-orange-600">{stats.reorderNeeded}</p>
-          </div>
-          <div className="bg-white rounded-lg shadow p-4 hover:shadow-md transition-shadow">
-            <div className="flex items-center justify-between mb-2">
-              <p className="text-sm text-gray-500">Pending POs</p>
-              <ClipboardList className="w-4 h-4 text-purple-400" />
-            </div>
-            <p className="text-2xl font-bold text-purple-600">{stats.pendingPOs}</p>
-          </div>
-          <div className="bg-white rounded-lg shadow p-4 hover:shadow-md transition-shadow">
-            <div className="flex items-center justify-between mb-2">
-              <p className="text-sm text-gray-500">Categories</p>
-              <Layers className="w-4 h-4 text-indigo-400" />
-            </div>
-            <p className="text-2xl font-bold text-indigo-600">{stats.totalCategories}</p>
-          </div>
-          <div className="bg-white rounded-lg shadow p-4 hover:shadow-md transition-shadow">
-            <div className="flex items-center justify-between mb-2">
-              <p className="text-sm text-gray-500">Stock Value</p>
-              <DollarSign className="w-4 h-4 text-teal-400" />
-            </div>
-            <p className="text-2xl font-bold text-teal-600">₹{(stats.totalStockValue / 1000).toFixed(0)}K</p>
-          </div>
-        </div>
+        <button
+          onClick={() => { resetForm(); setEditingPart(null); setShowFormModal(true); }}
+          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-full bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors"
+        >
+          <Plus className="w-4 h-4" />
+          Add Part
+        </button>
       </div>
 
       {/* Search and Filters */}
-      <div className="max-w-7xl mx-auto px-4 pb-8">
-        <div className="mb-6 flex gap-4">
-          <div className="flex-1 relative">
-            <Search className="absolute left-3 top-2.5 text-gray-400 w-5 h-5" />
+      <div>
+        <div className="mb-5 flex gap-3">
+          <div className="flex-1 max-w-xs relative">
+            <Search className="absolute left-3 top-2.5 text-muted-foreground w-4 h-4" />
             <input
               type="text"
-              placeholder="Search by part name, code, manufacturer, or supplier..."
+              placeholder="Search parts…"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 pl-10"
+              className="w-full px-4 py-2 border border-border rounded-xl bg-card text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/40 pl-9 transition-colors"
             />
           </div>
-          <button onClick={() => setShowFilters(!showFilters)} className="px-4 py-2 border rounded-lg bg-white hover:bg-gray-50 transition-colors flex items-center gap-2">
+          <button onClick={() => setShowFilters(!showFilters)} className={`inline-flex items-center gap-2 px-3.5 py-2 rounded-xl border text-sm font-medium transition-colors ${showFilters ? 'bg-primary/10 text-primary border-primary/30' : 'bg-card text-muted-foreground border-border hover:text-foreground'}`}>
             <Filter className="w-4 h-4" />
-            Filters {Object.values(filters).some(f => f) && <span className="w-2 h-2 bg-blue-500 rounded-full"></span>}
+            Filters {Object.values(filters).some(f => f) && <span className="w-1.5 h-1.5 bg-primary rounded-full"></span>}
           </button>
-          <button onClick={loadParts} className="px-4 py-2 border rounded-lg bg-white hover:bg-gray-50 transition-colors">
+          <button onClick={loadParts} className="px-3 py-2 border border-border rounded-xl bg-card hover:bg-muted text-muted-foreground transition-colors" title="Refresh">
             <RefreshCw className="w-4 h-4" />
           </button>
         </div>
 
         {showFilters && (
-          <div className="bg-white p-4 rounded-lg border mb-6 grid grid-cols-1 md:grid-cols-4 gap-4 animate-fade-in">
-            <select value={filters.category} onChange={(e) => setFilters({ ...filters, category: e.target.value })} className="border rounded px-3 py-2">
+          <div className="bg-card border border-border/60 p-4 rounded-2xl mb-5 grid grid-cols-1 md:grid-cols-4 gap-4">
+            <select value={filters.category} onChange={(e) => setFilters({ ...filters, category: e.target.value })} className="border border-border rounded-xl px-3 py-2 text-sm bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20">
               <option value="">All Categories</option>
               <option value="Battery">Battery</option>
               <option value="Motor">Motor</option>
@@ -804,14 +735,14 @@ export default function PartsManagementPage() {
               <option value="Consumables">Consumables</option>
               <option value="Other">Other</option>
             </select>
-            <select value={filters.stock_status} onChange={(e) => setFilters({ ...filters, stock_status: e.target.value })} className="border rounded px-3 py-2">
+            <select value={filters.stock_status} onChange={(e) => setFilters({ ...filters, stock_status: e.target.value })} className="border border-border rounded-xl px-3 py-2 text-sm bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20">
               <option value="">All Stock Status</option>
               <option value="in_stock">In Stock</option>
               <option value="low_stock">Low Stock</option>
               <option value="out_of_stock">Out of Stock</option>
               <option value="reorder">Reorder Needed</option>
             </select>
-            <select value={filters.is_active} onChange={(e) => setFilters({ ...filters, is_active: e.target.value })} className="border rounded px-3 py-2">
+            <select value={filters.is_active} onChange={(e) => setFilters({ ...filters, is_active: e.target.value })} className="border border-border rounded-xl px-3 py-2 text-sm bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20">
               <option value="">All Status</option>
               <option value="true">Active</option>
               <option value="false">Inactive</option>
@@ -821,68 +752,54 @@ export default function PartsManagementPage() {
               placeholder="Filter by supplier..."
               value={filters.supplier_name}
               onChange={(e) => setFilters({ ...filters, supplier_name: e.target.value })}
-              className="border rounded px-3 py-2"
+              className="border border-border rounded-xl px-3 py-2 text-sm bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20"
             />
           </div>
         )}
 
         {/* Parts Table */}
-        <div className="bg-white rounded-lg shadow overflow-hidden">
+        <div className="bg-card border border-border/60 rounded-2xl overflow-hidden">
           <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                    <div className="flex items-center gap-1"><Package className="w-3 h-3" /> Part Details</div>
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                    <div className="flex items-center gap-1"><Layers className="w-3 h-3" /> Category</div>
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                    <div className="flex items-center gap-1"><BarChart3 className="w-3 h-3" /> Stock</div>
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                    <div className="flex items-center gap-1"><MapPin className="w-3 h-3" /> Location</div>
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                    <div className="flex items-center gap-1"><DollarSign className="w-3 h-3" /> Price</div>
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                    <div className="flex items-center gap-1"><Truck className="w-3 h-3" /> Supplier</div>
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                    <div className="flex items-center gap-1"><Activity className="w-3 h-3" /> Status</div>
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+            <table className="min-w-full divide-y divide-border/40">
+              <thead>
+                <tr className="border-b border-border/60">
+                  <th className="px-6 py-3.5 text-left text-xs font-medium text-muted-foreground">Part Details</th>
+                  <th className="px-6 py-3.5 text-left text-xs font-medium text-muted-foreground">Category</th>
+                  <th className="px-6 py-3.5 text-left text-xs font-medium text-muted-foreground">Stock</th>
+                  <th className="px-6 py-3.5 text-left text-xs font-medium text-muted-foreground">Location</th>
+                  <th className="px-6 py-3.5 text-left text-xs font-medium text-muted-foreground">Price</th>
+                  <th className="px-6 py-3.5 text-left text-xs font-medium text-muted-foreground">Supplier</th>
+                  <th className="px-6 py-3.5 text-left text-xs font-medium text-muted-foreground">Status</th>
+                  <th className="px-6 py-3.5 text-left text-xs font-medium text-muted-foreground">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-200">
+              <tbody className="divide-y divide-border/40">
                 {loading ? (
                   <tr>
                     <td colSpan={8} className="px-6 py-12 text-center">
                       <div className="flex justify-center">
-                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
                       </div>
-                      <p className="mt-2 text-sm text-gray-500">Loading parts...</p>
+                      <p className="mt-2 text-sm text-muted-foreground">Loading parts...</p>
                     </td>
                   </tr>
                 ) : parts.length === 0 ? (
                   <tr>
-                    <td colSpan={8} className="px-6 py-12 text-center text-gray-500">
+                    <td colSpan={8} className="px-6 py-12 text-center text-muted-foreground">
                       <div className="flex flex-col items-center gap-2">
-                        <Package className="w-8 h-8 text-gray-300" />
+                        <Package className="w-8 h-8 text-muted-foreground/30" />
                         <span>No parts found</span>
                       </div>
                     </td>
                   </tr>
                 ) : (
                   parts.map((part) => (
-                    <tr key={part.id} className="hover:bg-gray-50 transition-colors">
+                    <tr key={part.id} className="hover:bg-muted/20 transition-colors">
                       <td className="px-6 py-4">
-                        <div className="font-medium text-gray-900">{part.part_name}</div>
-                        <div className="text-xs text-gray-500">Code: {part.part_code || 'N/A'}</div>
+                        <div className="font-medium text-foreground">{part.part_name}</div>
+                        <div className="text-xs text-muted-foreground">Code: {part.part_code || 'N/A'}</div>
                         {part.manufacturer && (
-                          <div className="text-xs text-gray-400 flex items-center gap-1">
+                          <div className="text-xs text-muted-foreground/70 flex items-center gap-1">
                             <Factory className="w-3 h-3" />
                             {part.manufacturer}
                           </div>
@@ -890,12 +807,12 @@ export default function PartsManagementPage() {
                       </td>
                       <td className="px-6 py-4">
                         <CategoryBadge category={part.category} />
-                        {part.sub_category && <div className="text-xs text-gray-500 mt-1">{part.sub_category}</div>}
+                        {part.sub_category && <div className="text-xs text-muted-foreground mt-1">{part.sub_category}</div>}
                       </td>
                       <td className="px-6 py-4">
                         <div className="flex items-center space-x-2">
-                          <span className="font-medium">{part.current_stock?.quantity_available ?? 0}</span>
-                          <span className="text-xs text-gray-500">{part.unit_of_measure}</span>
+                          <span className="font-medium text-foreground">{part.current_stock?.quantity_available ?? 0}</span>
+                          <span className="text-xs text-muted-foreground">{part.unit_of_measure}</span>
                         </div>
                         <StockBadge 
                           available={part.current_stock?.quantity_available ?? 0} 
@@ -903,70 +820,70 @@ export default function PartsManagementPage() {
                           reorderPoint={part.reorder_point} 
                         />
                         {part.current_stock && part.current_stock.quantity_allocated > 0 && (
-                          <div className="text-xs text-blue-600 mt-1">
+                          <div className="text-xs text-primary/80 mt-1">
                             {part.current_stock.quantity_allocated} allocated
                           </div>
                         )}
                       </td>
                       <td className="px-6 py-4">
-                        <div className="text-sm flex items-center gap-1">
-                          <MapPin className="w-3 h-3 text-gray-400" />
+                        <div className="text-sm flex items-center gap-1 text-foreground">
+                          <MapPin className="w-3 h-3 text-muted-foreground" />
                           {part.current_stock?.location_in_store || 'Not assigned'}
                         </div>
                         {part.current_stock?.bin_number && (
-                          <div className="text-xs text-gray-500 flex items-center gap-1">
+                          <div className="text-xs text-muted-foreground flex items-center gap-1">
                             <Hash className="w-3 h-3" />
                             Bin: {part.current_stock.bin_number}
                           </div>
                         )}
                       </td>
                       <td className="px-6 py-4">
-                        <div className="text-sm font-medium">
+                        <div className="text-sm font-medium text-foreground">
                           {part.current_stock?.selling_price 
                             ? `₹${part.current_stock.selling_price.toLocaleString()}`
                             : 'Not set'}
                         </div>
                         {part.current_stock?.mrp && (
-                          <div className="text-xs text-gray-500">MRP: ₹{part.current_stock.mrp.toLocaleString()}</div>
+                          <div className="text-xs text-muted-foreground">MRP: ₹{part.current_stock.mrp.toLocaleString()}</div>
                         )}
                       </td>
                       <td className="px-6 py-4">
-                        <div className="text-sm flex items-center gap-1">
-                          <Truck className="w-3 h-3 text-gray-400" />
+                        <div className="text-sm flex items-center gap-1 text-foreground">
+                          <Truck className="w-3 h-3 text-muted-foreground" />
                           {part.supplier_name || 'N/A'}
                         </div>
                         {part.supplier_part_code && (
-                          <div className="text-xs text-gray-500">{part.supplier_part_code}</div>
+                          <div className="text-xs text-muted-foreground">{part.supplier_part_code}</div>
                         )}
                       </td>
                       <td className="px-6 py-4">
                         {part.is_active ? (
-                          <span className="px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 inline-flex items-center gap-1">
+                          <span className="px-2.5 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 inline-flex items-center gap-1">
                             <CheckCircle className="w-3 h-3" />
                             Active
                           </span>
                         ) : (
-                          <span className="px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800 inline-flex items-center gap-1">
+                          <span className="px-2.5 py-1 rounded-full text-xs font-medium bg-muted text-muted-foreground inline-flex items-center gap-1">
                             <X className="w-3 h-3" />
                             Inactive
                           </span>
                         )}
                       </td>
                       <td className="px-6 py-4">
-                        <div className="flex space-x-2">
-                          <button onClick={() => viewPart(part.id)} className="text-blue-600 hover:text-blue-800 transition-colors p-1" title="View">
+                        <div className="flex gap-0.5">
+                          <button onClick={() => viewPart(part.id)} className="p-1.5 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-lg transition-colors" title="View">
                             <Eye className="w-4 h-4" />
                           </button>
-                          <button onClick={() => handleEdit(part)} className="text-green-600 hover:text-green-800 transition-colors p-1" title="Edit">
+                          <button onClick={() => handleEdit(part)} className="p-1.5 text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg transition-colors" title="Edit">
                             <Edit className="w-4 h-4" />
                           </button>
-                          <button onClick={() => openStockAdjustment(part)} className="text-purple-600 hover:text-purple-800 transition-colors p-1" title="Adjust Stock">
+                          <button onClick={() => openStockAdjustment(part)} className="p-1.5 text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg transition-colors" title="Adjust Stock">
                             <Box className="w-4 h-4" />
                           </button>
-                          <button onClick={() => openTransactionHistory(part)} className="text-indigo-600 hover:text-indigo-800 transition-colors p-1" title="History">
+                          <button onClick={() => openTransactionHistory(part)} className="p-1.5 text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg transition-colors" title="History">
                             <ClipboardList className="w-4 h-4" />
                           </button>
-                          <button onClick={() => deletePart(part.id)} className="text-red-600 hover:text-red-800 transition-colors p-1" title="Delete">
+                          <button onClick={() => deletePart(part.id)} className="p-1.5 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-lg transition-colors" title="Delete">
                             <Trash2 className="w-4 h-4" />
                           </button>
                         </div>
@@ -980,24 +897,24 @@ export default function PartsManagementPage() {
 
           {/* Pagination */}
           {!loading && parts.length > 0 && (
-            <div className="px-6 py-4 border-t flex justify-between items-center">
-              <div className="text-sm text-gray-700">
+            <div className="px-6 py-4 border-t border-border/40 flex justify-between items-center">
+              <div className="text-sm text-muted-foreground">
                 Showing {((currentPage - 1) * 20) + 1} to {Math.min(currentPage * 20, totalParts)} of {totalParts} parts
               </div>
               <div className="flex gap-2">
                 <button
                   onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
                   disabled={currentPage === 1}
-                  className="px-3 py-1 border rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors flex items-center gap-1"
+                  className="px-3 py-1.5 border border-border rounded-xl text-sm bg-card disabled:opacity-40 disabled:cursor-not-allowed hover:bg-muted transition-colors flex items-center gap-1 text-foreground"
                 >
                   <ChevronLeft className="w-4 h-4" />
                   Previous
                 </button>
-                <span className="px-3 py-1 text-sm">Page {currentPage} of {totalPages}</span>
+                <span className="px-3 py-1.5 text-sm text-muted-foreground">Page {currentPage} of {totalPages}</span>
                 <button
                   onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
                   disabled={currentPage === totalPages}
-                  className="px-3 py-1 border rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors flex items-center gap-1"
+                  className="px-3 py-1.5 border border-border rounded-xl text-sm bg-card disabled:opacity-40 disabled:cursor-not-allowed hover:bg-muted transition-colors flex items-center gap-1 text-foreground"
                 >
                   Next
                   <ChevronRight className="w-4 h-4" />
@@ -1010,28 +927,28 @@ export default function PartsManagementPage() {
 
       {/* Part Form Modal */}
       {showFormModal && (
-        <div className="fixed inset-0 backdrop-blur-md bg-white/30 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg shadow-xl w-full max-w-5xl max-h-[90vh] flex flex-col animate-fade-in">
-            <div className="flex-shrink-0 bg-white border-b px-6 py-4 flex justify-between items-center rounded-t-lg">
+        <div className="fixed inset-0 backdrop-blur-md bg-background/60 flex items-center justify-center z-50 p-4">
+          <div className="bg-card rounded-2xl shadow-xl border border-border w-full max-w-5xl max-h-[90vh] flex flex-col animate-fade-in">
+            <div className="flex-shrink-0 bg-card border-b border-border/60 px-6 py-4 flex justify-between items-center rounded-t-2xl">
               <div>
-                <h2 className="text-xl font-bold flex items-center gap-2">
+                <h2 className="text-xl font-bold flex items-center gap-2 text-foreground">
                   <Package className="w-5 h-5" />
                   {editingPart ? 'Edit Part' : 'Add New Part'}
                 </h2>
-                <p className="text-sm text-gray-500 mt-0.5">
+                <p className="text-sm text-muted-foreground mt-0.5">
                   Section {currentTabIndex + 1} of {tabs.length}: {tabs[currentTabIndex].label}
                   {tabs[currentTabIndex].mandatoryFields.length > 0 && (
                     <span className="text-red-500 ml-2">* Required fields</span>
                   )}
                 </p>
               </div>
-              <button onClick={() => { setShowFormModal(false); setEditingPart(null); resetForm(); }} className="text-gray-400 hover:text-gray-600 transition-colors">
+              <button onClick={() => { setShowFormModal(false); setEditingPart(null); resetForm(); }} className="text-muted-foreground hover:text-foreground p-1 rounded-lg hover:bg-muted transition-colors">
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            <div className="w-full bg-gray-200 h-1.5">
-              <div className="bg-blue-600 h-1.5 transition-all duration-300 ease-in-out" style={{ width: `${((currentTabIndex + 1) / tabs.length) * 100}%` }}></div>
+            <div className="w-full bg-muted h-1.5">
+              <div className="bg-primary h-1.5 transition-all duration-300 ease-in-out" style={{ width: `${((currentTabIndex + 1) / tabs.length) * 100}%` }}></div>
             </div>
 
             <div className="flex-1 overflow-y-auto p-6">
@@ -1054,7 +971,7 @@ export default function PartsManagementPage() {
                           ? 'bg-blue-50 text-blue-600 border-b-2 border-blue-600'
                           : index < currentTabIndex
                           ? 'text-green-600 hover:bg-green-50'
-                          : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+                          : 'text-muted-foreground hover:text-foreground hover:bg-muted'
                       }`}
                     >
                       {tab.icon}
@@ -1072,16 +989,16 @@ export default function PartsManagementPage() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 animate-fade-in">
                     <div>
                       <label className="block text-sm font-medium mb-1">Part Code</label>
-                      <input type="text" value={formData.part_code} onChange={(e) => setFormData({...formData, part_code: e.target.value})} className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Auto-generated if empty" />
+                      <input type="text" value={formData.part_code} onChange={(e) => setFormData({...formData, part_code: e.target.value})} className="w-full border border-border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary/30 bg-background text-foreground" placeholder="Auto-generated if empty" />
                     </div>
                     <div>
                       <label className="block text-sm font-medium mb-1">Part Name *</label>
-                      <input type="text" value={formData.part_name} onChange={(e) => setFormData({...formData, part_name: e.target.value})} className={`w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 ${formErrors.part_name ? 'border-red-500' : 'border-gray-300'}`} />
+                      <input type="text" value={formData.part_name} onChange={(e) => setFormData({...formData, part_name: e.target.value})} className={`w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary/30 bg-background text-foreground ${formErrors.part_name ? 'border-red-500' : 'border-border'}`} />
                       {formErrors.part_name && <p className="text-red-500 text-xs mt-1">{formErrors.part_name}</p>}
                     </div>
                     <div>
                       <label className="block text-sm font-medium mb-1">Category *</label>
-                      <select value={formData.category} onChange={(e) => setFormData({...formData, category: e.target.value})} className={`w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 ${formErrors.category ? 'border-red-500' : 'border-gray-300'}`}>
+                      <select value={formData.category} onChange={(e) => setFormData({...formData, category: e.target.value})} className={`w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary/30 bg-background text-foreground ${formErrors.category ? 'border-red-500' : 'border-border'}`}>
                         <option value="Battery">Battery</option>
                         <option value="Motor">Motor</option>
                         <option value="Controller">Controller</option>
@@ -1099,11 +1016,11 @@ export default function PartsManagementPage() {
                     </div>
                     <div>
                       <label className="block text-sm font-medium mb-1">Sub Category</label>
-                      <input type="text" value={formData.sub_category} onChange={(e) => setFormData({...formData, sub_category: e.target.value})} className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                      <input type="text" value={formData.sub_category} onChange={(e) => setFormData({...formData, sub_category: e.target.value})} className="w-full border border-border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary/30 bg-background text-foreground" />
                     </div>
                     <div>
                       <label className="block text-sm font-medium mb-1">Unit of Measure</label>
-                      <select value={formData.unit_of_measure} onChange={(e) => setFormData({...formData, unit_of_measure: e.target.value})} className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                      <select value={formData.unit_of_measure} onChange={(e) => setFormData({...formData, unit_of_measure: e.target.value})} className="w-full border border-border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary/30 bg-background text-foreground">
                         <option value="Piece">Piece</option>
                         <option value="Set">Set</option>
                         <option value="Pair">Pair</option>
@@ -1115,11 +1032,11 @@ export default function PartsManagementPage() {
                     </div>
                     <div>
                       <label className="block text-sm font-medium mb-1">Manufacturer</label>
-                      <input type="text" value={formData.manufacturer} onChange={(e) => setFormData({...formData, manufacturer: e.target.value})} className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                      <input type="text" value={formData.manufacturer} onChange={(e) => setFormData({...formData, manufacturer: e.target.value})} className="w-full border border-border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary/30 bg-background text-foreground" />
                     </div>
                     <div className="col-span-2">
                       <label className="block text-sm font-medium mb-1">Description</label>
-                      <textarea rows={3} value={formData.description} onChange={(e) => setFormData({...formData, description: e.target.value})} className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                      <textarea rows={3} value={formData.description} onChange={(e) => setFormData({...formData, description: e.target.value})} className="w-full border border-border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary/30 bg-background text-foreground" />
                     </div>
                     <label className="flex items-center space-x-2">
                       <input type="checkbox" checked={formData.is_consumable} onChange={(e) => setFormData({...formData, is_consumable: e.target.checked})} className="rounded" />
@@ -1127,7 +1044,7 @@ export default function PartsManagementPage() {
                     </label>
                     <div>
                       <label className="block text-sm font-medium mb-1">Warranty (Months)</label>
-                      <input type="number" value={formData.warranty_months} onChange={(e) => setFormData({...formData, warranty_months: e.target.value})} className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                      <input type="number" value={formData.warranty_months} onChange={(e) => setFormData({...formData, warranty_months: e.target.value})} className="w-full border border-border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary/30 bg-background text-foreground" />
                     </div>
                   </div>
                 )}
@@ -1140,21 +1057,21 @@ export default function PartsManagementPage() {
                         <Truck className="w-4 h-4" />
                         Supplier Name
                       </label>
-                      <input type="text" value={formData.supplier_name} onChange={(e) => setFormData({...formData, supplier_name: e.target.value})} className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                      <input type="text" value={formData.supplier_name} onChange={(e) => setFormData({...formData, supplier_name: e.target.value})} className="w-full border border-border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary/30 bg-background text-foreground" />
                     </div>
                     <div>
                       <label className="block text-sm font-medium mb-1 flex items-center gap-1">
                         <Tag className="w-4 h-4" />
                         Supplier Part Code
                       </label>
-                      <input type="text" value={formData.supplier_part_code} onChange={(e) => setFormData({...formData, supplier_part_code: e.target.value})} className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                      <input type="text" value={formData.supplier_part_code} onChange={(e) => setFormData({...formData, supplier_part_code: e.target.value})} className="w-full border border-border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary/30 bg-background text-foreground" />
                     </div>
                     <div>
                       <label className="block text-sm font-medium mb-1 flex items-center gap-1">
                         <Calendar className="w-4 h-4" />
                         Lead Time (Days)
                       </label>
-                      <input type="number" value={formData.lead_time_days} onChange={(e) => setFormData({...formData, lead_time_days: e.target.value})} className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                      <input type="number" value={formData.lead_time_days} onChange={(e) => setFormData({...formData, lead_time_days: e.target.value})} className="w-full border border-border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary/30 bg-background text-foreground" />
                     </div>
                   </div>
                 )}
@@ -1165,15 +1082,15 @@ export default function PartsManagementPage() {
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                       <div>
                         <label className="block text-sm font-medium mb-1">Min Stock Level</label>
-                        <input type="number" value={formData.min_stock_level} onChange={(e) => setFormData({...formData, min_stock_level: e.target.value})} className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                        <input type="number" value={formData.min_stock_level} onChange={(e) => setFormData({...formData, min_stock_level: e.target.value})} className="w-full border border-border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary/30 bg-background text-foreground" />
                       </div>
                       <div>
                         <label className="block text-sm font-medium mb-1">Max Stock Level</label>
-                        <input type="number" value={formData.max_stock_level} onChange={(e) => setFormData({...formData, max_stock_level: e.target.value})} className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                        <input type="number" value={formData.max_stock_level} onChange={(e) => setFormData({...formData, max_stock_level: e.target.value})} className="w-full border border-border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary/30 bg-background text-foreground" />
                       </div>
                       <div>
                         <label className="block text-sm font-medium mb-1">Reorder Point</label>
-                        <input type="number" value={formData.reorder_point} onChange={(e) => setFormData({...formData, reorder_point: e.target.value})} className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                        <input type="number" value={formData.reorder_point} onChange={(e) => setFormData({...formData, reorder_point: e.target.value})} className="w-full border border-border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary/30 bg-background text-foreground" />
                       </div>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -1182,21 +1099,21 @@ export default function PartsManagementPage() {
                           <MapPin className="w-4 h-4" />
                           Location in Store
                         </label>
-                        <input type="text" value={formData.location_in_store} onChange={(e) => setFormData({...formData, location_in_store: e.target.value})} className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="e.g., Section A" />
+                        <input type="text" value={formData.location_in_store} onChange={(e) => setFormData({...formData, location_in_store: e.target.value})} className="w-full border border-border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary/30 bg-background text-foreground" placeholder="e.g., Section A" />
                       </div>
                       <div>
                         <label className="block text-sm font-medium mb-1 flex items-center gap-1">
                           <Hash className="w-4 h-4" />
                           Bin Number
                         </label>
-                        <input type="text" value={formData.bin_number} onChange={(e) => setFormData({...formData, bin_number: e.target.value})} className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="e.g., BIN-001" />
+                        <input type="text" value={formData.bin_number} onChange={(e) => setFormData({...formData, bin_number: e.target.value})} className="w-full border border-border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary/30 bg-background text-foreground" placeholder="e.g., BIN-001" />
                       </div>
                       <div>
                         <label className="block text-sm font-medium mb-1 flex items-center gap-1">
                           <Ruler className="w-4 h-4" />
                           Rack Number
                         </label>
-                        <input type="text" value={formData.rack_number} onChange={(e) => setFormData({...formData, rack_number: e.target.value})} className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="e.g., RACK-A" />
+                        <input type="text" value={formData.rack_number} onChange={(e) => setFormData({...formData, rack_number: e.target.value})} className="w-full border border-border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary/30 bg-background text-foreground" placeholder="e.g., RACK-A" />
                       </div>
                     </div>
                     <label className="flex items-center space-x-2">
@@ -1214,7 +1131,7 @@ export default function PartsManagementPage() {
                         <DollarSign className="w-4 h-4" />
                         Selling Price (₹)
                       </label>
-                      <input type="number" step="0.01" value={formData.selling_price} onChange={(e) => setFormData({...formData, selling_price: e.target.value})} className={`w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 ${formErrors.selling_price ? 'border-red-500' : 'border-gray-300'}`} />
+                      <input type="number" step="0.01" value={formData.selling_price} onChange={(e) => setFormData({...formData, selling_price: e.target.value})} className={`w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary/30 bg-background text-foreground ${formErrors.selling_price ? 'border-red-500' : 'border-border'}`} />
                       {formErrors.selling_price && <p className="text-red-500 text-xs mt-1">{formErrors.selling_price}</p>}
                     </div>
                     <div>
@@ -1222,16 +1139,16 @@ export default function PartsManagementPage() {
                         <Tag className="w-4 h-4" />
                         MRP (₹)
                       </label>
-                      <input type="number" step="0.01" value={formData.mrp} onChange={(e) => setFormData({...formData, mrp: e.target.value})} className={`w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 ${formErrors.mrp ? 'border-red-500' : 'border-gray-300'}`} />
+                      <input type="number" step="0.01" value={formData.mrp} onChange={(e) => setFormData({...formData, mrp: e.target.value})} className={`w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary/30 bg-background text-foreground ${formErrors.mrp ? 'border-red-500' : 'border-border'}`} />
                       {formErrors.mrp && <p className="text-red-500 text-xs mt-1">{formErrors.mrp}</p>}
                     </div>
                     <div>
                       <label className="block text-sm font-medium mb-1">HSN Code</label>
-                      <input type="text" value={formData.hsn_code} onChange={(e) => setFormData({...formData, hsn_code: e.target.value})} className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                      <input type="text" value={formData.hsn_code} onChange={(e) => setFormData({...formData, hsn_code: e.target.value})} className="w-full border border-border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary/30 bg-background text-foreground" />
                     </div>
                     <div>
                       <label className="block text-sm font-medium mb-1">GST Percentage</label>
-                      <input type="number" step="0.01" value={formData.gst_percentage} onChange={(e) => setFormData({...formData, gst_percentage: e.target.value})} className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                      <input type="number" step="0.01" value={formData.gst_percentage} onChange={(e) => setFormData({...formData, gst_percentage: e.target.value})} className="w-full border border-border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary/30 bg-background text-foreground" />
                     </div>
                   </div>
                 )}
@@ -1248,21 +1165,21 @@ export default function PartsManagementPage() {
                         type="text" 
                         value={formData.compatible_vehicle_models} 
                         onChange={(e) => setFormData({...formData, compatible_vehicle_models: e.target.value})} 
-                        className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" 
+                        className="w-full border border-border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary/30 bg-background text-foreground" 
                         placeholder="Comma separated vehicle model IDs or names"
                       />
-                      <p className="text-xs text-gray-500 mt-1">Enter vehicle model IDs or names separated by commas</p>
+                      <p className="text-xs text-muted-foreground mt-1">Enter vehicle model IDs or names separated by commas</p>
                     </div>
                   </div>
                 )}
 
                 {/* Navigation Buttons */}
-                <div className="sticky bottom-0 bg-white border-t mt-8 pt-4 flex justify-between items-center">
+                <div className="sticky bottom-0 bg-card border-t border-border/60 mt-8 pt-4 flex justify-between items-center">
                   <div className="flex items-center space-x-3">
                     <button
                       type="button"
                       onClick={() => { setShowFormModal(false); setEditingPart(null); resetForm(); }}
-                      className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 transition-colors"
+                      className="px-4 py-2 border border-border rounded-xl text-foreground hover:bg-muted transition-colors"
                     >
                       Cancel
                     </button>
@@ -1270,7 +1187,7 @@ export default function PartsManagementPage() {
                       <button
                         type="button"
                         onClick={goToPreviousTab}
-                        className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 transition-colors flex items-center space-x-2"
+                        className="px-4 py-2 border border-border rounded-xl text-foreground hover:bg-muted transition-colors flex items-center space-x-2"
                       >
                         <ChevronLeft className="w-4 h-4" />
                         <span>Previous</span>
@@ -1279,12 +1196,12 @@ export default function PartsManagementPage() {
                   </div>
 
                   <div className="flex items-center space-x-3">
-                    <span className="text-sm text-gray-500">{currentTabIndex + 1} of {tabs.length}</span>
+                    <span className="text-sm text-muted-foreground">{currentTabIndex + 1} of {tabs.length}</span>
                     {!isLastTab ? (
                       <button
                         type="button"
                         onClick={goToNextTab}
-                        className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors flex items-center space-x-2"
+                        className="px-4 py-2 bg-primary text-primary-foreground rounded-xl hover:bg-primary/90 transition-colors flex items-center space-x-2"
                       >
                         <span>Next: {tabs[currentTabIndex + 1].label}</span>
                         <ChevronRight className="w-4 h-4" />
@@ -1309,27 +1226,27 @@ export default function PartsManagementPage() {
 
       {/* Stock Adjustment Modal */}
       {showStockModal && selectedPart && (
-        <div className="fixed inset-0 backdrop-blur-md bg-white/30 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg shadow-xl w-full max-w-lg animate-fade-in">
-            <div className="px-6 py-4 border-b flex justify-between items-center">
+        <div className="fixed inset-0 backdrop-blur-md bg-background/60 flex items-center justify-center z-50 p-4">
+          <div className="bg-card rounded-2xl shadow-xl border border-border w-full max-w-lg animate-fade-in">
+            <div className="px-6 py-4 border-b border-border/60 flex justify-between items-center">
               <div>
-                <h2 className="text-xl font-bold flex items-center gap-2">
+                <h2 className="text-xl font-bold flex items-center gap-2 text-foreground">
                   <Box className="w-5 h-5" />
                   Stock Adjustment
                 </h2>
-                <p className="text-sm text-gray-500">{selectedPart.part_name} ({selectedPart.part_code})</p>
-                <p className="text-sm font-medium mt-1">
-                  Current Stock: <span className="text-blue-600">{selectedPart.current_stock?.quantity_available ?? 0} {selectedPart.unit_of_measure}</span>
+                <p className="text-sm text-muted-foreground">{selectedPart.part_name} ({selectedPart.part_code})</p>
+                <p className="text-sm font-medium mt-1 text-foreground">
+                  Current Stock: <span className="text-primary">{selectedPart.current_stock?.quantity_available ?? 0} {selectedPart.unit_of_measure}</span>
                 </p>
               </div>
-              <button onClick={() => setShowStockModal(false)} className="text-gray-400 hover:text-gray-600 transition-colors">
+              <button onClick={() => setShowStockModal(false)} className="text-muted-foreground hover:text-foreground p-1 rounded-lg hover:bg-muted transition-colors">
                 <X className="w-5 h-5" />
               </button>
             </div>
             <div className="p-6 space-y-4">
               <div>
                 <label className="block text-sm font-medium mb-1">Transaction Type</label>
-                <select value={stockForm.transaction_type} onChange={(e) => setStockForm({...stockForm, transaction_type: e.target.value})} className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <select value={stockForm.transaction_type} onChange={(e) => setStockForm({...stockForm, transaction_type: e.target.value})} className="w-full border border-border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary/30 bg-background text-foreground">
                   <option value="Stock_Adjustment_Add">Add Stock</option>
                   <option value="Stock_Adjustment_Remove">Remove Stock</option>
                   <option value="Damaged_WriteOff">Damaged - Write Off</option>
@@ -1338,19 +1255,19 @@ export default function PartsManagementPage() {
               </div>
               <div>
                 <label className="block text-sm font-medium mb-1">Quantity *</label>
-                <input type="number" value={stockForm.quantity} onChange={(e) => setStockForm({...stockForm, quantity: e.target.value})} className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Enter quantity" />
+                <input type="number" value={stockForm.quantity} onChange={(e) => setStockForm({...stockForm, quantity: e.target.value})} className="w-full border border-border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary/30 bg-background text-foreground" placeholder="Enter quantity" />
               </div>
               <div>
                 <label className="block text-sm font-medium mb-1">Unit Cost (₹)</label>
-                <input type="number" step="0.01" value={stockForm.unit_cost} onChange={(e) => setStockForm({...stockForm, unit_cost: e.target.value})} className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                <input type="number" step="0.01" value={stockForm.unit_cost} onChange={(e) => setStockForm({...stockForm, unit_cost: e.target.value})} className="w-full border border-border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary/30 bg-background text-foreground" />
               </div>
               <div>
                 <label className="block text-sm font-medium mb-1">Notes</label>
-                <textarea rows={3} value={stockForm.notes} onChange={(e) => setStockForm({...stockForm, notes: e.target.value})} className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                <textarea rows={3} value={stockForm.notes} onChange={(e) => setStockForm({...stockForm, notes: e.target.value})} className="w-full border border-border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary/30 bg-background text-foreground" />
               </div>
               <div className="flex justify-end space-x-3 pt-4">
-                <button onClick={() => setShowStockModal(false)} className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 transition-colors">Cancel</button>
-                <button onClick={handleStockAdjustment} disabled={isSubmitting} className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50">
+                <button onClick={() => setShowStockModal(false)} className="px-4 py-2 border border-border rounded-xl text-foreground hover:bg-muted transition-colors">Cancel</button>
+                <button onClick={handleStockAdjustment} disabled={isSubmitting} className="px-6 py-2 bg-primary text-primary-foreground rounded-xl hover:bg-primary/90 transition-colors disabled:opacity-50">
                   {isSubmitting ? 'Processing...' : 'Confirm Adjustment'}
                 </button>
               </div>
@@ -1361,50 +1278,50 @@ export default function PartsManagementPage() {
 
       {/* Transaction History Modal */}
       {showTransactionModal && selectedPart && (
-        <div className="fixed inset-0 backdrop-blur-md bg-white/30 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] flex flex-col animate-fade-in">
-            <div className="flex-shrink-0 bg-white border-b px-6 py-4 flex justify-between items-center rounded-t-lg">
+        <div className="fixed inset-0 backdrop-blur-md bg-background/60 flex items-center justify-center z-50 p-4">
+          <div className="bg-card rounded-2xl shadow-xl border border-border w-full max-w-4xl max-h-[90vh] flex flex-col animate-fade-in">
+            <div className="flex-shrink-0 bg-card border-b border-border/60 px-6 py-4 flex justify-between items-center rounded-t-2xl">
               <div>
-                <h2 className="text-xl font-bold flex items-center gap-2">
+                <h2 className="text-xl font-bold flex items-center gap-2 text-foreground">
                   <ClipboardList className="w-5 h-5" />
                   Transaction History
                 </h2>
-                <p className="text-sm text-gray-500">{selectedPart.part_name} ({selectedPart.part_code})</p>
+                <p className="text-sm text-muted-foreground">{selectedPart.part_name} ({selectedPart.part_code})</p>
               </div>
-              <button onClick={() => setShowTransactionModal(false)} className="text-gray-400 hover:text-gray-600 transition-colors">
+              <button onClick={() => setShowTransactionModal(false)} className="text-muted-foreground hover:text-foreground p-1 rounded-lg hover:bg-muted transition-colors">
                 <X className="w-5 h-5" />
               </button>
             </div>
             <div className="flex-1 overflow-y-auto p-6">
               {transactions.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-12 text-gray-500">
-                  <ClipboardList className="w-12 h-12 mb-4 text-gray-300" />
+                <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
+                  <ClipboardList className="w-12 h-12 mb-4 text-muted-foreground/30" />
                   <p>No transactions found</p>
                 </div>
               ) : (
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-50">
+                <table className="min-w-full divide-y divide-border/40">
+                  <thead className="bg-muted/30">
                     <tr>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                      <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase">
                         <div className="flex items-center gap-1"><Calendar className="w-3 h-3" /> Date</div>
                       </th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                      <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase">
                         <div className="flex items-center gap-1"><Activity className="w-3 h-3" /> Type</div>
                       </th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                      <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase">
                         <div className="flex items-center gap-1"><BarChart3 className="w-3 h-3" /> Quantity</div>
                       </th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                      <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase">
                         <div className="flex items-center gap-1"><DollarSign className="w-3 h-3" /> Cost</div>
                       </th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">By</th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Notes</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase">By</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Notes</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-gray-200">
+                  <tbody className="divide-y divide-border/40">
                     {transactions.map((trans) => (
-                      <tr key={trans.id} className="hover:bg-gray-50">
-                        <td className="px-4 py-3 text-sm">{new Date(trans.transaction_date).toLocaleDateString()}</td>
+                      <tr key={trans.id} className="hover:bg-muted/20 transition-colors">
+                        <td className="px-4 py-3 text-sm text-foreground">{new Date(trans.transaction_date).toLocaleDateString()}</td>
                         <td className="px-4 py-3">
                           <span className={`px-2 py-1 rounded-full text-xs font-medium inline-flex items-center gap-1 ${
                             trans.transaction_type.includes('Add') || trans.transaction_type === 'Purchase'
@@ -1420,7 +1337,7 @@ export default function PartsManagementPage() {
                         <td className="px-4 py-3 text-sm font-medium">{trans.quantity}</td>
                         <td className="px-4 py-3 text-sm">{trans.total_amount ? `₹${trans.total_amount.toLocaleString()}` : '-'}</td>
                         <td className="px-4 py-3 text-sm">{trans.performed_by_user?.full_name || 'System'}</td>
-                        <td className="px-4 py-3 text-sm text-gray-500">{trans.notes || '-'}</td>
+                        <td className="px-4 py-3 text-sm text-muted-foreground">{trans.notes || '-'}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -1433,24 +1350,24 @@ export default function PartsManagementPage() {
 
       {/* Detail Modal */}
       {showDetailModal && selectedPart && (
-        <div className="fixed inset-0 backdrop-blur-md bg-white/30 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] flex flex-col animate-fade-in">
-            <div className="flex-shrink-0 bg-white border-b px-6 py-4 flex justify-between items-center rounded-t-lg">
-              <h2 className="text-xl font-bold flex items-center gap-2">
+        <div className="fixed inset-0 backdrop-blur-md bg-background/60 flex items-center justify-center z-50 p-4">
+          <div className="bg-card rounded-2xl shadow-xl border border-border w-full max-w-4xl max-h-[90vh] flex flex-col animate-fade-in">
+            <div className="flex-shrink-0 bg-card border-b border-border/60 px-6 py-4 flex justify-between items-center rounded-t-2xl">
+              <h2 className="text-xl font-bold flex items-center gap-2 text-foreground">
                 <Eye className="w-5 h-5" />
                 Part Details
               </h2>
-              <button onClick={() => setShowDetailModal(false)} className="text-gray-400 hover:text-gray-600 transition-colors">
+              <button onClick={() => setShowDetailModal(false)} className="text-muted-foreground hover:text-foreground p-1 rounded-lg hover:bg-muted transition-colors">
                 <X className="w-5 h-5" />
               </button>
             </div>
             <div className="flex-1 overflow-y-auto p-6">
               <div className="mb-6 flex justify-between items-start">
                 <div>
-                  <h3 className="text-2xl font-bold">{selectedPart.part_name}</h3>
-                  <p className="text-gray-500">Code: {selectedPart.part_code || 'N/A'}</p>
+                  <h3 className="text-2xl font-bold text-foreground">{selectedPart.part_name}</h3>
+                  <p className="text-muted-foreground">Code: {selectedPart.part_code || 'N/A'}</p>
                   {selectedPart.manufacturer && (
-                    <p className="text-gray-500 flex items-center gap-1">
+                    <p className="text-muted-foreground flex items-center gap-1">
                       <Factory className="w-4 h-4" />
                       {selectedPart.manufacturer}
                     </p>
@@ -1510,7 +1427,7 @@ export default function PartsManagementPage() {
               {selectedPart.description && (
                 <div className="mt-4">
                   <h4 className="font-semibold border-b pb-1">Description</h4>
-                  <p className="mt-2 text-gray-600">{selectedPart.description}</p>
+                  <p className="mt-2 text-muted-foreground">{selectedPart.description}</p>
                 </div>
               )}
             </div>

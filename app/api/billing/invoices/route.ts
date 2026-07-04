@@ -649,6 +649,8 @@ async function generateInvoicePDF(invoice: any): Promise<ArrayBuffer> {
   // ---- Layout constants ----
   const L = 8;              // left edge
   const R = 202;           // right edge
+  const TOP = 8;           // top margin for content on every page
+  const BOTTOM = 289;      // bottom limit (A4 height 297mm - 8mm margin)
   const NAVY: [number, number, number] = [26, 35, 126];
   const BLACK: [number, number, number] = [0, 0, 0];
   const GRAY: [number, number, number] = [90, 90, 90];
@@ -837,7 +839,7 @@ async function generateInvoicePDF(invoice: any): Promise<ArrayBuffer> {
   ]);
   autoTable(doc, {
     startY: y,
-    margin: { left: L, right: 210 - R },
+    margin: { left: L, right: 210 - R, top: TOP, bottom: 12 },
     head: [['#', 'Item', 'HSN/SAC', 'Tax', 'Qty', 'Rate/Item', 'Per', 'Amount']],
     body: itemBody,
     theme: 'grid',
@@ -856,16 +858,28 @@ async function generateInvoicePDF(invoice: any): Promise<ArrayBuffer> {
   });
   let ty = (doc as any).lastAutoTable.finalY;
 
+  // Page-break helper: if the next block won't fit before the bottom margin,
+  // start a new page and reset the cursor to the top so nothing gets trimmed.
+  const ensureSpace = (needed: number) => {
+    if (ty + needed > BOTTOM) {
+      doc.addPage();
+      ty = TOP;
+    }
+  };
+
   // ---- Subtotal lines (right side, within left/right frame) ----
   const amountColX = 172;
   const subH = 5;
   const subLine = (label: string, value: string, bold = false) => {
+    ensureSpace(subH);
     box(L, ty, R - L, subH);
     vline(amountColX, ty, ty + subH);
     txt(label, amountColX - 2, ty + 3.5, { size: 8, bold, italic: !bold, align: 'right' });
     txt(value, R - 2, ty + 3.5, { size: 8, bold, align: 'right' });
     ty += subH;
   };
+  // Keep the taxable/tax/total/words block together on one page.
+  ensureSpace(subH * 3 + 8 + 8);
   subLine('Taxable Amount', inr(taxable), true);
   subLine(`CGST ${num2(cgstPct)}%`, inr(cgstTotal));
   subLine(`SGST ${num2(sgstPct)}%`, inr(sgstTotal));
@@ -891,9 +905,11 @@ async function generateInvoicePDF(invoice: any): Promise<ArrayBuffer> {
   ty += wordsH + 3;
 
   // ============ HSN/SAC BREAKDOWN TABLE ============
+  // Ensure the header plus at least a couple of rows fit; otherwise start fresh on a new page.
+  ensureSpace(24);
   autoTable(doc, {
     startY: ty,
-    margin: { left: L, right: 210 - R },
+    margin: { left: L, right: 210 - R, top: TOP, bottom: 12 },
     head: [
       [
         { content: 'HSN/SAC', rowSpan: 2, styles: { valign: 'middle' } },
@@ -940,6 +956,8 @@ async function generateInvoicePDF(invoice: any): Promise<ArrayBuffer> {
 
   // ---- Amount Paid badge ----
   const isPaid = String(invoice.payment_status || '').toLowerCase() === 'paid';
+  // Keep the badge + bank/UPI/signature block (40mm) together on one page.
+  ensureSpace(5 + (isPaid ? 9 : 0) + 40);
   ty += 5;
   if (isPaid) {
     doc.setFillColor(GREEN[0], GREEN[1], GREEN[2]);
@@ -1025,22 +1043,57 @@ async function generateInvoicePDF(invoice: any): Promise<ArrayBuffer> {
   ty += payH;
 
   // ============ NOTES / TERMS ============
-  // Pre-wrap the terms so the box can grow to fit vendor-configured content.
+  // Pre-wrap the terms so the block can flow across as many pages as needed.
   const terms = resolveInvoiceTerms(invoice.invoice_terms_conditions);
   const wrappedTerms: string[] = [];
   terms.forEach((t) => {
     doc.splitTextToSize(t, R - splitX - 8).forEach((ln: string) => wrappedTerms.push(ln));
   });
-  // 10mm header offset + line height per term line + 4mm bottom padding, min 30mm.
-  const notesH = Math.max(30, 10 + wrappedTerms.length * 3.2 + 4);
-  box(L, ty, R - L, notesH);
-  vline(splitX, ty, ty + notesH);
-  txt('Notes:', L + 3, ty + 5, { size: 8, bold: true });
-  txt(invoice.invoice_footer_note || 'Thank you for your business.', L + 3, ty + 10, { size: 7.5, color: GRAY });
-  txt('Terms and Conditions:', splitX + 4, ty + 5, { size: 8, bold: true });
-  let tyy = ty + 10;
-  wrappedTerms.forEach((ln) => { txt(ln, splitX + 4, tyy, { size: 6.8, color: GRAY }); tyy += 3.2; });
-  ty += notesH;
+
+  const lineH = 3.2;
+  const padBottom = 4;
+
+  // Begin the block on a fresh page if there isn't enough room to start it neatly.
+  if (ty + 30 > BOTTOM) {
+    doc.addPage();
+    ty = TOP;
+  }
+
+  let termIdx = 0;
+  let firstSegment = true;
+  // Draw one box segment per page, continuing the terms list until all lines are placed.
+  while (true) {
+    const segTop = ty;
+    const topOffset = firstSegment ? 10 : 9; // section headers only appear on the first segment
+    const maxLines = Math.max(0, Math.floor((BOTTOM - segTop - topOffset - padBottom) / lineH));
+    const linesThisPage = Math.min(maxLines, wrappedTerms.length - termIdx);
+    const segH = Math.max(firstSegment ? 30 : 12, topOffset + linesThisPage * lineH + padBottom);
+
+    box(L, segTop, R - L, segH);
+    vline(splitX, segTop, segTop + segH);
+
+    if (firstSegment) {
+      txt('Notes:', L + 3, segTop + 5, { size: 8, bold: true });
+      txt(invoice.invoice_footer_note || 'Thank you for your business.', L + 3, segTop + 10, { size: 7.5, color: GRAY });
+      txt('Terms and Conditions:', splitX + 4, segTop + 5, { size: 8, bold: true });
+    } else {
+      txt('Terms and Conditions (contd.):', splitX + 4, segTop + 5, { size: 8, bold: true });
+    }
+
+    let lineY = segTop + topOffset;
+    for (let k = 0; k < linesThisPage; k++) {
+      txt(wrappedTerms[termIdx], splitX + 4, lineY, { size: 6.8, color: GRAY });
+      termIdx++;
+      lineY += lineH;
+    }
+
+    ty = segTop + segH;
+    firstSegment = false;
+
+    if (termIdx >= wrappedTerms.length) break;
+    doc.addPage();
+    ty = TOP;
+  }
 
   return doc.output('arraybuffer');
 }
