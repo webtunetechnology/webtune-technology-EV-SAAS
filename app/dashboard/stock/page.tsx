@@ -989,16 +989,16 @@ export default function PartsManagementPage() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 animate-fade-in">
                     <div>
                       <label className="block text-sm font-medium mb-1">Part Code</label>
-                      <input type="text" value={formData.part_code} onChange={(e) => setFormData({...formData, part_code: e.target.value})} className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Auto-generated if empty" />
+                      <input type="text" value={formData.part_code} onChange={(e) => setFormData({...formData, part_code: e.target.value})} className="w-full border border-border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary/30 bg-background text-foreground" placeholder="Auto-generated if empty" />
                     </div>
                     <div>
                       <label className="block text-sm font-medium mb-1">Part Name *</label>
-                      <input type="text" value={formData.part_name} onChange={(e) => setFormData({...formData, part_name: e.target.value})} className={`w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 ${formErrors.part_name ? 'border-red-500' : 'border-gray-300'}`} />
+                      <input type="text" value={formData.part_name} onChange={(e) => setFormData({...formData, part_name: e.target.value})} className={`w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary/30 bg-background text-foreground ${formErrors.part_name ? 'border-red-500' : 'border-border'}`} />
                       {formErrors.part_name && <p className="text-red-500 text-xs mt-1">{formErrors.part_name}</p>}
                     </div>
                     <div>
                       <label className="block text-sm font-medium mb-1">Category *</label>
-                      <select value={formData.category} onChange={(e) => setFormData({...formData, category: e.target.value})} className={`w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 ${formErrors.category ? 'border-red-500' : 'border-gray-300'}`}>
+                      <select value={formData.category} onChange={(e) => setFormData({...formData, category: e.target.value})} className={`w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary/30 bg-background text-foreground ${formErrors.category ? 'border-red-500' : 'border-border'}`}>
                         <option value="Battery">Battery</option>
                         <option value="Motor">Motor</option>
                         <option value="Controller">Controller</option>
@@ -1016,11 +1016,11 @@ export default function PartsManagementPage() {
                     </div>
                     <div>
                       <label className="block text-sm font-medium mb-1">Sub Category</label>
-                      <input type="text" value={formData.sub_category} onChange={(e) => setFormData({...formData, sub_category: e.target.value})} className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                      <input type="text" value={formData.sub_category} onChange={(e) => setFormData({...formData, sub_category: e.target.value})} className="w-full border border-border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary/30 bg-background text-foreground" />
                     </div>
                     <div>
                       <label className="block text-sm font-medium mb-1">Unit of Measure</label>
-                      <select value={formData.unit_of_measure} onChange={(e) => setFormData({...formData, unit_of_measure: e.target.value})} className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                      <select value={formData.unit_of_measure} onChange={(e) => setFormData({...formData, unit_of_measure: e.target.value})} className="w-full border border-border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary/30 bg-background text-foreground">
                         <option value="Piece">Piece</option>
                         <option value="Set">Set</option>
                         <option value="Pair">Pair</option>
@@ -1032,11 +1032,11 @@ export default function PartsManagementPage() {
                     </div>
                     <div>
                       <label className="block text-sm font-medium mb-1">Manufacturer</label>
-                      <input type="text" value={formData.manufacturer} onChange={(e) => setFormData({...formData, manufacturer: e.target.value})} className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                      <input type="text" value={formData.manufacturer} onChange={(e) => setFormData({...formData, manufacturer: e.target.value})} className="w-full border border-border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary/30 bg-background text-foreground" />
                     </div>
                     <div className="col-span-2">
                       <label className="block text-sm font-medium mb-1">Description</label>
-                      <textarea rows={3} value={formData.description} onChange={(e) => setFormData({...formData, description: e.target.value})} className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                      <textarea rows={3} value={formData.description} onChange={(e) => setFormData({...formData, description: e.target.value})} className="w-full border border-border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary/30 bg-background text-foreground" />
                     </div>
                     <label className="flex items-center space-x-2">
                       <input type="checkbox" checked={formData.is_consumable} onChange={(e) => setFormData({...formData, is_consumable: e.target.checked})} className="rounded" />
@@ -1044,7 +1044,7 @@ export default function PartsManagementPage() {
                     </label>
                     <div>
                       <label className="block text-sm font-medium mb-1">Warranty (Months)</label>
-                      <input type="number" value={formData.warranty_months} onChange={(e) => setFormData({...formData, warranty_months: e.target.value})} className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                      <input type="number" value={formData.warranty_months} onChange={(e) => setFormData({...formData, warranty_months: e.target.value})} className="w-full border border-border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary/30 bg-background text-foreground" />
                     </div>
                   </div>
                 )}
@@ -1057,21 +1057,21 @@ export default function PartsManagementPage() {
                         <Truck className="w-4 h-4" />
                         Supplier Name
                       </label>
-                      <input type="text" value={formData.supplier_name} onChange={(e) => setFormData({...formData, supplier_name: e.target.value})} className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                      <input type="text" value={formData.supplier_name} onChange={(e) => setFormData({...formData, supplier_name: e.target.value})} className="w-full border border-border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary/30 bg-background text-foreground" />
                     </div>
                     <div>
                       <label className="block text-sm font-medium mb-1 flex items-center gap-1">
                         <Tag className="w-4 h-4" />
                         Supplier Part Code
                       </label>
-                      <input type="text" value={formData.supplier_part_code} onChange={(e) => setFormData({...formData, supplier_part_code: e.target.value})} className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                      <input type="text" value={formData.supplier_part_code} onChange={(e) => setFormData({...formData, supplier_part_code: e.target.value})} className="w-full border border-border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary/30 bg-background text-foreground" />
                     </div>
                     <div>
                       <label className="block text-sm font-medium mb-1 flex items-center gap-1">
                         <Calendar className="w-4 h-4" />
                         Lead Time (Days)
                       </label>
-                      <input type="number" value={formData.lead_time_days} onChange={(e) => setFormData({...formData, lead_time_days: e.target.value})} className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                      <input type="number" value={formData.lead_time_days} onChange={(e) => setFormData({...formData, lead_time_days: e.target.value})} className="w-full border border-border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary/30 bg-background text-foreground" />
                     </div>
                   </div>
                 )}
@@ -1082,15 +1082,15 @@ export default function PartsManagementPage() {
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                       <div>
                         <label className="block text-sm font-medium mb-1">Min Stock Level</label>
-                        <input type="number" value={formData.min_stock_level} onChange={(e) => setFormData({...formData, min_stock_level: e.target.value})} className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                        <input type="number" value={formData.min_stock_level} onChange={(e) => setFormData({...formData, min_stock_level: e.target.value})} className="w-full border border-border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary/30 bg-background text-foreground" />
                       </div>
                       <div>
                         <label className="block text-sm font-medium mb-1">Max Stock Level</label>
-                        <input type="number" value={formData.max_stock_level} onChange={(e) => setFormData({...formData, max_stock_level: e.target.value})} className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                        <input type="number" value={formData.max_stock_level} onChange={(e) => setFormData({...formData, max_stock_level: e.target.value})} className="w-full border border-border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary/30 bg-background text-foreground" />
                       </div>
                       <div>
                         <label className="block text-sm font-medium mb-1">Reorder Point</label>
-                        <input type="number" value={formData.reorder_point} onChange={(e) => setFormData({...formData, reorder_point: e.target.value})} className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                        <input type="number" value={formData.reorder_point} onChange={(e) => setFormData({...formData, reorder_point: e.target.value})} className="w-full border border-border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary/30 bg-background text-foreground" />
                       </div>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -1099,21 +1099,21 @@ export default function PartsManagementPage() {
                           <MapPin className="w-4 h-4" />
                           Location in Store
                         </label>
-                        <input type="text" value={formData.location_in_store} onChange={(e) => setFormData({...formData, location_in_store: e.target.value})} className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="e.g., Section A" />
+                        <input type="text" value={formData.location_in_store} onChange={(e) => setFormData({...formData, location_in_store: e.target.value})} className="w-full border border-border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary/30 bg-background text-foreground" placeholder="e.g., Section A" />
                       </div>
                       <div>
                         <label className="block text-sm font-medium mb-1 flex items-center gap-1">
                           <Hash className="w-4 h-4" />
                           Bin Number
                         </label>
-                        <input type="text" value={formData.bin_number} onChange={(e) => setFormData({...formData, bin_number: e.target.value})} className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="e.g., BIN-001" />
+                        <input type="text" value={formData.bin_number} onChange={(e) => setFormData({...formData, bin_number: e.target.value})} className="w-full border border-border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary/30 bg-background text-foreground" placeholder="e.g., BIN-001" />
                       </div>
                       <div>
                         <label className="block text-sm font-medium mb-1 flex items-center gap-1">
                           <Ruler className="w-4 h-4" />
                           Rack Number
                         </label>
-                        <input type="text" value={formData.rack_number} onChange={(e) => setFormData({...formData, rack_number: e.target.value})} className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="e.g., RACK-A" />
+                        <input type="text" value={formData.rack_number} onChange={(e) => setFormData({...formData, rack_number: e.target.value})} className="w-full border border-border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary/30 bg-background text-foreground" placeholder="e.g., RACK-A" />
                       </div>
                     </div>
                     <label className="flex items-center space-x-2">
@@ -1131,7 +1131,7 @@ export default function PartsManagementPage() {
                         <DollarSign className="w-4 h-4" />
                         Selling Price (₹)
                       </label>
-                      <input type="number" step="0.01" value={formData.selling_price} onChange={(e) => setFormData({...formData, selling_price: e.target.value})} className={`w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 ${formErrors.selling_price ? 'border-red-500' : 'border-gray-300'}`} />
+                      <input type="number" step="0.01" value={formData.selling_price} onChange={(e) => setFormData({...formData, selling_price: e.target.value})} className={`w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary/30 bg-background text-foreground ${formErrors.selling_price ? 'border-red-500' : 'border-border'}`} />
                       {formErrors.selling_price && <p className="text-red-500 text-xs mt-1">{formErrors.selling_price}</p>}
                     </div>
                     <div>
@@ -1139,16 +1139,16 @@ export default function PartsManagementPage() {
                         <Tag className="w-4 h-4" />
                         MRP (₹)
                       </label>
-                      <input type="number" step="0.01" value={formData.mrp} onChange={(e) => setFormData({...formData, mrp: e.target.value})} className={`w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 ${formErrors.mrp ? 'border-red-500' : 'border-gray-300'}`} />
+                      <input type="number" step="0.01" value={formData.mrp} onChange={(e) => setFormData({...formData, mrp: e.target.value})} className={`w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary/30 bg-background text-foreground ${formErrors.mrp ? 'border-red-500' : 'border-border'}`} />
                       {formErrors.mrp && <p className="text-red-500 text-xs mt-1">{formErrors.mrp}</p>}
                     </div>
                     <div>
                       <label className="block text-sm font-medium mb-1">HSN Code</label>
-                      <input type="text" value={formData.hsn_code} onChange={(e) => setFormData({...formData, hsn_code: e.target.value})} className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                      <input type="text" value={formData.hsn_code} onChange={(e) => setFormData({...formData, hsn_code: e.target.value})} className="w-full border border-border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary/30 bg-background text-foreground" />
                     </div>
                     <div>
                       <label className="block text-sm font-medium mb-1">GST Percentage</label>
-                      <input type="number" step="0.01" value={formData.gst_percentage} onChange={(e) => setFormData({...formData, gst_percentage: e.target.value})} className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                      <input type="number" step="0.01" value={formData.gst_percentage} onChange={(e) => setFormData({...formData, gst_percentage: e.target.value})} className="w-full border border-border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary/30 bg-background text-foreground" />
                     </div>
                   </div>
                 )}
@@ -1165,7 +1165,7 @@ export default function PartsManagementPage() {
                         type="text" 
                         value={formData.compatible_vehicle_models} 
                         onChange={(e) => setFormData({...formData, compatible_vehicle_models: e.target.value})} 
-                        className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" 
+                        className="w-full border border-border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary/30 bg-background text-foreground" 
                         placeholder="Comma separated vehicle model IDs or names"
                       />
                       <p className="text-xs text-muted-foreground mt-1">Enter vehicle model IDs or names separated by commas</p>
@@ -1246,7 +1246,7 @@ export default function PartsManagementPage() {
             <div className="p-6 space-y-4">
               <div>
                 <label className="block text-sm font-medium mb-1">Transaction Type</label>
-                <select value={stockForm.transaction_type} onChange={(e) => setStockForm({...stockForm, transaction_type: e.target.value})} className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <select value={stockForm.transaction_type} onChange={(e) => setStockForm({...stockForm, transaction_type: e.target.value})} className="w-full border border-border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary/30 bg-background text-foreground">
                   <option value="Stock_Adjustment_Add">Add Stock</option>
                   <option value="Stock_Adjustment_Remove">Remove Stock</option>
                   <option value="Damaged_WriteOff">Damaged - Write Off</option>
@@ -1255,15 +1255,15 @@ export default function PartsManagementPage() {
               </div>
               <div>
                 <label className="block text-sm font-medium mb-1">Quantity *</label>
-                <input type="number" value={stockForm.quantity} onChange={(e) => setStockForm({...stockForm, quantity: e.target.value})} className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Enter quantity" />
+                <input type="number" value={stockForm.quantity} onChange={(e) => setStockForm({...stockForm, quantity: e.target.value})} className="w-full border border-border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary/30 bg-background text-foreground" placeholder="Enter quantity" />
               </div>
               <div>
                 <label className="block text-sm font-medium mb-1">Unit Cost (₹)</label>
-                <input type="number" step="0.01" value={stockForm.unit_cost} onChange={(e) => setStockForm({...stockForm, unit_cost: e.target.value})} className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                <input type="number" step="0.01" value={stockForm.unit_cost} onChange={(e) => setStockForm({...stockForm, unit_cost: e.target.value})} className="w-full border border-border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary/30 bg-background text-foreground" />
               </div>
               <div>
                 <label className="block text-sm font-medium mb-1">Notes</label>
-                <textarea rows={3} value={stockForm.notes} onChange={(e) => setStockForm({...stockForm, notes: e.target.value})} className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                <textarea rows={3} value={stockForm.notes} onChange={(e) => setStockForm({...stockForm, notes: e.target.value})} className="w-full border border-border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary/30 bg-background text-foreground" />
               </div>
               <div className="flex justify-end space-x-3 pt-4">
                 <button onClick={() => setShowStockModal(false)} className="px-4 py-2 border border-border rounded-xl text-foreground hover:bg-muted transition-colors">Cancel</button>

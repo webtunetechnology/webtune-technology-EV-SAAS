@@ -994,7 +994,7 @@ export default function ServiceManagementPage() {
                 <select 
                   value={appointmentForm.customer_id} 
                   onChange={(e) => handleCustomerChange(e.target.value)} 
-                  className={`w-full border rounded px-3 py-2 ${formErrors.customer_id ? 'border-red-500' : 'border-gray-300'}`}
+                  className={`w-full border rounded px-3 py-2 ${formErrors.customer_id ? 'border-red-500' : 'border-border bg-background text-foreground'}`}
                 >
                   <option value="">Select Customer</option>
                   {customers.map(c => (
@@ -1007,7 +1007,7 @@ export default function ServiceManagementPage() {
                 <select 
                   value={appointmentForm.vehicle_id} 
                   onChange={(e) => setAppointmentForm({...appointmentForm, vehicle_id: e.target.value})} 
-                  className={`w-full border rounded px-3 py-2 ${formErrors.vehicle_id ? 'border-red-500' : 'border-gray-300'}`}
+                  className={`w-full border rounded px-3 py-2 ${formErrors.vehicle_id ? 'border-red-500' : 'border-border bg-background text-foreground'}`}
                 >
                   <option value="">Select Vehicle</option>
                   {vehicles.map(v => (
@@ -1256,7 +1256,7 @@ function ServiceFormContent({
           <select 
             value={serviceForm.customer_id} 
             onChange={(e) => handleCustomerChange(e.target.value)} 
-            className={`w-full border rounded px-3 py-2 ${formErrors.customer_id ? 'border-red-500' : 'border-gray-300'}`}
+            className={`w-full border rounded px-3 py-2 ${formErrors.customer_id ? 'border-red-500' : 'border-border bg-background text-foreground'}`}
           >
             <option value="">Select Customer</option>
             {customers.map((c: any) => (
@@ -1269,7 +1269,7 @@ function ServiceFormContent({
           <select 
             value={serviceForm.vehicle_id} 
             onChange={(e) => setServiceForm({...serviceForm, vehicle_id: e.target.value})} 
-            className={`w-full border rounded px-3 py-2 ${formErrors.vehicle_id ? 'border-red-500' : 'border-gray-300'}`}
+            className={`w-full border rounded px-3 py-2 ${formErrors.vehicle_id ? 'border-red-500' : 'border-border bg-background text-foreground'}`}
           >
             <option value="">Select Vehicle</option>
             {vehicles.map((v: any) => (
@@ -1310,7 +1310,7 @@ function ServiceFormContent({
             type="number" 
             value={serviceForm.odometer_reading} 
             onChange={(e) => setServiceForm({...serviceForm, odometer_reading: e.target.value})} 
-            className={`w-full border rounded px-3 py-2 ${formErrors.odometer_reading ? 'border-red-500' : 'border-gray-300'}`} 
+            className={`w-full border rounded px-3 py-2 ${formErrors.odometer_reading ? 'border-red-500' : 'border-border bg-background text-foreground'}`} 
           />
         </div>
       </div>
