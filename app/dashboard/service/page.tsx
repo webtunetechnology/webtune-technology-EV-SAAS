@@ -704,103 +704,74 @@ export default function ServiceManagementPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div>
       {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
 
       {/* Header */}
-      <div className="bg-white border-b shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 py-4">
-          <div className="flex justify-between items-center">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-                <Wrench className="w-6 h-6" />
-                Service Management
-              </h1>
-              <p className="text-sm text-gray-500 mt-1">Manage appointments, service records, and repairs</p>
-            </div>
-            <div className="flex space-x-3">
-              <button 
-                onClick={() => { resetAppointmentForm(); setEditingAppointment(null); setShowAppointmentModal(true); }} 
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2"
-              >
-                <Plus className="w-4 h-4" />
-                New Appointment
-              </button>
-              <button 
-                onClick={() => { resetServiceForm(); setShowServiceModal(true); }} 
-                className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center gap-2"
-              >
-                <Plus className="w-4 h-4" />
-                New Service Record
-              </button>
-            </div>
-          </div>
+      <div className="flex items-start justify-between mb-6">
+        <div>
+          <h1 className="text-2xl font-bold text-foreground">Service</h1>
+          <p className="text-sm text-muted-foreground mt-0.5">Manage appointments, service records, and repairs</p>
         </div>
-      </div>
-
-      {/* Stats */}
-      <div className="max-w-7xl mx-auto px-4 py-6">
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-          {[
-            { label: "Today's Appointments", value: stats.todayAppointments, color: '', icon: <Calendar className="w-5 h-5" /> },
-            { label: 'In Progress', value: stats.inProgress, color: 'text-yellow-600', icon: <Clock className="w-5 h-5" /> },
-            { label: 'Completed Today', value: stats.completedToday, color: 'text-green-600', icon: <CheckCircle className="w-5 h-5" /> },
-            { label: 'Pending Payments', value: stats.pendingPayments, color: 'text-red-600', icon: <AlertCircle className="w-5 h-5" /> },
-            { label: 'Revenue (Month)', value: `₹${stats.totalRevenue.toLocaleString()}`, color: 'text-purple-600', icon: <DollarSign className="w-5 h-5" /> },
-            { label: 'Avg Rating', value: `${stats.avgRating} ⭐`, color: 'text-indigo-600', icon: <Star className="w-5 h-5" /> },
-          ].map((stat, i) => (
-            <div key={i} className="bg-white rounded-lg shadow p-4">
-              <div className="flex items-center justify-between mb-2">
-                <p className="text-sm text-gray-500">{stat.label}</p>
-                <span className={stat.color}>{stat.icon}</span>
-              </div>
-              <p className={`text-2xl font-bold ${stat.color}`}>{stat.value}</p>
-            </div>
-          ))}
+        <div className="flex gap-2">
+          <button 
+            onClick={() => { resetAppointmentForm(); setEditingAppointment(null); setShowAppointmentModal(true); }} 
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-full bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors"
+          >
+            <Plus className="w-4 h-4" />
+            New Appointment
+          </button>
+          <button 
+            onClick={() => { resetServiceForm(); setShowServiceModal(true); }} 
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-full border border-border bg-card text-foreground text-sm font-medium hover:bg-muted transition-colors"
+          >
+            <Plus className="w-4 h-4" />
+            Service Record
+          </button>
         </div>
       </div>
 
       {/* View Toggle & Search */}
-      <div className="max-w-7xl mx-auto px-4 pb-8">
-        <div className="mb-6 space-y-4">
-          <div className="flex space-x-4">
+      <div>
+        <div className="mb-5 space-y-3">
+          <div className="flex gap-2">
             <button 
               onClick={() => setActiveView('appointments')} 
-              className={`px-6 py-2 rounded-lg font-medium flex items-center gap-2 ${activeView === 'appointments' ? 'bg-blue-600 text-white' : 'bg-white text-gray-700 border'}`}
+              className={`px-5 py-2 rounded-full text-sm font-medium flex items-center gap-2 transition-colors ${activeView === 'appointments' ? 'bg-primary text-primary-foreground' : 'bg-card text-muted-foreground border border-border hover:text-foreground'}`}
             >
               <Calendar className="w-4 h-4" />
               Appointments
             </button>
             <button 
               onClick={() => setActiveView('records')} 
-              className={`px-6 py-2 rounded-lg font-medium flex items-center gap-2 ${activeView === 'records' ? 'bg-blue-600 text-white' : 'bg-white text-gray-700 border'}`}
+              className={`px-5 py-2 rounded-full text-sm font-medium flex items-center gap-2 transition-colors ${activeView === 'records' ? 'bg-primary text-primary-foreground' : 'bg-card text-muted-foreground border border-border hover:text-foreground'}`}
             >
               <Wrench className="w-4 h-4" />
               Service Records
             </button>
           </div>
-          <div className="flex gap-4">
-            <div className="flex-1 relative">
-              <Search className="absolute left-3 top-2.5 text-gray-400 w-5 h-5" />
+          <div className="flex gap-3">
+            <div className="flex-1 max-w-xs relative">
+              <Search className="absolute left-3 top-2.5 text-muted-foreground w-4 h-4" />
               <input 
                 type="text" 
                 placeholder={activeView === 'appointments' ? "Search by customer..." : "Search service records..."} 
                 value={searchTerm} 
                 onChange={(e) => setSearchTerm(e.target.value)} 
-                className="w-full px-4 py-2 border rounded-lg pl-10" 
+                className="w-full px-4 py-2 border border-border rounded-xl bg-card text-sm pl-9 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/40 transition-colors" 
               />
             </div>
             <button 
               onClick={() => setShowFilters(!showFilters)} 
-              className="px-4 py-2 border rounded-lg bg-white hover:bg-gray-50 flex items-center gap-2"
+              className={`inline-flex items-center gap-2 px-3.5 py-2 rounded-xl border text-sm font-medium transition-colors ${showFilters ? 'bg-primary/10 text-primary border-primary/30' : 'bg-card text-muted-foreground border-border hover:text-foreground'}`}
             >
               <Filter className="w-4 h-4" />
-              Filters {Object.values(filters).some(f => f) && <span className="w-2 h-2 bg-blue-500 rounded-full"></span>}
+              Filters {Object.values(filters).some(f => f) && <span className="w-1.5 h-1.5 bg-primary rounded-full"></span>}
             </button>
           </div>
           {showFilters && (
-            <div className="bg-white p-4 rounded-lg border grid grid-cols-1 md:grid-cols-4 gap-4">
-              <select value={filters.status} onChange={(e) => setFilters({ ...filters, status: e.target.value })} className="border rounded px-3 py-2">
+            <div className="bg-card border border-border/60 p-4 rounded-2xl grid grid-cols-1 md:grid-cols-4 gap-4">
+              <select value={filters.status} onChange={(e) => setFilters({ ...filters, status: e.target.value })} className="border border-border rounded-xl px-3 py-2 text-sm bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20">
                 <option value="">All Status</option>
                 <option value="Scheduled">Scheduled</option><option value="In Progress">In Progress</option>
                 <option value="Completed">Completed</option><option value="Cancelled">Cancelled</option>
@@ -808,58 +779,48 @@ export default function ServiceManagementPage() {
               </select>
               {activeView === 'records' && (
                 <>
-                  <select value={filters.service_type} onChange={(e) => setFilters({ ...filters, service_type: e.target.value })} className="border rounded px-3 py-2">
+                  <select value={filters.service_type} onChange={(e) => setFilters({ ...filters, service_type: e.target.value })} className="border border-border rounded-xl px-3 py-2 text-sm bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20">
                     <option value="">All Types</option>
                     <option value="Free Service">Free Service</option><option value="Paid Service">Paid Service</option>
                     <option value="Warranty Repair">Warranty Repair</option><option value="Accidental Repair">Accidental Repair</option>
                     <option value="Recall">Recall</option><option value="Battery Replacement">Battery Replacement</option>
                     <option value="Software Update">Software Update</option>
                   </select>
-                  <select value={filters.payment_status} onChange={(e) => setFilters({ ...filters, payment_status: e.target.value })} className="border rounded px-3 py-2">
+                  <select value={filters.payment_status} onChange={(e) => setFilters({ ...filters, payment_status: e.target.value })} className="border border-border rounded-xl px-3 py-2 text-sm bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20">
                     <option value="">All Payments</option>
                     <option value="Pending">Pending</option><option value="Paid">Paid</option>
                     <option value="Warranty">Warranty</option><option value="Insurance">Insurance</option>
                   </select>
                 </>
               )}
-              <input type="date" value={filters.date_from} onChange={(e) => setFilters({ ...filters, date_from: e.target.value })} className="border rounded px-3 py-2" />
-              <input type="date" value={filters.date_to} onChange={(e) => setFilters({ ...filters, date_to: e.target.value })} className="border rounded px-3 py-2" />
+              <input type="date" value={filters.date_from} onChange={(e) => setFilters({ ...filters, date_from: e.target.value })} className="border border-border rounded-xl px-3 py-2 text-sm bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20" />
+              <input type="date" value={filters.date_to} onChange={(e) => setFilters({ ...filters, date_to: e.target.value })} className="border border-border rounded-xl px-3 py-2 text-sm bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20" />
             </div>
           )}
         </div>
 
         {/* Table */}
-        <div className="bg-white rounded-lg shadow overflow-hidden">
+        <div className="bg-card border border-border/60 rounded-2xl overflow-hidden">
           <div className="overflow-x-auto">
             {activeView === 'appointments' ? (
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                      <div className="flex items-center gap-1"><User className="w-3 h-3" /> Customer</div>
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                      <div className="flex items-center gap-1"><Car className="w-3 h-3" /> Vehicle</div>
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                      <div className="flex items-center gap-1"><CalendarDays className="w-3 h-3" /> Date & Time</div>
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                      <div className="flex items-center gap-1"><Settings className="w-3 h-3" /> Type</div>
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                      <div className="flex items-center gap-1"><User className="w-3 h-3" /> Technician</div>
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+              <table className="min-w-full divide-y divide-border/40">
+                <thead>
+                  <tr className="border-b border-border/60">
+                    <th className="px-6 py-3.5 text-left text-xs font-medium text-muted-foreground">Customer</th>
+                    <th className="px-6 py-3.5 text-left text-xs font-medium text-muted-foreground">Vehicle</th>
+                    <th className="px-6 py-3.5 text-left text-xs font-medium text-muted-foreground">Date & Time</th>
+                    <th className="px-6 py-3.5 text-left text-xs font-medium text-muted-foreground">Type</th>
+                    <th className="px-6 py-3.5 text-left text-xs font-medium text-muted-foreground">Technician</th>
+                    <th className="px-6 py-3.5 text-left text-xs font-medium text-muted-foreground">Status</th>
+                    <th className="px-6 py-3.5 text-left text-xs font-medium text-muted-foreground">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-200">
+                <tbody className="divide-y divide-border/40">
                   {appointments.length === 0 ? (
                     <tr>
-                      <td colSpan={7} className="px-6 py-12 text-center text-gray-500">
+                      <td colSpan={7} className="px-6 py-12 text-center text-muted-foreground">
                         <div className="flex flex-col items-center gap-2">
-                          <Calendar className="w-8 h-8 text-gray-300" />
+                          <Calendar className="w-8 h-8 text-muted-foreground/30" />
                           <span>No appointments found</span>
                         </div>
                       </td>
@@ -910,35 +871,21 @@ export default function ServiceManagementPage() {
                 </tbody>
               </table>
             ) : (
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                      <div className="flex items-center gap-1"><CalendarDays className="w-3 h-3" /> Service Date</div>
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                      <div className="flex items-center gap-1"><User className="w-3 h-3" /> Customer</div>
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                      <div className="flex items-center gap-1"><Car className="w-3 h-3" /> Vehicle</div>
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                      <div className="flex items-center gap-1"><Settings className="w-3 h-3" /> Type</div>
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                      <div className="flex items-center gap-1"><DollarSign className="w-3 h-3" /> Amount</div>
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                      <div className="flex items-center gap-1"><CreditCard className="w-3 h-3" /> Payment</div>
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                      <div className="flex items-center gap-1"><Star className="w-3 h-3" /> Rating</div>
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+              <table className="min-w-full divide-y divide-border/40">
+                <thead>
+                  <tr className="border-b border-border/60">
+                    <th className="px-6 py-3.5 text-left text-xs font-medium text-muted-foreground">Service Date</th>
+                    <th className="px-6 py-3.5 text-left text-xs font-medium text-muted-foreground">Customer</th>
+                    <th className="px-6 py-3.5 text-left text-xs font-medium text-muted-foreground">Vehicle</th>
+                    <th className="px-6 py-3.5 text-left text-xs font-medium text-muted-foreground">Type</th>
+                    <th className="px-6 py-3.5 text-left text-xs font-medium text-muted-foreground">Amount</th>
+                    <th className="px-6 py-3.5 text-left text-xs font-medium text-muted-foreground">Payment</th>
+                    <th className="px-6 py-3.5 text-left text-xs font-medium text-muted-foreground">Status</th>
+                    <th className="px-6 py-3.5 text-left text-xs font-medium text-muted-foreground">Rating</th>
+                    <th className="px-6 py-3.5 text-left text-xs font-medium text-muted-foreground">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-200">
+                <tbody className="divide-y divide-border/40">
                   {records.length === 0 ? (
                     <tr>
                       <td colSpan={9} className="px-6 py-12 text-center text-gray-500">

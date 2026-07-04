@@ -627,7 +627,7 @@ export default function VehicleManagementPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div>
       {toast && (
         <Toast
           message={toast.message}
@@ -637,106 +637,54 @@ export default function VehicleManagementPage() {
       )}
 
       {/* Header */}
-      <div className="bg-white border-b shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 py-4">
-          <div className="flex justify-between items-center">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-                <Car className="w-6 h-6" />
-                Vehicle Management
-              </h1>
-              <p className="text-sm text-gray-500 mt-1">Manage vehicle models, specifications, and pricing</p>
-            </div>
-            <button
-              onClick={() => { resetForm(); setEditingVehicle(null); setShowModal(true); }}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
-            >
-              <Plus className="w-4 h-4" />
-              Add Vehicle
-            </button>
-          </div>
+      <div className="flex items-start justify-between mb-6">
+        <div>
+          <h1 className="text-2xl font-bold text-foreground">Vehicles</h1>
+          <p className="text-sm text-muted-foreground mt-0.5">
+            {loading ? 'Loading…' : `${stats.total} model${stats.total !== 1 ? 's' : ''} in catalog`}
+          </p>
         </div>
-      </div>
-
-      {/* Stats Cards */}
-      <div className="max-w-7xl mx-auto px-4 py-6">
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-          <div className="bg-white rounded-lg shadow p-4 hover:shadow-md transition-shadow">
-            <div className="flex items-center justify-between mb-2">
-              <p className="text-sm text-gray-500">Total Models</p>
-              <Car className="w-4 h-4 text-gray-400" />
-            </div>
-            <p className="text-2xl font-bold">{stats.total}</p>
-          </div>
-          <div className="bg-white rounded-lg shadow p-4 hover:shadow-md transition-shadow">
-            <div className="flex items-center justify-between mb-2">
-              <p className="text-sm text-gray-500">Active</p>
-              <CheckCircle className="w-4 h-4 text-green-400" />
-            </div>
-            <p className="text-2xl font-bold text-green-600">{stats.active}</p>
-          </div>
-          <div className="bg-white rounded-lg shadow p-4 hover:shadow-md transition-shadow">
-            <div className="flex items-center justify-between mb-2">
-              <p className="text-sm text-gray-500">Discontinued</p>
-              <AlertCircle className="w-4 h-4 text-red-400" />
-            </div>
-            <p className="text-2xl font-bold text-red-600">{stats.discontinued}</p>
-          </div>
-          <div className="bg-white rounded-lg shadow p-4 hover:shadow-md transition-shadow">
-            <div className="flex items-center justify-between mb-2">
-              <p className="text-sm text-gray-500">Scooters</p>
-              <Bike className="w-4 h-4 text-blue-400" />
-            </div>
-            <p className="text-2xl font-bold text-blue-600">{stats.scooterCount}</p>
-          </div>
-          <div className="bg-white rounded-lg shadow p-4 hover:shadow-md transition-shadow">
-            <div className="flex items-center justify-between mb-2">
-              <p className="text-sm text-gray-500">Avg Range</p>
-              <Gauge className="w-4 h-4 text-purple-400" />
-            </div>
-            <p className="text-2xl font-bold text-purple-600">{stats.averageRange} km</p>
-          </div>
-          <div className="bg-white rounded-lg shadow p-4 hover:shadow-md transition-shadow">
-            <div className="flex items-center justify-between mb-2">
-              <p className="text-sm text-gray-500">Avg Price</p>
-              <TrendingUp className="w-4 h-4 text-indigo-400" />
-            </div>
-            <p className="text-2xl font-bold text-indigo-600">₹{(stats.averagePrice / 100000).toFixed(1)}L</p>
-          </div>
-        </div>
+        <button
+          onClick={() => { resetForm(); setEditingVehicle(null); setShowModal(true); }}
+          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-full bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors"
+        >
+          <Plus className="w-4 h-4" />
+          Add Vehicle
+        </button>
       </div>
 
       {/* Search and Filters */}
-      <div className="max-w-7xl mx-auto px-4 pb-8">
-        <div className="mb-6 flex gap-4">
-          <div className="flex-1 relative">
-            <Search className="absolute left-3 top-2.5 text-gray-400 w-5 h-5" />
+      <div>
+        <div className="mb-5 flex gap-3">
+          <div className="flex-1 max-w-xs relative">
+            <Search className="absolute left-3 top-2.5 text-muted-foreground w-4 h-4" />
             <input
               type="text"
-              placeholder="Search by model name, variant, or brand..."
+              placeholder="Search models…"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 pl-10"
+              className="w-full px-4 py-2 border border-border rounded-xl bg-card text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/40 pl-9 transition-colors"
             />
           </div>
           <button 
             onClick={() => setShowFilters(!showFilters)} 
-            className="px-4 py-2 border rounded-lg bg-white hover:bg-gray-50 transition-colors flex items-center gap-2"
+            className={`inline-flex items-center gap-2 px-3.5 py-2 rounded-xl border text-sm font-medium transition-colors ${showFilters ? 'bg-primary/10 text-primary border-primary/30' : 'bg-card text-muted-foreground border-border hover:text-foreground'}`}
           >
             <Filter className="w-4 h-4" />
-            Filters {Object.values(filters).some(f => f) && <span className="w-2 h-2 bg-blue-500 rounded-full"></span>}
+            Filters {Object.values(filters).some(f => f) && <span className="w-1.5 h-1.5 bg-primary rounded-full"></span>}
           </button>
           <button 
             onClick={loadVehicles} 
-            className="px-4 py-2 border rounded-lg bg-white hover:bg-gray-50 transition-colors"
+            className="px-3 py-2 border border-border rounded-xl bg-card hover:bg-muted text-muted-foreground transition-colors"
+            title="Refresh"
           >
             <RefreshCw className="w-4 h-4" />
           </button>
         </div>
 
         {showFilters && (
-          <div className="bg-white p-4 rounded-lg border mb-6 grid grid-cols-1 md:grid-cols-4 gap-4 animate-fade-in">
-            <select value={filters.vehicle_type} onChange={(e) => setFilters({ ...filters, vehicle_type: e.target.value })} className="border rounded px-3 py-2">
+          <div className="bg-card border border-border/60 p-4 rounded-2xl mb-5 grid grid-cols-1 md:grid-cols-4 gap-4">
+            <select value={filters.vehicle_type} onChange={(e) => setFilters({ ...filters, vehicle_type: e.target.value })} className="border border-border rounded-xl px-3 py-2 text-sm bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20">
               <option value="">All Types</option>
               <option value="Electric Scooter">Electric Scooter</option>
               <option value="Electric Motorcycle">Electric Motorcycle</option>
@@ -744,18 +692,18 @@ export default function VehicleManagementPage() {
               <option value="Electric Rickshaw">Electric Rickshaw</option>
               <option value="Electric Bus">Electric Bus</option>
             </select>
-            <select value={filters.brand_id} onChange={(e) => setFilters({ ...filters, brand_id: e.target.value })} className="border rounded px-3 py-2">
+            <select value={filters.brand_id} onChange={(e) => setFilters({ ...filters, brand_id: e.target.value })} className="border border-border rounded-xl px-3 py-2 text-sm bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20">
               <option value="">All Brands</option>
               {brands.map(brand => (
                 <option key={brand.id} value={brand.id}>{brand.brand_name}</option>
               ))}
             </select>
-            <select value={filters.is_active} onChange={(e) => setFilters({ ...filters, is_active: e.target.value })} className="border rounded px-3 py-2">
+            <select value={filters.is_active} onChange={(e) => setFilters({ ...filters, is_active: e.target.value })} className="border border-border rounded-xl px-3 py-2 text-sm bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20">
               <option value="">All Status</option>
               <option value="true">Active</option>
               <option value="false">Inactive</option>
             </select>
-            <select value={filters.is_discontinued} onChange={(e) => setFilters({ ...filters, is_discontinued: e.target.value })} className="border rounded px-3 py-2">
+            <select value={filters.is_discontinued} onChange={(e) => setFilters({ ...filters, is_discontinued: e.target.value })} className="border border-border rounded-xl px-3 py-2 text-sm bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20">
               <option value="">All Availability</option>
               <option value="true">Discontinued</option>
               <option value="false">Available</option>
@@ -764,62 +712,48 @@ export default function VehicleManagementPage() {
         )}
 
         {/* Vehicles Table */}
-        <div className="bg-white rounded-lg shadow overflow-hidden">
+        <div className="bg-card border border-border/60 rounded-2xl overflow-hidden">
           <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                    <div className="flex items-center gap-1"><Car className="w-3 h-3" /> Vehicle</div>
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                    <div className="flex items-center gap-1"><Settings className="w-3 h-3" /> Type</div>
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                    <div className="flex items-center gap-1"><Battery className="w-3 h-3" /> Battery</div>
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                    <div className="flex items-center gap-1"><Gauge className="w-3 h-3" /> Performance</div>
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                    <div className="flex items-center gap-1"><DollarSign className="w-3 h-3" /> Price</div>
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                    <div className="flex items-center gap-1"><Activity className="w-3 h-3" /> Status</div>
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                    <div className="flex items-center gap-1"><Shield className="w-3 h-3" /> Warranty</div>
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+            <table className="min-w-full divide-y divide-border/40">
+              <thead>
+                <tr className="border-b border-border/60">
+                  <th className="px-6 py-3.5 text-left text-xs font-medium text-muted-foreground">Vehicle</th>
+                  <th className="px-6 py-3.5 text-left text-xs font-medium text-muted-foreground">Type</th>
+                  <th className="px-6 py-3.5 text-left text-xs font-medium text-muted-foreground">Battery</th>
+                  <th className="px-6 py-3.5 text-left text-xs font-medium text-muted-foreground">Performance</th>
+                  <th className="px-6 py-3.5 text-left text-xs font-medium text-muted-foreground">Price</th>
+                  <th className="px-6 py-3.5 text-left text-xs font-medium text-muted-foreground">Status</th>
+                  <th className="px-6 py-3.5 text-left text-xs font-medium text-muted-foreground">Warranty</th>
+                  <th className="px-6 py-3.5 text-left text-xs font-medium text-muted-foreground">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-200">
+              <tbody className="divide-y divide-border/40">
                 {loading ? (
                   <tr>
                     <td colSpan={8} className="px-6 py-12 text-center">
                       <div className="flex justify-center">
-                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
                       </div>
-                      <p className="mt-2 text-sm text-gray-500">Loading vehicles...</p>
+                      <p className="mt-2 text-sm text-muted-foreground">Loading vehicles...</p>
                     </td>
                   </tr>
                 ) : vehicles.length === 0 ? (
                   <tr>
-                    <td colSpan={8} className="px-6 py-12 text-center text-gray-500">
+                    <td colSpan={8} className="px-6 py-12 text-center text-muted-foreground">
                       <div className="flex flex-col items-center gap-2">
-                        <Car className="w-8 h-8 text-gray-300" />
+                        <Car className="w-8 h-8 text-muted-foreground/30" />
                         <span>No vehicles found</span>
                       </div>
                     </td>
                   </tr>
                 ) : (
                   vehicles.map((vehicle) => (
-                    <tr key={vehicle.id} className="hover:bg-gray-50 transition-colors">
+                    <tr key={vehicle.id} className="hover:bg-muted/20 transition-colors">
                       <td className="px-6 py-4">
-                        <div className="font-medium text-gray-900">{vehicle.model_name}</div>
-                        <div className="text-sm text-gray-500">{vehicle.brand?.brand_name || 'Unknown Brand'}</div>
+                        <div className="font-medium text-foreground">{vehicle.model_name}</div>
+                        <div className="text-sm text-muted-foreground">{vehicle.brand?.brand_name || 'Unknown Brand'}</div>
                         {vehicle.variant_name && (
-                          <div className="text-xs text-gray-400">{vehicle.variant_name}</div>
+                          <div className="text-xs text-muted-foreground/70">{vehicle.variant_name}</div>
                         )}
                       </td>
                       <td className="px-6 py-4">

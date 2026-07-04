@@ -668,127 +668,58 @@ export default function PartsManagementPage() {
 
   if (loading && parts.length === 0) {
     return (
-      <div className="min-h-screen bg-gray-50">
-        <div className="max-w-7xl mx-auto px-4 py-8">
-          <LoadingSkeleton />
-        </div>
+      <div>
+        <LoadingSkeleton />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div>
       {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
 
       {/* Header */}
-      <div className="bg-white border-b shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 py-4">
-          <div className="flex justify-between items-center">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-                <Package className="w-6 h-6" />
-                Spare Parts & Stock Management
-              </h1>
-              <p className="text-sm text-gray-500 mt-1">Manage parts inventory, stock levels, and transactions</p>
-            </div>
-            <button
-              onClick={() => { resetForm(); setEditingPart(null); setShowFormModal(true); }}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
-            >
-              <Plus className="w-4 h-4" />
-              Add Part
-            </button>
-          </div>
+      <div className="flex items-start justify-between mb-6">
+        <div>
+          <h1 className="text-2xl font-bold text-foreground">Spare Parts & Stock</h1>
+          <p className="text-sm text-muted-foreground mt-0.5">
+            {loading ? 'Loading…' : `${stats.totalParts} part${stats.totalParts !== 1 ? 's' : ''} in catalog`}
+          </p>
         </div>
-      </div>
-
-      {/* Stats Cards */}
-      <div className="max-w-7xl mx-auto px-4 py-6">
-        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-4">
-          <div className="bg-white rounded-lg shadow p-4 hover:shadow-md transition-shadow">
-            <div className="flex items-center justify-between mb-2">
-              <p className="text-sm text-gray-500">Total Parts</p>
-              <Package className="w-4 h-4 text-gray-400" />
-            </div>
-            <p className="text-2xl font-bold">{stats.totalParts}</p>
-          </div>
-          <div className="bg-white rounded-lg shadow p-4 hover:shadow-md transition-shadow">
-            <div className="flex items-center justify-between mb-2">
-              <p className="text-sm text-gray-500">Active</p>
-              <CheckCircle className="w-4 h-4 text-green-400" />
-            </div>
-            <p className="text-2xl font-bold text-green-600">{stats.activeParts}</p>
-          </div>
-          <div className="bg-white rounded-lg shadow p-4 hover:shadow-md transition-shadow">
-            <div className="flex items-center justify-between mb-2">
-              <p className="text-sm text-gray-500">Low Stock</p>
-              <TrendingDown className="w-4 h-4 text-yellow-400" />
-            </div>
-            <p className="text-2xl font-bold text-yellow-600">{stats.lowStock}</p>
-          </div>
-          <div className="bg-white rounded-lg shadow p-4 hover:shadow-md transition-shadow">
-            <div className="flex items-center justify-between mb-2">
-              <p className="text-sm text-gray-500">Out of Stock</p>
-              <AlertCircle className="w-4 h-4 text-red-400" />
-            </div>
-            <p className="text-2xl font-bold text-red-600">{stats.outOfStock}</p>
-          </div>
-          <div className="bg-white rounded-lg shadow p-4 hover:shadow-md transition-shadow">
-            <div className="flex items-center justify-between mb-2">
-              <p className="text-sm text-gray-500">Reorder Needed</p>
-              <ShoppingCart className="w-4 h-4 text-orange-400" />
-            </div>
-            <p className="text-2xl font-bold text-orange-600">{stats.reorderNeeded}</p>
-          </div>
-          <div className="bg-white rounded-lg shadow p-4 hover:shadow-md transition-shadow">
-            <div className="flex items-center justify-between mb-2">
-              <p className="text-sm text-gray-500">Pending POs</p>
-              <ClipboardList className="w-4 h-4 text-purple-400" />
-            </div>
-            <p className="text-2xl font-bold text-purple-600">{stats.pendingPOs}</p>
-          </div>
-          <div className="bg-white rounded-lg shadow p-4 hover:shadow-md transition-shadow">
-            <div className="flex items-center justify-between mb-2">
-              <p className="text-sm text-gray-500">Categories</p>
-              <Layers className="w-4 h-4 text-indigo-400" />
-            </div>
-            <p className="text-2xl font-bold text-indigo-600">{stats.totalCategories}</p>
-          </div>
-          <div className="bg-white rounded-lg shadow p-4 hover:shadow-md transition-shadow">
-            <div className="flex items-center justify-between mb-2">
-              <p className="text-sm text-gray-500">Stock Value</p>
-              <DollarSign className="w-4 h-4 text-teal-400" />
-            </div>
-            <p className="text-2xl font-bold text-teal-600">₹{(stats.totalStockValue / 1000).toFixed(0)}K</p>
-          </div>
-        </div>
+        <button
+          onClick={() => { resetForm(); setEditingPart(null); setShowFormModal(true); }}
+          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-full bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors"
+        >
+          <Plus className="w-4 h-4" />
+          Add Part
+        </button>
       </div>
 
       {/* Search and Filters */}
-      <div className="max-w-7xl mx-auto px-4 pb-8">
-        <div className="mb-6 flex gap-4">
-          <div className="flex-1 relative">
-            <Search className="absolute left-3 top-2.5 text-gray-400 w-5 h-5" />
+      <div>
+        <div className="mb-5 flex gap-3">
+          <div className="flex-1 max-w-xs relative">
+            <Search className="absolute left-3 top-2.5 text-muted-foreground w-4 h-4" />
             <input
               type="text"
-              placeholder="Search by part name, code, manufacturer, or supplier..."
+              placeholder="Search parts…"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 pl-10"
+              className="w-full px-4 py-2 border border-border rounded-xl bg-card text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/40 pl-9 transition-colors"
             />
           </div>
-          <button onClick={() => setShowFilters(!showFilters)} className="px-4 py-2 border rounded-lg bg-white hover:bg-gray-50 transition-colors flex items-center gap-2">
+          <button onClick={() => setShowFilters(!showFilters)} className={`inline-flex items-center gap-2 px-3.5 py-2 rounded-xl border text-sm font-medium transition-colors ${showFilters ? 'bg-primary/10 text-primary border-primary/30' : 'bg-card text-muted-foreground border-border hover:text-foreground'}`}>
             <Filter className="w-4 h-4" />
-            Filters {Object.values(filters).some(f => f) && <span className="w-2 h-2 bg-blue-500 rounded-full"></span>}
+            Filters {Object.values(filters).some(f => f) && <span className="w-1.5 h-1.5 bg-primary rounded-full"></span>}
           </button>
-          <button onClick={loadParts} className="px-4 py-2 border rounded-lg bg-white hover:bg-gray-50 transition-colors">
+          <button onClick={loadParts} className="px-3 py-2 border border-border rounded-xl bg-card hover:bg-muted text-muted-foreground transition-colors" title="Refresh">
             <RefreshCw className="w-4 h-4" />
           </button>
         </div>
 
         {showFilters && (
-          <div className="bg-white p-4 rounded-lg border mb-6 grid grid-cols-1 md:grid-cols-4 gap-4 animate-fade-in">
-            <select value={filters.category} onChange={(e) => setFilters({ ...filters, category: e.target.value })} className="border rounded px-3 py-2">
+          <div className="bg-card border border-border/60 p-4 rounded-2xl mb-5 grid grid-cols-1 md:grid-cols-4 gap-4">
+            <select value={filters.category} onChange={(e) => setFilters({ ...filters, category: e.target.value })} className="border border-border rounded-xl px-3 py-2 text-sm bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20">
               <option value="">All Categories</option>
               <option value="Battery">Battery</option>
               <option value="Motor">Motor</option>
@@ -804,14 +735,14 @@ export default function PartsManagementPage() {
               <option value="Consumables">Consumables</option>
               <option value="Other">Other</option>
             </select>
-            <select value={filters.stock_status} onChange={(e) => setFilters({ ...filters, stock_status: e.target.value })} className="border rounded px-3 py-2">
+            <select value={filters.stock_status} onChange={(e) => setFilters({ ...filters, stock_status: e.target.value })} className="border border-border rounded-xl px-3 py-2 text-sm bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20">
               <option value="">All Stock Status</option>
               <option value="in_stock">In Stock</option>
               <option value="low_stock">Low Stock</option>
               <option value="out_of_stock">Out of Stock</option>
               <option value="reorder">Reorder Needed</option>
             </select>
-            <select value={filters.is_active} onChange={(e) => setFilters({ ...filters, is_active: e.target.value })} className="border rounded px-3 py-2">
+            <select value={filters.is_active} onChange={(e) => setFilters({ ...filters, is_active: e.target.value })} className="border border-border rounded-xl px-3 py-2 text-sm bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20">
               <option value="">All Status</option>
               <option value="true">Active</option>
               <option value="false">Inactive</option>
@@ -821,56 +752,42 @@ export default function PartsManagementPage() {
               placeholder="Filter by supplier..."
               value={filters.supplier_name}
               onChange={(e) => setFilters({ ...filters, supplier_name: e.target.value })}
-              className="border rounded px-3 py-2"
+              className="border border-border rounded-xl px-3 py-2 text-sm bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20"
             />
           </div>
         )}
 
         {/* Parts Table */}
-        <div className="bg-white rounded-lg shadow overflow-hidden">
+        <div className="bg-card border border-border/60 rounded-2xl overflow-hidden">
           <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                    <div className="flex items-center gap-1"><Package className="w-3 h-3" /> Part Details</div>
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                    <div className="flex items-center gap-1"><Layers className="w-3 h-3" /> Category</div>
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                    <div className="flex items-center gap-1"><BarChart3 className="w-3 h-3" /> Stock</div>
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                    <div className="flex items-center gap-1"><MapPin className="w-3 h-3" /> Location</div>
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                    <div className="flex items-center gap-1"><DollarSign className="w-3 h-3" /> Price</div>
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                    <div className="flex items-center gap-1"><Truck className="w-3 h-3" /> Supplier</div>
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                    <div className="flex items-center gap-1"><Activity className="w-3 h-3" /> Status</div>
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+            <table className="min-w-full divide-y divide-border/40">
+              <thead>
+                <tr className="border-b border-border/60">
+                  <th className="px-6 py-3.5 text-left text-xs font-medium text-muted-foreground">Part Details</th>
+                  <th className="px-6 py-3.5 text-left text-xs font-medium text-muted-foreground">Category</th>
+                  <th className="px-6 py-3.5 text-left text-xs font-medium text-muted-foreground">Stock</th>
+                  <th className="px-6 py-3.5 text-left text-xs font-medium text-muted-foreground">Location</th>
+                  <th className="px-6 py-3.5 text-left text-xs font-medium text-muted-foreground">Price</th>
+                  <th className="px-6 py-3.5 text-left text-xs font-medium text-muted-foreground">Supplier</th>
+                  <th className="px-6 py-3.5 text-left text-xs font-medium text-muted-foreground">Status</th>
+                  <th className="px-6 py-3.5 text-left text-xs font-medium text-muted-foreground">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-200">
+              <tbody className="divide-y divide-border/40">
                 {loading ? (
                   <tr>
                     <td colSpan={8} className="px-6 py-12 text-center">
                       <div className="flex justify-center">
-                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
                       </div>
-                      <p className="mt-2 text-sm text-gray-500">Loading parts...</p>
+                      <p className="mt-2 text-sm text-muted-foreground">Loading parts...</p>
                     </td>
                   </tr>
                 ) : parts.length === 0 ? (
                   <tr>
-                    <td colSpan={8} className="px-6 py-12 text-center text-gray-500">
+                    <td colSpan={8} className="px-6 py-12 text-center text-muted-foreground">
                       <div className="flex flex-col items-center gap-2">
-                        <Package className="w-8 h-8 text-gray-300" />
+                        <Package className="w-8 h-8 text-muted-foreground/30" />
                         <span>No parts found</span>
                       </div>
                     </td>

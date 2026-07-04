@@ -700,52 +700,28 @@ export default function InventoryManagementPage() {
   // ============================================================================
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div>
       {/* Header */}
-      <div className="bg-white border-b border-gray-200">
-        <div className="px-4 sm:px-6 lg:px-8 py-6">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">Inventory Management</h1>
-              <p className="mt-1 text-sm text-gray-500">Manage your EV vehicles, track stock levels, and monitor battery health</p>
-            </div>
-            <div className="mt-4 sm:mt-0 flex flex-col sm:flex-row gap-3">
-              <button onClick={handleExport} disabled={inventory.length === 0}
-                className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-lg shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
-                <Download className="h-4 w-4 mr-2" />Export CSV
-              </button>
-              <button onClick={openAddModal}
-                className="inline-flex items-center px-4 py-2 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700">
-                <Plus className="h-4 w-4 mr-2" />Add Vehicle
-              </button>
-            </div>
-          </div>
+      <div className="flex items-start justify-between mb-6">
+        <div>
+          <h1 className="text-2xl font-bold text-foreground">Inventory</h1>
+          <p className="text-sm text-muted-foreground mt-0.5">
+            {loading ? 'Loading…' : `${inventory.length} vehicle${inventory.length !== 1 ? 's' : ''} in stock`}
+          </p>
+        </div>
+        <div className="flex gap-2">
+          <button onClick={handleExport} disabled={inventory.length === 0}
+            className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl border border-border bg-card text-sm font-medium text-muted-foreground hover:text-foreground disabled:opacity-40 transition-colors">
+            <Download className="h-4 w-4" />Export
+          </button>
+          <button onClick={openAddModal}
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-full bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors">
+            <Plus className="h-4 w-4" />Add Vehicle
+          </button>
         </div>
       </div>
 
-      <div className="px-4 sm:px-6 lg:px-8 py-6">
-        {/* Stats Cards */}
-        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-4 mb-6">
-          {[
-            { label: 'Total', value: stats.total, color: 'text-gray-900', icon: Package },
-            { label: 'Available', value: stats.available, color: 'text-green-600', icon: CheckCircle },
-            { label: 'Booked', value: stats.booked, color: 'text-blue-600', icon: Calendar },
-            { label: 'Sold', value: stats.sold, color: 'text-gray-600', icon: DollarSign },
-            { label: 'In Transit', value: stats.transit, color: 'text-purple-600', icon: Truck },
-            { label: 'Test Ride', value: stats.testRide, color: 'text-orange-600', icon: Activity },
-            { label: 'Demo', value: stats.demo, color: 'text-indigo-600', icon: Activity },
-            { label: 'Low Batt', value: stats.lowBattery, color: 'text-red-600', icon: Battery }
-          ].map((stat) => (
-            <div key={stat.label} className="bg-white rounded-lg shadow p-4">
-              <div className="flex items-center justify-between">
-                <div className="text-xs font-medium text-gray-500">{stat.label}</div>
-                <stat.icon className={`h-4 w-4 ${stat.color}`} />
-              </div>
-              <div className={`mt-1 text-xl font-bold ${stat.color}`}>{stat.value}</div>
-            </div>
-          ))}
-        </div>
-
+      <div>
         {/* Notifications */}
         {error && (
           <div className="mb-4 bg-red-50 border-l-4 border-red-400 p-4 rounded-lg">
@@ -767,70 +743,69 @@ export default function InventoryManagementPage() {
         )}
 
         {/* Search & Filters */}
-        <div className="bg-white rounded-lg shadow mb-6">
-          <div className="p-4">
-            <div className="flex flex-col sm:flex-row gap-4">
-              <div className="flex-1 relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
-                <input type="text" placeholder="Search by VIN, Chassis, Motor, or Battery number..."
-                  value={filters.search} onChange={(e) => handleFilterChange('search', e.target.value)}
-                  className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm" />
-              </div>
-              <button onClick={() => setShowFilters(!showFilters)}
-                className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
-                <Filter className="h-4 w-4 mr-2" />Filters
-                {showFilters ? <ChevronUp className="h-4 w-4 ml-2" /> : <ChevronDown className="h-4 w-4 ml-2" />}
-              </button>
-              <select value={sortBy} onChange={(e) => setSortBy(e.target.value)}
-                className="px-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500">
-                {SORT_FIELDS.map(f => <option key={f.value} value={f.value}>{f.label}</option>)}
-              </select>
-              <button onClick={() => setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc')}
-                className="px-4 py-2 border border-gray-300 rounded-lg text-sm hover:bg-gray-50">
-                {sortOrder === 'asc' ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-              </button>
+        <div className="mb-5">
+          <div className="flex flex-col sm:flex-row gap-3">
+            <div className="flex-1 max-w-xs relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <input type="text" placeholder="Search by VIN, Chassis…"
+                value={filters.search} onChange={(e) => handleFilterChange('search', e.target.value)}
+                className="block w-full pl-9 pr-3 py-2 border border-border rounded-xl bg-card text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/40 transition-colors" />
             </div>
-            {showFilters && (
-              <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 pt-4 border-t">
-                <div>
-                  <label className="block text-xs font-medium text-gray-500 mb-1">Stock Status</label>
-                  <select value={filters.stockStatus} onChange={(e) => handleFilterChange('stockStatus', e.target.value)}
-                    className="block w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500">
-                    <option value="">All Statuses</option>
-                    {STOCK_STATUS_OPTIONS.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-xs font-medium text-gray-500 mb-1">Brand</label>
-                  <select value={filters.brandId} onChange={(e) => handleFilterChange('brandId', e.target.value)}
-                    className="block w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500">
-                    <option value="">All Brands</option>
-                    {brands.map(b => <option key={b.id} value={b.id}>{b.brand_name}</option>)}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-xs font-medium text-gray-500 mb-1">Vehicle Type</label>
-                  <select value={filters.vehicleType} onChange={(e) => handleFilterChange('vehicleType', e.target.value)}
-                    className="block w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500">
-                    <option value="">All Types</option>
-                    {VEHICLE_TYPE_OPTIONS.map(t => <option key={t} value={t}>{t}</option>)}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-xs font-medium text-gray-500 mb-1">Test Ride</label>
-                  <select value={filters.isTestRide} onChange={(e) => handleFilterChange('isTestRide', e.target.value)}
-                    className="block w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500">
-                    <option value="">All</option>
-                    <option value="true">Yes</option>
-                    <option value="false">No</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-xs font-medium text-gray-500 mb-1">Demo Vehicle</label>
-                  <select value={filters.isDemo} onChange={(e) => handleFilterChange('isDemo', e.target.value)}
-                    className="block w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500">
-                    <option value="">All</option>
-                    <option value="true">Yes</option>
+            <button onClick={() => setShowFilters(!showFilters)}
+              className={`inline-flex items-center gap-2 px-3.5 py-2 rounded-xl border text-sm font-medium transition-colors ${showFilters ? 'bg-primary/10 text-primary border-primary/30' : 'bg-card text-muted-foreground border-border hover:text-foreground'}`}>
+              <Filter className="h-4 w-4" />Filters
+              {showFilters ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+            </button>
+            <select value={sortBy} onChange={(e) => setSortBy(e.target.value)}
+              className="px-3 py-2 border border-border rounded-xl text-sm bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20">
+              {SORT_FIELDS.map(f => <option key={f.value} value={f.value}>{f.label}</option>)}
+            </select>
+            <button onClick={() => setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc')}
+              className="px-3 py-2 border border-border rounded-xl text-sm bg-card hover:bg-muted text-muted-foreground transition-colors">
+              {sortOrder === 'asc' ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+            </button>
+          </div>
+          {showFilters && (
+            <div className="mt-3 bg-card border border-border/60 rounded-2xl p-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+              <div>
+                <label className="block text-xs font-medium text-muted-foreground mb-1">Stock Status</label>
+                <select value={filters.stockStatus} onChange={(e) => handleFilterChange('stockStatus', e.target.value)}
+                  className="block w-full px-3 py-2 border border-border rounded-xl text-sm bg-background focus:outline-none focus:ring-2 focus:ring-primary/20">
+                  <option value="">All Statuses</option>
+                  {STOCK_STATUS_OPTIONS.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-muted-foreground mb-1">Brand</label>
+                <select value={filters.brandId} onChange={(e) => handleFilterChange('brandId', e.target.value)}
+                  className="block w-full px-3 py-2 border border-border rounded-xl text-sm bg-background focus:outline-none focus:ring-2 focus:ring-primary/20">
+                  <option value="">All Brands</option>
+                  {brands.map(b => <option key={b.id} value={b.id}>{b.brand_name}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-muted-foreground mb-1">Vehicle Type</label>
+                <select value={filters.vehicleType} onChange={(e) => handleFilterChange('vehicleType', e.target.value)}
+                  className="block w-full px-3 py-2 border border-border rounded-xl text-sm bg-background focus:outline-none focus:ring-2 focus:ring-primary/20">
+                  <option value="">All Types</option>
+                  {VEHICLE_TYPE_OPTIONS.map(t => <option key={t} value={t}>{t}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-muted-foreground mb-1">Test Ride</label>
+                <select value={filters.isTestRide} onChange={(e) => handleFilterChange('isTestRide', e.target.value)}
+                  className="block w-full px-3 py-2 border border-border rounded-xl text-sm bg-background focus:outline-none focus:ring-2 focus:ring-primary/20">
+                  <option value="">All</option>
+                  <option value="true">Yes</option>
+                  <option value="false">No</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-muted-foreground mb-1">Demo Vehicle</label>
+                <select value={filters.isDemo} onChange={(e) => handleFilterChange('isDemo', e.target.value)}
+                  className="block w-full px-3 py-2 border border-border rounded-xl text-sm bg-background focus:outline-none focus:ring-2 focus:ring-primary/20">
+                  <option value="">All</option>
+                  <option value="true">Yes</option>
                     <option value="false">No</option>
                   </select>
                 </div>
@@ -841,50 +816,50 @@ export default function InventoryManagementPage() {
 
         {/* Bulk Actions */}
         {selectedItems.size > 0 && (
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-            <span className="text-sm text-blue-700 font-medium">{selectedItems.size} {selectedItems.size === 1 ? 'vehicle' : 'vehicles'} selected</span>
+          <div className="bg-primary/5 border border-primary/20 rounded-2xl p-4 mb-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+            <span className="text-sm text-primary font-medium">{selectedItems.size} {selectedItems.size === 1 ? 'vehicle' : 'vehicles'} selected</span>
             <div className="flex items-center gap-3 w-full sm:w-auto">
               <select value={bulkStatus} onChange={(e) => setBulkStatus(e.target.value as StockStatus)}
-                className="px-3 py-2 border border-blue-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 flex-1 sm:flex-none">
+                className="px-3 py-2 border border-border rounded-xl text-sm bg-card focus:outline-none focus:ring-2 focus:ring-primary/20 flex-1 sm:flex-none">
                 {STOCK_STATUS_OPTIONS.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
               </select>
               <button onClick={handleBulkAction} disabled={loading}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 disabled:opacity-50 whitespace-nowrap">
+                className="px-4 py-2 bg-primary text-primary-foreground rounded-full text-sm font-medium hover:bg-primary/90 disabled:opacity-50 whitespace-nowrap">
                 {loading ? 'Updating...' : 'Update Status'}
               </button>
               <button onClick={() => setSelectedItems(new Set())}
-                className="px-4 py-2 border border-blue-300 text-blue-700 rounded-lg text-sm font-medium hover:bg-blue-100 whitespace-nowrap">Clear</button>
+                className="px-4 py-2 border border-border text-muted-foreground rounded-xl text-sm font-medium hover:text-foreground whitespace-nowrap">Clear</button>
             </div>
           </div>
         )}
 
         {/* Inventory Table */}
-        <div className="bg-white rounded-lg shadow overflow-hidden">
+        <div className="bg-card border border-border/60 rounded-2xl overflow-hidden">
           <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="w-10 px-4 py-3"><input type="checkbox" checked={selectedItems.size === inventory.length && inventory.length > 0} onChange={toggleSelectAll} className="rounded border-gray-300 text-blue-600 focus:ring-blue-500" /></th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Vehicle</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">VIN / Chassis</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Color</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Price</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Battery</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Location</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Received</th>
-                  <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+            <table className="min-w-full divide-y divide-border/60">
+              <thead>
+                <tr className="border-b border-border/60">
+                  <th className="w-10 px-4 py-3.5"><input type="checkbox" checked={selectedItems.size === inventory.length && inventory.length > 0} onChange={toggleSelectAll} className="rounded border-border text-primary focus:ring-primary/20" /></th>
+                  <th className="px-4 py-3.5 text-left text-xs font-medium text-muted-foreground">Vehicle</th>
+                  <th className="px-4 py-3.5 text-left text-xs font-medium text-muted-foreground">VIN / Chassis</th>
+                  <th className="px-4 py-3.5 text-left text-xs font-medium text-muted-foreground">Color</th>
+                  <th className="px-4 py-3.5 text-left text-xs font-medium text-muted-foreground">Price</th>
+                  <th className="px-4 py-3.5 text-left text-xs font-medium text-muted-foreground">Status</th>
+                  <th className="px-4 py-3.5 text-left text-xs font-medium text-muted-foreground">Battery</th>
+                  <th className="px-4 py-3.5 text-left text-xs font-medium text-muted-foreground">Location</th>
+                  <th className="px-4 py-3.5 text-left text-xs font-medium text-muted-foreground">Received</th>
+                  <th className="px-4 py-3.5 text-right text-xs font-medium text-muted-foreground">Actions</th>
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
+              <tbody className="divide-y divide-border/40">
                 {loading && inventory.length === 0 ? (
-                  <tr><td colSpan={10} className="px-4 py-12 text-center"><RefreshCw className="h-8 w-8 animate-spin mx-auto text-gray-400" /><p className="mt-2 text-sm text-gray-500">Loading inventory...</p></td></tr>
+                  <tr><td colSpan={10} className="px-4 py-12 text-center"><RefreshCw className="h-8 w-8 animate-spin mx-auto text-muted-foreground/40" /><p className="mt-2 text-sm text-muted-foreground">Loading inventory...</p></td></tr>
                 ) : inventory.length === 0 ? (
-                  <tr><td colSpan={10} className="px-4 py-12 text-center"><Package className="h-12 w-12 mx-auto text-gray-300" /><p className="mt-2 text-sm text-gray-500">No vehicles found</p><button onClick={openAddModal} className="mt-3 inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700"><Plus className="h-4 w-4 mr-2" />Add First Vehicle</button></td></tr>
+                  <tr><td colSpan={10} className="px-4 py-12 text-center"><Package className="h-12 w-12 mx-auto text-muted-foreground/30" /><p className="mt-2 text-sm text-muted-foreground">No vehicles found</p><button onClick={openAddModal} className="mt-3 inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90"><Plus className="h-4 w-4" />Add First Vehicle</button></td></tr>
                 ) : (
                   inventory.map((item) => (
-                    <tr key={item.id} className={`hover:bg-gray-50 transition-colors ${selectedItems.has(item.id) ? 'bg-blue-50' : ''}`}>
-                      <td className="w-10 px-4 py-3"><input type="checkbox" checked={selectedItems.has(item.id)} onChange={() => toggleSelectItem(item.id)} className="rounded border-gray-300 text-blue-600 focus:ring-blue-500" /></td>
+                    <tr key={item.id} className={`hover:bg-muted/20 transition-colors ${selectedItems.has(item.id) ? 'bg-primary/5' : ''}`}>
+                      <td className="w-10 px-4 py-3"><input type="checkbox" checked={selectedItems.has(item.id)} onChange={() => toggleSelectItem(item.id)} className="rounded border-border text-primary focus:ring-primary/20" /></td>
                       <td className="px-4 py-3">
                         <div className="flex items-center min-w-0">
                           <span className="text-xl mr-2 flex-shrink-0">{getVehicleIcon(item.vehicles?.vehicle_type)}</span>
