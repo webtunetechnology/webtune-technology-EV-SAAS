@@ -63,6 +63,7 @@ interface BillingConfig {
   default_gst_percentage: number;
   invoice_sequence: number;
   invoice_footer_note?: string;
+  invoice_terms_conditions?: string;
   bank_name?: string;
   account_number?: string;
   ifsc_code?: string;
@@ -143,6 +144,25 @@ function getBrandName(vehicleData: any): string {
 
 function round2(n: number): number {
   return Math.round((Number(n) + Number.EPSILON) * 100) / 100;
+}
+
+// Fallback terms used when a showroom has not configured its own in the profile.
+const DEFAULT_INVOICE_TERMS = [
+  'Goods once sold cannot be taken back or exchanged.',
+  'Warranty as per manufacturer terms and conditions.',
+  'Interest @24% p.a. charged on overdue bills beyond 15 days.',
+  'Subject to local jurisdiction.',
+];
+
+// Turn the vendor-configured terms text (one term per line) into a clean, numbered list.
+// Falls back to the default terms when nothing is configured.
+function resolveInvoiceTerms(raw?: string | null): string[] {
+  const lines = (raw || '')
+    .split('\n')
+    .map((l) => l.replace(/^\s*\d+[.)]\s*/, '').trim()) // strip any leading "1." / "1)" numbering
+    .filter((l) => l.length > 0);
+  const source = lines.length > 0 ? lines : DEFAULT_INVOICE_TERMS;
+  return source.map((t, i) => `${i + 1}. ${t}`);
 }
 
 // Fetch a remote image (logo / signature) and return a base64 data URL + jsPDF format.
@@ -1005,20 +1025,21 @@ async function generateInvoicePDF(invoice: any): Promise<ArrayBuffer> {
   ty += payH;
 
   // ============ NOTES / TERMS ============
-  const notesH = 30;
+  // Pre-wrap the terms so the box can grow to fit vendor-configured content.
+  const terms = resolveInvoiceTerms(invoice.invoice_terms_conditions);
+  const wrappedTerms: string[] = [];
+  terms.forEach((t) => {
+    doc.splitTextToSize(t, R - splitX - 8).forEach((ln: string) => wrappedTerms.push(ln));
+  });
+  // 10mm header offset + line height per term line + 4mm bottom padding, min 30mm.
+  const notesH = Math.max(30, 10 + wrappedTerms.length * 3.2 + 4);
   box(L, ty, R - L, notesH);
   vline(splitX, ty, ty + notesH);
   txt('Notes:', L + 3, ty + 5, { size: 8, bold: true });
   txt(invoice.invoice_footer_note || 'Thank you for your business.', L + 3, ty + 10, { size: 7.5, color: GRAY });
   txt('Terms and Conditions:', splitX + 4, ty + 5, { size: 8, bold: true });
-  const terms = [
-    '1. Goods once sold cannot be taken back or exchanged.',
-    '2. Warranty as per manufacturer terms and conditions.',
-    '3. Interest @24% p.a. charged on overdue bills beyond 15 days.',
-    '4. Subject to local jurisdiction.',
-  ];
   let tyy = ty + 10;
-  terms.forEach((t) => { const w = doc.splitTextToSize(t, R - splitX - 8); w.forEach((ln: string) => { txt(ln, splitX + 4, tyy, { size: 6.8, color: GRAY }); tyy += 3.2; }); });
+  wrappedTerms.forEach((ln) => { txt(ln, splitX + 4, tyy, { size: 6.8, color: GRAY }); tyy += 3.2; });
   ty += notesH;
 
   return doc.output('arraybuffer');
@@ -1317,6 +1338,7 @@ async function generateAndUploadPDF(
       upi_id: billingConfigData?.upi_id || null,
       authorized_signature_url: billingConfigData?.authorized_signature_url || null,
       invoice_footer_note: billingConfigData?.invoice_footer_note || null,
+      invoice_terms_conditions: billingConfigData?.invoice_terms_conditions || null,
       charger_type: invoiceData.charger_type || 'Standard',
       home_charger_installed: invoiceData.home_charger_installed || false,
       home_charger_model: invoiceData.home_charger_model || null,
@@ -1585,9 +1607,10 @@ export async function generatePDFEndpoint(request: NextRequest) {
       bank_name: bcfg?.bank_name || null,
       account_number: bcfg?.account_number || null,
       ifsc_code: bcfg?.ifsc_code || null,
-      upi_id: bcfg?.upi_id || null,
-      invoice_footer_note: bcfg?.invoice_footer_note || null,
-    });
+  upi_id: bcfg?.upi_id || null,
+  invoice_footer_note: bcfg?.invoice_footer_note || null,
+  invoice_terms_conditions: bcfg?.invoice_terms_conditions || null,
+  });
 
     return NextResponse.json({ success: true, data: { html: htmlContent, invoice } });
   } catch (error: any) {
