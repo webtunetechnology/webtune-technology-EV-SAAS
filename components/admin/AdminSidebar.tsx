@@ -57,7 +57,7 @@ export function AdminSidebar({ onNavigate }: { onNavigate?: () => void }) {
       )}
     >
       {/* Brand header + collapse toggle */}
-      <div className="flex items-center justify-between px-4 py-5">
+      <div className="flex items-center justify-between px-4 py-4">
         <Link href="/admin" onClick={onNavigate} className="flex items-center gap-2.5 min-w-0">
           <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#C15F3C] shrink-0">
             <ShieldCheck className="h-5 w-5 text-white" />
@@ -81,8 +81,8 @@ export function AdminSidebar({ onNavigate }: { onNavigate?: () => void }) {
       <div className="h-px bg-gray-200" />
 
       {/* Navigation */}
-      <nav className="flex-1 overflow-y-auto px-3 py-4">
-        <ul className="flex flex-col gap-1">
+      <nav className="flex-1 overflow-hidden px-3 py-3">
+        <ul className="flex flex-col gap-0.5">
           {navItems.map((item) => {
             const active =
               item.href === '/admin' ? pathname === '/admin' : pathname.startsWith(item.href)
@@ -94,7 +94,7 @@ export function AdminSidebar({ onNavigate }: { onNavigate?: () => void }) {
                   onClick={onNavigate}
                   title={collapsed ? item.label : undefined}
                   className={cn(
-                    'flex items-center gap-3 rounded-full px-3 py-2.5 text-sm transition-colors',
+                    'flex items-center gap-2.5 rounded-full px-3 py-1.5 text-[13px] leading-tight transition-colors',
                     collapsed && 'justify-center',
                     active
                       ? 'bg-[#F8E7DC] font-semibold text-[#C15F3C]'
@@ -102,7 +102,7 @@ export function AdminSidebar({ onNavigate }: { onNavigate?: () => void }) {
                   )}
                 >
                   <Icon
-                    className={cn('h-5 w-5 shrink-0', active ? 'text-[#C15F3C]' : 'text-gray-500')}
+                    className={cn('h-4 w-4 shrink-0', active ? 'text-[#C15F3C]' : 'text-gray-500')}
                   />
                   {!collapsed && <span className="truncate">{item.label}</span>}
                   {!collapsed && item.badge ? (
@@ -125,11 +125,11 @@ export function AdminSidebar({ onNavigate }: { onNavigate?: () => void }) {
           onClick={handleLogout}
           title={collapsed ? 'Logout' : undefined}
           className={cn(
-            'flex w-full items-center gap-3 rounded-full px-3 py-2.5 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-50',
+            'flex w-full items-center gap-2.5 rounded-full px-3 py-2 text-[13px] font-medium text-gray-600 transition-colors hover:bg-gray-50',
             collapsed && 'justify-center'
           )}
         >
-          <LogOut className="h-5 w-5 shrink-0 text-gray-500" />
+          <LogOut className="h-4 w-4 shrink-0 text-gray-500" />
           {!collapsed && <span>Logout</span>}
         </button>
       </div>
