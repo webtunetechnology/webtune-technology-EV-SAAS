@@ -13,7 +13,8 @@ import {
   Boxes,
   Leaf,
   Battery,
-  Store
+  Store,
+  Crown
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase/client';
 
@@ -223,6 +224,12 @@ export function Sidebar({ activeSection: propActiveSection, onSectionChange: pro
       label: 'Stock', 
       icon: Boxes, 
       href: '/dashboard/stock'
+    },
+    { 
+      id: 'subscription', 
+      label: 'Subscription', 
+      icon: Crown, 
+      href: '/dashboard/subscription'
     },
   ];
 

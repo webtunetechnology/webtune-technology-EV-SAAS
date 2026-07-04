@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { Sidebar } from '@/components/Sidebar';
 import { Header } from '@/components/Header';
+import { SubscriptionGate } from '@/components/SubscriptionGate';
 import { usePathname } from 'next/navigation';
 
 export default function DashboardLayout({
@@ -43,7 +44,7 @@ export default function DashboardLayout({
       <div className="lg:ml-64">
         <Header activeSection={activeSection} onMenuClick={() => setSidebarOpen(!sidebarOpen)} />
         <main className="p-4 md:p-6 lg:p-8">
-          {children}
+          <SubscriptionGate>{children}</SubscriptionGate>
         </main>
       </div>
     </div>
