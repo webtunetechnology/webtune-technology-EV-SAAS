@@ -15,7 +15,7 @@ export async function GET(request: NextRequest) {
     const date_to = searchParams.get('date_to') || '';
     const customer_id = searchParams.get('customer_id') || '';
     const vehicle_id = searchParams.get('vehicle_id') || '';
-    const technician_id = searchParams.get('technician_id') || '';
+
     
     const showroom_id = request.cookies.get('showroom_id')?.value;
     
@@ -41,8 +41,7 @@ export async function GET(request: NextRequest) {
             model_name,
             brand:brands(brand_name)
           )
-        ),
-        technician:showroom_users(id, full_name)
+        )
       `, { count: 'exact' })
       .eq('showroom_id', showroom_id);
     
@@ -55,7 +54,6 @@ export async function GET(request: NextRequest) {
     if (status) query = query.eq('status', status);
     if (customer_id) query = query.eq('customer_id', customer_id);
     if (vehicle_id) query = query.eq('vehicle_id', vehicle_id);
-    if (technician_id) query = query.eq('assigned_technician_id', technician_id);
     if (date_from) query = query.gte('appointment_date', date_from);
     if (date_to) query = query.lte('appointment_date', date_to);
     
@@ -137,7 +135,6 @@ export async function POST(request: NextRequest) {
       appointment_date: body.appointment_date,
       appointment_time: body.appointment_time,
       service_type: body.service_type || null,
-      assigned_technician_id: body.assigned_technician_id || null,
       customer_notes: body.customer_notes || null,
       status: body.status || 'Scheduled',
     };
@@ -156,8 +153,7 @@ export async function POST(request: NextRequest) {
             model_name,
             brand:brands(brand_name)
           )
-        ),
-        technician:showroom_users(id, full_name)
+        )
       `)
       .single();
     

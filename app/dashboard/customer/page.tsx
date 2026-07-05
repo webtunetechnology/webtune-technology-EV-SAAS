@@ -71,12 +71,7 @@ interface Customer {
   longitude?: number;
 }
 
-interface SalesExecutive {
-  id: string;
-  full_name: string;
-  email: string;
-  mobile_number: string;
-}
+
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -187,7 +182,7 @@ export default function CustomerManagementPage() {
   const [totalCustomers, setTotal]      = useState(0);
   const [toast, setToast]               = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null);
   const [stats, setStats]               = useState({ total: 0, active: 0, vip: 0, converted: 0, totalLoyaltyPoints: 0, totalVehicles: 0 });
-  const [executives, setExecutives]     = useState<SalesExecutive[]>([]);
+
   const [showFilters, setShowFilters]   = useState(false);
   const [activeTab, setActiveTab]       = useState('basic');
   const [openActions, setOpenActions]   = useState<string | null>(null);
@@ -212,10 +207,10 @@ export default function CustomerManagementPage() {
     address_line1: '', address_line2: '', city: '', state: '', country: 'India',
     pincode: '', latitude: '', longitude: '', preferred_language: 'English',
     whatsapp_opt_in: true, sms_opt_in: true, email_opt_in: true, promotional_opt_in: false,
-    source: 'Walk-in', referred_by: '', lead_status: 'New', customer_status: 'Active',
+    source: 'Walk-in', lead_status: 'New', customer_status: 'Active',
     first_contact_date: new Date().toISOString().split('T')[0], last_contact_date: '',
     expected_purchase_month: '', notes: '', tags: '', emergency_contact_name: '',
-    emergency_contact_number: '', emergency_contact_relation: '', assigned_sales_executive_id: '',
+    emergency_contact_number: '', emergency_contact_relation: '',
   };
 
   const [formData, setFormData]     = useState(emptyForm);
@@ -239,7 +234,7 @@ export default function CustomerManagementPage() {
     return () => clearTimeout(t);
   }, [searchTerm]);
 
-  useEffect(() => { loadCustomers(); loadStats(); loadExecutives(); }, [currentPage, filters]);
+  useEffect(() => { loadCustomers(); loadStats(); }, [currentPage, filters]);
 
   const showToast = (message: string, type: 'success' | 'error' | 'info') => setToast({ message, type });
 
@@ -255,8 +250,7 @@ export default function CustomerManagementPage() {
     finally { setLoading(false); }
   }, [currentPage, searchTerm, filters]);
 
-  const loadStats     = useCallback(async () => { try { const r = await apiClient.get('/api/customers-stats'); if (r.success) setStats(r.stats); } catch {} }, []);
-  const loadExecutives = useCallback(async () => { try { const r = await apiClient.get('/api/sales-executives'); if (r.success) setExecutives(r.data); } catch {} }, []);
+  const loadStats = useCallback(async () => { try { const r = await apiClient.get('/api/customers-stats'); if (r.success) setStats(r.stats); } catch {} }, []);
 
   const validateForm = () => {
     const e: Record<string, string> = {};
@@ -297,7 +291,7 @@ export default function CustomerManagementPage() {
 
   const prepareSubmit = (d: typeof formData) => ({
     ...d,
-    assigned_sales_executive_id:  d.assigned_sales_executive_id  || null,
+    assigned_sales_executive_id: null,
     alternate_mobile:             d.alternate_mobile             || null,
     email:                        d.email                        || null,
     gender:                       d.gender                       || null,
@@ -311,7 +305,7 @@ export default function CustomerManagementPage() {
     driving_license_number:       d.driving_license_number       || null,
     charging_capacity_available:  d.charging_capacity_available  || null,
     previous_vehicle_type:        d.previous_vehicle_type        || null,
-    referred_by:                  d.referred_by                  || null,
+    referred_by: null,
     notes:                        d.notes                        || null,
     emergency_contact_name:       d.emergency_contact_name       || null,
     emergency_contact_number:     d.emergency_contact_number     || null,
@@ -377,15 +371,13 @@ export default function CustomerManagementPage() {
       latitude: c.latitude?.toString() || '', longitude: c.longitude?.toString() || '',
       preferred_language: c.preferred_language, whatsapp_opt_in: c.whatsapp_opt_in,
       sms_opt_in: c.sms_opt_in, email_opt_in: c.email_opt_in, promotional_opt_in: c.promotional_opt_in,
-      source: c.source || 'Walk-in', referred_by: c.referred_by || '',
-      lead_status: c.lead_status, customer_status: c.customer_status,
+      source: c.source || 'Walk-in', lead_status: c.lead_status, customer_status: c.customer_status,
       first_contact_date: c.first_contact_date || '', last_contact_date: c.last_contact_date || '',
       expected_purchase_month: c.expected_purchase_month || '', notes: c.notes || '',
       tags: Array.isArray(c.tags) ? c.tags.join(', ') : '',
       emergency_contact_name: c.emergency_contact_name || '',
       emergency_contact_number: c.emergency_contact_number || '',
       emergency_contact_relation: c.emergency_contact_relation || '',
-      assigned_sales_executive_id: c.assigned_sales_executive_id || '',
     });
     setActiveTab('basic'); setSectionErr(''); setFormErrors({}); setShowModal(true);
   };
@@ -428,7 +420,7 @@ export default function CustomerManagementPage() {
         </button>
       </div>
 
-      {/* ── Toolbar ─────────────────────────────────────��───────────────── */}
+      {/* ── Toolbar ─────────────────────────────────────���───────────────── */}
       <div className="flex flex-col sm:flex-row gap-3 mb-5">
         <div className="relative flex-1 max-w-xs">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -492,7 +484,6 @@ export default function CustomerManagementPage() {
                   <th className="px-5 py-3.5 text-left text-xs font-medium text-muted-foreground">Type / Status</th>
                   <th className="px-5 py-3.5 text-left text-xs font-medium text-muted-foreground">Location</th>
                   <th className="px-5 py-3.5 text-left text-xs font-medium text-muted-foreground">Lead</th>
-                  <th className="px-5 py-3.5 text-left text-xs font-medium text-muted-foreground">Executive</th>
                   <th className="px-5 py-3.5 text-left text-xs font-medium text-muted-foreground">Vehicles</th>
                   <th className="px-5 py-3.5 text-right text-xs font-medium text-muted-foreground">Actions</th>
                 </tr>
@@ -558,16 +549,6 @@ export default function CustomerManagementPage() {
                     </td>
                     <td className="px-5 py-3.5">
                       <Chip label={c.lead_status} map={leadChip} />
-                    </td>
-                    <td className="px-5 py-3.5">
-                      <div className="flex items-center gap-1.5">
-                        <div className="w-5 h-5 rounded-full bg-muted flex items-center justify-center flex-shrink-0">
-                          <User className="w-3 h-3 text-muted-foreground" />
-                        </div>
-                        <span className="text-sm text-foreground truncate max-w-[120px]">
-                          {c.assigned_sales_executive?.full_name || <span className="text-muted-foreground italic">Unassigned</span>}
-                        </span>
-                      </div>
                     </td>
                     <td className="px-5 py-3.5">
                       <p className="font-medium text-foreground">{c.total_vehicles_owned || 0}</p>
@@ -866,7 +847,7 @@ export default function CustomerManagementPage() {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <FormField label="Lead Source">
                         <select value={formData.source} onChange={e => set({ source: e.target.value })} className={selectCls}>
-                          {['Walk-in','Website','Facebook','Instagram','Google','Referral','Test Ride','EV Expo','Cold Call','Other'].map(o => <option key={o}>{o}</option>)}
+                          {['Walk-in','Website','Facebook','Instagram','Google','Test Ride','EV Expo','Cold Call','Other'].map(o => <option key={o}>{o}</option>)}
                         </select>
                       </FormField>
                       <FormField label="Lead Status">
@@ -878,15 +859,6 @@ export default function CustomerManagementPage() {
                         <select value={formData.customer_status} onChange={e => set({ customer_status: e.target.value })} className={selectCls}>
                           {['Active','Inactive','Blocked','VIP'].map(o => <option key={o}>{o}</option>)}
                         </select>
-                      </FormField>
-                      <FormField label="Assigned Sales Executive">
-                        <select value={formData.assigned_sales_executive_id} onChange={e => set({ assigned_sales_executive_id: e.target.value })} className={selectCls}>
-                          <option value="">Unassigned</option>
-                          {executives.map(ex => <option key={ex.id} value={ex.id}>{ex.full_name}</option>)}
-                        </select>
-                      </FormField>
-                      <FormField label="Referred By">
-                        <input type="text" value={formData.referred_by} onChange={e => set({ referred_by: e.target.value })} className={inputCls()} placeholder="Customer code or name" />
                       </FormField>
                       <FormField label="Expected Purchase Month">
                         <input type="month" value={formData.expected_purchase_month} onChange={e => set({ expected_purchase_month: e.target.value })} className={inputCls()} />
@@ -970,7 +942,7 @@ export default function CustomerManagementPage() {
                     <h2 className="text-xl font-semibold text-foreground">
                       {selectedCustomer.first_name} {selectedCustomer.last_name || ''}
                     </h2>
-                    <p className="text-sm text-muted-foreground">{selectedCustomer.customer_code} · Referral: {selectedCustomer.referral_code || 'N/A'}</p>
+                    <p className="text-sm text-muted-foreground">{selectedCustomer.customer_code}</p>
                     <div className="flex items-center gap-2 mt-2">
                       <Chip label={selectedCustomer.customer_status} map={statusChip} />
                       <Chip label={selectedCustomer.lead_status} map={leadChip} />
