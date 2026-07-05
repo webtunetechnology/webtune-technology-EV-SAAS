@@ -579,7 +579,7 @@ export default function ServiceManagementPage() {
         setShowServiceModal(false); resetServiceForm();
         showToast('Service record created!', 'success');
       } else { showToast(result.error || 'Failed', 'error'); }
-    } catch { showToast('Failed', 'error'); }
+    } catch (err) { showToast('Failed', 'error'); }
     finally { setIsSubmitting(false); }
   };
 
