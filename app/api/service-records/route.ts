@@ -44,7 +44,6 @@ export async function GET(request: NextRequest) {
             brand:brands(brand_name)
           )
         ),
-        technician:showroom_users!service_records_completed_by_fkey(id, full_name)
       `, { count: 'exact' })
       .eq('showroom_id', showroom_id);
     
@@ -150,7 +149,7 @@ export async function POST(request: NextRequest) {
       next_service_due_date: body.next_service_due_date || null,
       status: body.status || 'In Progress',
       customer_rating: body.customer_rating || null,
-      completed_by: isCompleted ? (user_id || body.completed_by) : null,
+      completed_by: isCompleted ? user_id : null,
       completed_at: isCompleted ? new Date().toISOString() : null,
     };
     
@@ -312,7 +311,6 @@ export async function POST(request: NextRequest) {
             brand:brands(brand_name)
           )
         ),
-        technician:showroom_users!service_records_completed_by_fkey(id, full_name)
       `)
       .eq('id', record.id)
       .single();

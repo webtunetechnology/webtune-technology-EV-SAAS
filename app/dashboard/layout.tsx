@@ -1,19 +1,33 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Sidebar } from '@/components/Sidebar';
 import { Header } from '@/components/Header';
 import { SubscriptionGate } from '@/components/SubscriptionGate';
-import { usePathname } from 'next/navigation';
+import { SuspensionGate } from '@/components/SuspensionGate';
+import { usePathname, useRouter } from 'next/navigation';
 
 export default function DashboardLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const router = useRouter();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
   const pathname = usePathname();
+
+  // Belt-and-suspenders client-side auth guard (mirrors proxy.ts logic).
+  // Runs on every route change to catch mid-session cookie expiry and
+  // logout-in-another-tab scenarios.
+  useEffect(() => {
+    const parts = document.cookie.split(';');
+    const hasAuthToken  = parts.some(c => c.trim().startsWith('auth_token=') && c.trim() !== 'auth_token=');
+    const hasLoggedIn   = parts.some(c => c.trim() === 'user_logged_in=true');
+    if (!hasAuthToken && !hasLoggedIn) {
+      router.replace('/');
+    }
+  }, [pathname, router]);
   
   // Get active section from pathname
   const getActiveSection = () => {
@@ -49,7 +63,9 @@ export default function DashboardLayout({
       <div className={`transition-[margin] duration-300 ease-in-out ${collapsed ? 'lg:ml-20' : 'lg:ml-64'}`}>
         <Header activeSection={activeSection} onMenuClick={() => setSidebarOpen(!sidebarOpen)} />
         <main className="p-4 md:p-6 lg:p-8">
-          <SubscriptionGate>{children}</SubscriptionGate>
+          <SuspensionGate>
+            <SubscriptionGate>{children}</SubscriptionGate>
+          </SuspensionGate>
         </main>
       </div>
     </div>

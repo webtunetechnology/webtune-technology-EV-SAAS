@@ -43,7 +43,6 @@ import {
 interface ServiceAppointment {
   id: string;
   showroom_id: string;
-  assigned_technician_id: string | null;
   customer_id: string;
   vehicle_id: string;
   appointment_date: string;
@@ -53,7 +52,6 @@ interface ServiceAppointment {
   status: 'Scheduled' | 'Confirmed' | 'In Progress' | 'Completed' | 'Cancelled' | 'No Show';
   customer?: { id: string; first_name: string; last_name: string | null; mobile: string; };
   vehicle?: { id: string; chassis_number: string; registration_number: string | null; vehicle_model?: { model_name: string; brand?: { brand_name: string }; }; };
-  technician?: { id: string; full_name: string; };
   created_at: string;
   updated_at: string;
 }
@@ -95,7 +93,6 @@ interface ServiceRecord {
   completed_at: string | null;
   customer?: { id: string; first_name: string; last_name: string | null; mobile: string; };
   vehicle?: { id: string; chassis_number: string; registration_number: string | null; current_odometer_km: number; vehicle_model?: { model_name: string; brand?: { brand_name: string }; }; };
-  technician?: { id: string; full_name: string; };
   created_at: string;
   updated_at: string;
 }
@@ -127,12 +124,6 @@ interface CustomerVehicle {
   vehicle_model?: { id: string; model_name: string; brand?: { brand_name: string }; };
 }
 
-interface Technician {
-  id: string;
-  full_name: string;
-  email: string | null;
-  mobile_number: string;
-}
 
 interface PartsUsed {
   part_id: string;
@@ -278,7 +269,7 @@ export default function ServiceManagementPage() {
   });
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [vehicles, setVehicles] = useState<CustomerVehicle[]>([]);
-  const [technicians, setTechnicians] = useState<Technician[]>([]);
+
   const [parts, setParts] = useState<Part[]>([]);
   const [showFilters, setShowFilters] = useState(false);
   const [filters, setFilters] = useState({
@@ -299,7 +290,6 @@ export default function ServiceManagementPage() {
     appointment_date: new Date().toISOString().split('T')[0],
     appointment_time: '10:00',
     service_type: '',
-    assigned_technician_id: '',
     customer_notes: '',
     status: 'Scheduled' as ServiceAppointment['status'],
   });
@@ -364,7 +354,6 @@ export default function ServiceManagementPage() {
     else loadRecords();
     loadStats();
     loadCustomers();
-    loadTechnicians();
     loadParts();
   }, [currentPage, filters, activeView]);
 
@@ -423,13 +412,6 @@ export default function ServiceManagementPage() {
     } catch (error) { console.error('Error loading vehicles:', error); }
   };
 
-  const loadTechnicians = async () => {
-    try {
-      const result = await apiClient.get('/api/technicians');
-      if (result.success) setTechnicians(result.data);
-    } catch (error) { console.error('Error loading technicians:', error); }
-  };
-
   const loadParts = async () => {
     try {
       const result = await apiClient.get('/api/parts?is_active=true&limit=200');
@@ -447,7 +429,7 @@ export default function ServiceManagementPage() {
     setAppointmentForm({
       customer_id: '', vehicle_id: '',
       appointment_date: new Date().toISOString().split('T')[0], appointment_time: '10:00',
-      service_type: '', assigned_technician_id: '', customer_notes: '', status: 'Scheduled',
+      service_type: '', customer_notes: '', status: 'Scheduled',
     });
     setFormErrors({});
   };
@@ -456,8 +438,8 @@ export default function ServiceManagementPage() {
     setAppointmentForm({
       customer_id: appt.customer_id, vehicle_id: appt.vehicle_id,
       appointment_date: appt.appointment_date, appointment_time: appt.appointment_time,
-      service_type: appt.service_type || '', assigned_technician_id: appt.assigned_technician_id || '',
-      customer_notes: appt.customer_notes || '', status: appt.status,
+      service_type: appt.service_type || '', customer_notes: appt.customer_notes || '',
+      status: appt.status,
     });
     if (appt.customer_id) loadVehicles(appt.customer_id);
   };
@@ -487,7 +469,7 @@ export default function ServiceManagementPage() {
       battery_cells_balanced: true, motor_efficiency_check: '', charging_port_status: '', thermal_management_check: '',
       labor_cost: '', parts_cost: '0', tax_amount: '', discount_amount: '0',
       payment_status: 'Pending', payment_method: '', next_service_due_km: '', next_service_due_date: '',
-      status: 'In Progress', completed_by: appt.assigned_technician_id || '',
+      status: 'In Progress', completed_by: '',
     });
     setPartsUsed([]);
     if (appt.customer_id) loadVehicles(appt.customer_id);
@@ -810,7 +792,6 @@ export default function ServiceManagementPage() {
                     <th className="px-6 py-3.5 text-left text-xs font-medium text-muted-foreground">Vehicle</th>
                     <th className="px-6 py-3.5 text-left text-xs font-medium text-muted-foreground">Date & Time</th>
                     <th className="px-6 py-3.5 text-left text-xs font-medium text-muted-foreground">Type</th>
-                    <th className="px-6 py-3.5 text-left text-xs font-medium text-muted-foreground">Technician</th>
                     <th className="px-6 py-3.5 text-left text-xs font-medium text-muted-foreground">Status</th>
                     <th className="px-6 py-3.5 text-left text-xs font-medium text-muted-foreground">Actions</th>
                   </tr>
@@ -846,7 +827,6 @@ export default function ServiceManagementPage() {
                         </div>
                       </td>
                       <td className="px-6 py-4 text-sm text-foreground">{appt.service_type || 'General'}</td>
-                      <td className="px-6 py-4 text-sm text-foreground">{appt.technician?.full_name || 'Unassigned'}</td>
                       <td className="px-6 py-4"><StatusBadge status={appt.status} type="appointment" /></td>
                       <td className="px-6 py-4">
                         <div className="flex gap-0.5">
@@ -1037,37 +1017,22 @@ export default function ServiceManagementPage() {
                   />
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium mb-1">Service Type</label>
-                  <select 
-                    value={appointmentForm.service_type} 
-                    onChange={(e) => setAppointmentForm({...appointmentForm, service_type: e.target.value})} 
-                    className="w-full border rounded px-3 py-2"
-                  >
-                    <option value="">Select Type</option>
-                    <option value="Free Service">Free Service</option>
-                    <option value="Paid Service">Paid Service</option>
-                    <option value="Warranty Repair">Warranty Repair</option>
-                    <option value="Accidental Repair">Accidental Repair</option>
-                    <option value="Recall">Recall</option>
-                    <option value="Battery Replacement">Battery Replacement</option>
-                    <option value="Software Update">Software Update</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-1">Technician</label>
-                  <select 
-                    value={appointmentForm.assigned_technician_id} 
-                    onChange={(e) => setAppointmentForm({...appointmentForm, assigned_technician_id: e.target.value})} 
-                    className="w-full border rounded px-3 py-2"
-                  >
-                    <option value="">Unassigned</option>
-                    {technicians.map(t => (
-                      <option key={t.id} value={t.id}>{t.full_name}</option>
-                    ))}
-                  </select>
-                </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Service Type</label>
+                <select 
+                  value={appointmentForm.service_type} 
+                  onChange={(e) => setAppointmentForm({...appointmentForm, service_type: e.target.value})} 
+                  className="w-full border rounded px-3 py-2"
+                >
+                  <option value="">Select Type</option>
+                  <option value="Free Service">Free Service</option>
+                  <option value="Paid Service">Paid Service</option>
+                  <option value="Warranty Repair">Warranty Repair</option>
+                  <option value="Accidental Repair">Accidental Repair</option>
+                  <option value="Recall">Recall</option>
+                  <option value="Battery Replacement">Battery Replacement</option>
+                  <option value="Software Update">Software Update</option>
+                </select>
               </div>
               <div>
                 <label className="block text-sm font-medium mb-1">Notes</label>
@@ -1116,7 +1081,7 @@ export default function ServiceManagementPage() {
             </div>
             <ServiceFormContent 
               serviceForm={serviceForm} setServiceForm={setServiceForm}
-              customers={customers} vehicles={vehicles} technicians={technicians} parts={parts}
+              customers={customers} vehicles={vehicles} parts={parts}
               partsUsed={partsUsed} setPartsUsed={setPartsUsed}
               formErrors={formErrors} handleCustomerChange={handleCustomerChange}
               addPart={addPart} removePart={removePart} updatePart={updatePart}
@@ -1146,7 +1111,7 @@ export default function ServiceManagementPage() {
             </div>
             <ServiceFormContent 
               serviceForm={serviceForm} setServiceForm={setServiceForm}
-              customers={customers} vehicles={vehicles} technicians={technicians} parts={parts}
+              customers={customers} vehicles={vehicles} parts={parts}
               partsUsed={partsUsed} setPartsUsed={setPartsUsed}
               formErrors={formErrors} handleCustomerChange={handleCustomerChange}
               addPart={addPart} removePart={removePart} updatePart={updatePart}
@@ -1188,7 +1153,6 @@ export default function ServiceManagementPage() {
                   <h4 className="font-semibold border-b pb-1">Service Info</h4>
                   <p><strong>Date:</strong> {new Date(selectedRecord.service_date).toLocaleDateString()}</p>
                   <p><strong>Odometer:</strong> {selectedRecord.odometer_reading} km</p>
-                  <p><strong>Technician:</strong> {selectedRecord.technician?.full_name || 'N/A'}</p>
                 </div>
                 <div>
                   <h4 className="font-semibold border-b pb-1">
@@ -1244,7 +1208,7 @@ export default function ServiceManagementPage() {
 
 // Reusable Service Form Content Component
 function ServiceFormContent({
-  serviceForm, setServiceForm, customers, vehicles, technicians, parts,
+  serviceForm, setServiceForm, customers, vehicles, parts,
   partsUsed, setPartsUsed, formErrors, handleCustomerChange,
   addPart, removePart, updatePart, isSubmitting, onSubmit, onCancel, submitLabel
 }: any) {
@@ -1444,7 +1408,7 @@ function ServiceFormContent({
           </div>
         </div>
       </div>
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-2 gap-4">
         <div>
           <label className="block text-sm font-medium mb-1">Payment Status</label>
           <select 
@@ -1470,19 +1434,6 @@ function ServiceFormContent({
             <option value="UPI">UPI</option>
             <option value="Card">Card</option>
             <option value="Bank Transfer">Bank Transfer</option>
-          </select>
-        </div>
-        <div>
-          <label className="block text-sm font-medium mb-1">Technician</label>
-          <select 
-            value={serviceForm.completed_by} 
-            onChange={(e) => setServiceForm({...serviceForm, completed_by: e.target.value})} 
-            className="w-full border rounded px-3 py-2"
-          >
-            <option value="">Select</option>
-            {technicians.map((t: any) => (
-              <option key={t.id} value={t.id}>{t.full_name}</option>
-            ))}
           </select>
         </div>
       </div>

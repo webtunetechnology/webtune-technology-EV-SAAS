@@ -162,19 +162,36 @@ export function Header({ activeSection = 'dashboard', onMenuClick }: HeaderProps
     }
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem('user');
-    localStorage.removeItem('showroom');
-    localStorage.removeItem('user_logged_in');
-    localStorage.removeItem('showroom_logo');
-    sessionStorage.removeItem('showroom_logo');
+  const handleLogout = async () => {
+    // 1. Clear all auth-related localStorage keys
+    const lsKeys = [
+      'auth_token', 'user_logged_in', 'login_timestamp', 'user', 'showroom',
+      'showroom_addresses', 'showroom_branding', 'billing_configuration',
+      'subscription', 'complete_auth_data', 'showroom_logo',
+    ];
+    lsKeys.forEach(k => localStorage.removeItem(k));
+    sessionStorage.clear();
 
-    const cookies = ['user_id', 'user_name', 'user_email', 'user_role', 'showroom_id', 'showroom_name', 'user_logged_in', 'showroom_logo'];
-    cookies.forEach(cookie => {
-      document.cookie = `${cookie}=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;`;
+    // 2. Expire all auth cookies client-side
+    const cookieNames = [
+      'auth_token', 'user_logged_in', 'user_id', 'user_email', 'user_role',
+      'showroom_id', 'showroom_name', 'showroom_logo', 'showroom_primary_color',
+      'showroom_city', 'showroom_state', 'login_timestamp',
+    ];
+    const expired = 'path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;';
+    cookieNames.forEach(name => {
+      document.cookie = `${name}=; ${expired}`;
     });
 
-    window.location.href = '/login';
+    // 3. Tell the server to clear HttpOnly cookies too
+    try {
+      await fetch('/api/auth/logout', { method: 'POST' });
+    } catch {
+      // best-effort — client-side clear is sufficient
+    }
+
+    // 4. Hard redirect to home
+    window.location.replace('/');
   };
 
   const handleSearch = (e: React.FormEvent) => {

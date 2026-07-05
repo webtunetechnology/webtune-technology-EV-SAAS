@@ -20,11 +20,9 @@ export function proxy(request: NextRequest) {
   const isAdminLogin = pathname === '/admin/login'
   const isAdminArea = pathname.startsWith('/admin') && !isAdminLogin
 
-  // Block unauthenticated access to the dashboard
+  // Block unauthenticated access to the dashboard — redirect to home
   if (isDashboard && !isAuthenticated) {
-    const loginUrl = new URL('/login', request.url)
-    loginUrl.searchParams.set('redirect', pathname)
-    return NextResponse.redirect(loginUrl)
+    return NextResponse.redirect(new URL('/', request.url))
   }
 
   // Keep authenticated users out of the auth pages
