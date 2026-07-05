@@ -115,6 +115,11 @@ export default function CreatePartsInvoicePage() {
   }, [partSearch]);
 
   const addPart = (part: Part) => {
+    // current_stock may come back as an array from the Supabase join — flatten it
+    const stock = Array.isArray((part as any).current_stock)
+      ? (part as any).current_stock[0] ?? null
+      : part.current_stock ?? null;
+
     const exists = items.find(it => it.part_id === part.id);
     if (exists) {
       setItems(prev => prev.map(it => it.part_id === part.id ? { ...it, quantity: it.quantity + 1 } : it));
@@ -126,8 +131,8 @@ export default function CreatePartsInvoicePage() {
         hsn_code       : part.hsn_code || '',
         gst_percentage : part.gst_percentage || 0,
         quantity       : 1,
-        unit_price     : Number(part.current_stock?.selling_price || part.current_stock?.mrp || 0),
-        available_qty  : part.current_stock?.quantity_available || 0,
+        unit_price     : Number(stock?.selling_price || stock?.mrp || 0),
+        available_qty  : stock?.quantity_available || 0,
       }]);
     }
     setPartSearch('');
@@ -334,12 +339,15 @@ export default function CreatePartsInvoicePage() {
                             <p className="text-xs text-gray-500">{p.part_code} {p.category ? `· ${p.category}` : ''}</p>
                           </div>
                           <div className="text-right">
-                            <p className="text-sm font-semibold text-blue-600">
-                              {inr(Number(p.current_stock?.selling_price || p.current_stock?.mrp || 0))}
-                            </p>
-                            <p className="text-xs text-gray-400">
-                              Stock: {p.current_stock?.quantity_available ?? '—'}
-                            </p>
+                            {(() => {
+                              const s = Array.isArray((p as any).current_stock) ? (p as any).current_stock[0] : p.current_stock;
+                              return (
+                                <>
+                                  <p className="text-sm font-semibold text-blue-600">{inr(Number(s?.selling_price || s?.mrp || 0))}</p>
+                                  <p className="text-xs text-gray-400">Stock: {s?.quantity_available ?? '—'}</p>
+                                </>
+                              );
+                            })()}
                           </div>
                         </div>
                       </button>

@@ -22,12 +22,11 @@ export async function GET(request: NextRequest) {
     let query = supabase
       .from('parts_counter_sales')
       .select(`
-        *,
-        customer:customers(id, first_name, last_name, mobile),
-        items:parts_counter_sale_items(
-          id, quantity, unit_price, total_price,
-          part:parts(id, part_name, part_code, hsn_code, gst_percentage)
-        )
+        id, sale_number, sale_date, customer_id,
+        customer_name, customer_mobile,
+        subtotal, tax_amount, discount_amount, total_amount,
+        payment_method, payment_status, notes, created_at,
+        items:parts_counter_sale_items(id, quantity, unit_price, total_price)
       `, { count: 'exact' })
       .eq('showroom_id', showroomId)
       .order('created_at', { ascending: false })
