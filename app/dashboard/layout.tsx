@@ -1,20 +1,33 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Sidebar } from '@/components/Sidebar';
 import { Header } from '@/components/Header';
 import { SubscriptionGate } from '@/components/SubscriptionGate';
 import { SuspensionGate } from '@/components/SuspensionGate';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 
 export default function DashboardLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const router = useRouter();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
   const pathname = usePathname();
+
+  // Belt-and-suspenders client-side auth guard.
+  // The edge proxy (proxy.ts) is the primary gate; this catches any case
+  // where the cookie has been cleared without a full navigation (e.g. logout
+  // in another tab, cookie expiry mid-session).
+  useEffect(() => {
+    const isLoggedIn =
+      document.cookie.split(';').some(c => c.trim().startsWith('user_logged_in=true'));
+    if (!isLoggedIn) {
+      router.replace('/');
+    }
+  }, [pathname, router]);
   
   // Get active section from pathname
   const getActiveSection = () => {
