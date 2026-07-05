@@ -428,7 +428,7 @@ export default function CustomerManagementPage() {
         </button>
       </div>
 
-      {/* ── Toolbar ─────────────────────────────────────────────────────── */}
+      {/* ── Toolbar ─────────────────────────────────────��───────────────── */}
       <div className="flex flex-col sm:flex-row gap-3 mb-5">
         <div className="relative flex-1 max-w-xs">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -1008,7 +1008,12 @@ export default function CustomerManagementPage() {
                   <dl className="grid grid-cols-2 gap-3">
                     <FieldRow label="Mobile"     value={selectedCustomer.mobile} />
                     <FieldRow label="Alt Mobile" value={selectedCustomer.alternate_mobile} />
-                    <FieldRow label="Email"      value={selectedCustomer.email} />
+                    {selectedCustomer.email && (
+                      <div className="col-span-2 flex flex-col gap-0.5">
+                        <dt className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">Email</dt>
+                        <dd className="text-sm text-foreground break-all">{selectedCustomer.email}</dd>
+                      </div>
+                    )}
                     <FieldRow label="Gender"     value={selectedCustomer.gender} />
                     <FieldRow label="DOB"        value={selectedCustomer.date_of_birth ? new Date(selectedCustomer.date_of_birth).toLocaleDateString() : null} />
                     <FieldRow label="Occupation" value={selectedCustomer.occupation} />
