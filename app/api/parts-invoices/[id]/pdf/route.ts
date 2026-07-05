@@ -237,13 +237,16 @@ async function generatePartsInvoicePDF(invoice: any): Promise<ArrayBuffer> {
   vline(splitX,y,y+custH);
   txt('Customer Details:',L+3,y+5,{size:8,bold:true});
   txt(invoice.customer_name||'Walk-in Customer',L+3,y+9.5,{size:8.5,bold:true});
-  txt('Billing address:',L+3,y+14,{size:7.5,bold:true});
-  const billLines=doc.splitTextToSize(addrOrDash(invoice.customer_address),splitX-L-6);
-  let by=y+18;
+  if (invoice.customer_gstin) txt(`GSTIN: ${invoice.customer_gstin}`,L+3,y+13.5,{size:7,color:GRAY});
+  txt('Billing address:',L+3,y+(invoice.customer_gstin?17:14),{size:7.5,bold:true});
+  const billAddr = invoice.customer_address && invoice.customer_address.trim() ? invoice.customer_address : 'Same as shipping';
+  const billLines=doc.splitTextToSize(billAddr,splitX-L-6);
+  let by=y+(invoice.customer_gstin?21:18);
   billLines.slice(0,3).forEach((ln:string)=>{txt(ln,L+3,by,{size:7,color:GRAY}); by+=3.2;});
-  txt(`Ph: ${invoice.customer_mobile||'N/A'}`,L+3,Math.min(by,y+custH-2),{size:7,color:GRAY});
+  if (invoice.customer_mobile) txt(`Ph: ${invoice.customer_mobile}`,L+3,Math.min(by,y+custH-2),{size:7,color:GRAY});
   txt('Shipping address:',splitX+4,y+5,{size:8,bold:true});
-  const shipLines=doc.splitTextToSize(addrOrDash(invoice.customer_address),R-splitX-8);
+  const shipAddr = invoice.customer_address && invoice.customer_address.trim() ? invoice.customer_address : 'As per customer record';
+  const shipLines=doc.splitTextToSize(shipAddr,R-splitX-8);
   let sy=y+9.5;
   shipLines.slice(0,4).forEach((ln:string)=>{txt(ln,splitX+4,sy,{size:7,color:GRAY}); sy+=3.4;});
   y+=custH;
@@ -528,22 +531,38 @@ export async function GET(
       };
     });
 
-    // 4. Showroom / branding / billing in parallel
+    // 4. Showroom / branding / billing / customer in parallel
     const [
       {data:showroomData},
       {data:brandingData},
       {data:billingData},
       {data:addressData},
+      {data:customerData},
     ] = await Promise.all([
-      supabase.from('showrooms').select('showroom_name,gst_number,pan_number,state').eq('id',showroomId).single(),
+      supabase.from('showrooms').select('showroom_name,gst_number,pan_number').eq('id',showroomId).single(),
       supabase.from('showroom_branding').select('*').eq('showroom_id',showroomId).maybeSingle(),
       supabase.from('billing_configurations').select('*').eq('showroom_id',showroomId).maybeSingle(),
       supabase.from('showroom_addresses').select('*').eq('showroom_id',showroomId).eq('is_primary',true).maybeSingle(),
+      sale.customer_id
+        ? supabase.from('customers').select('first_name,last_name,mobile,gst_number,address_line1,address_line2,city,state,pincode').eq('id',sale.customer_id).maybeSingle()
+        : Promise.resolve({data:null}),
     ]);
 
     const showroomAddress = addressData
-      ? [addressData.address_line_1,addressData.address_line_2,addressData.city,addressData.state,addressData.pincode].filter(Boolean).join(', ')
-      : 'N/A';
+      ? [addressData.address_line_1, addressData.address_line_2, addressData.city, addressData.state, addressData.pincode].filter(Boolean).join(', ')
+      : '';
+
+    // State for Place of Supply comes from showroom address
+    const showroomState = addressData?.state || null;
+
+    // Customer full address from customers table
+    const customerAddress = customerData
+      ? [customerData.address_line1, customerData.address_line2, customerData.city, customerData.state, customerData.pincode].filter(Boolean).join(', ')
+      : null;
+
+    const customerName   = sale.customer_name   || (customerData ? `${customerData.first_name || ''} ${customerData.last_name || ''}`.trim() : 'Walk-in Customer');
+    const customerMobile = sale.customer_mobile || customerData?.mobile || '';
+    const customerGstin  = customerData?.gst_number || null;
 
     const pdfData = {
       sale_number              : sale.sale_number,
@@ -555,22 +574,23 @@ export async function GET(
       discount_amount          : sale.discount_amount,
       notes                    : sale.notes,
       items                    : flatItems,
-      customer_name            : sale.customer_name  ||'Walk-in Customer',
-      customer_mobile          : sale.customer_mobile||'N/A',
-      customer_address         : sale.customer_address||null,
-      showroom_name            : showroomData?.showroom_name||'EV Showroom',
-      gst_number               : showroomData?.gst_number   ||'N/A',
-      showroom_state           : showroomData?.state         ||null,
+      customer_name            : customerName,
+      customer_mobile          : customerMobile,
+      customer_address         : customerAddress,
+      customer_gstin           : customerGstin,
+      showroom_name            : showroomData?.showroom_name || 'EV Showroom',
+      gst_number               : showroomData?.gst_number    || '',
+      showroom_state           : showroomState,
       showroom_address         : showroomAddress,
-      showroom_phone           : brandingData?.official_mobile_number||brandingData?.whatsapp_number||'N/A',
-      logo_url                 : brandingData?.logo_url||null,
-      bank_name                : billingData?.bank_name      ||null,
-      account_number           : billingData?.account_number ||null,
-      ifsc_code                : billingData?.ifsc_code      ||null,
-      upi_id                   : billingData?.upi_id         ||null,
-      authorized_signature_url : billingData?.authorized_signature_url||null,
-      invoice_footer_note      : billingData?.invoice_footer_note     ||null,
-      invoice_terms_conditions : billingData?.invoice_terms_conditions||null,
+      showroom_phone           : brandingData?.official_mobile_number || brandingData?.whatsapp_number || '',
+      logo_url                 : brandingData?.logo_url || null,
+      bank_name                : billingData?.bank_name                || null,
+      account_number           : billingData?.account_number           || null,
+      ifsc_code                : billingData?.ifsc_code                || null,
+      upi_id                   : billingData?.upi_id                   || null,
+      authorized_signature_url : billingData?.authorized_signature_url || null,
+      invoice_footer_note      : billingData?.invoice_footer_note      || null,
+      invoice_terms_conditions : billingData?.invoice_terms_conditions || null,
     };
 
     // 5. Generate PDF
