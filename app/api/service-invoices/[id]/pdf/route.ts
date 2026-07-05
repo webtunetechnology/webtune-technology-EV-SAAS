@@ -166,11 +166,14 @@ async function generateServiceInvoicePDF(data: any): Promise<ArrayBuffer> {
   y += custH;
 
   // ============ SERVICE ITEMS TABLE ============
+  // Build item rows — ONLY billable line items (labour + parts).
+  // Discount, tax, and sub-totals are rendered BELOW the table, not inside it.
   type Line = { desc: string; hsn: string; qty: number; rate: number; amount: number; per: string };
   const lines: Line[] = [];
-  if (laborCost > 0) lines.push({ desc: 'Labour Charges', hsn: '9987', qty: 1, rate: laborCost, amount: laborCost, per: 'Job' });
+  if (laborCost > 0) {
+    lines.push({ desc: 'Labour Charges', hsn: '9987', qty: 1, rate: laborCost, amount: laborCost, per: 'Job' });
+  }
   if (partsCost > 0) {
-    // If there are individual parts, list them; else one aggregate row
     const parts = Array.isArray(data.parts_detail) && data.parts_detail.length > 0 ? data.parts_detail : null;
     if (parts) {
       parts.forEach((p: any) => {
@@ -182,8 +185,7 @@ async function generateServiceInvoicePDF(data: any): Promise<ArrayBuffer> {
       lines.push({ desc: 'Parts & Materials', hsn: '8708', qty: 1, rate: partsCost, amount: partsCost, per: 'Nos' });
     }
   }
-  if (discAmount > 0) lines.push({ desc: 'Discount', hsn: '', qty: 1, rate: -discAmount, amount: -discAmount, per: '' });
-  if (taxAmount  > 0) lines.push({ desc: `Tax / GST`, hsn: '9991', qty: 1, rate: taxAmount, amount: taxAmount, per: '' });
+  // NOTE: discAmount and taxAmount are NOT added here — they appear only in the sub-total section below.
 
   const itemBody = lines.map((l, i) => [
     String(i + 1), l.desc, l.hsn || '-', `${l.qty}`, num2(l.rate), l.per, num2(l.amount),
