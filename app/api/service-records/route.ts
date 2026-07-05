@@ -295,6 +295,52 @@ export async function POST(request: NextRequest) {
         .eq('showroom_id', showroom_id);
     }
     
+    // ── Auto-generate a service invoice ─────────────────────────────────────
+    try {
+      // Build a sequential invoice number: SRV/YYMM/0001
+      const { count: invoiceCount } = await supabase
+        .from('service_invoices')
+        .select('id', { count: 'exact', head: true })
+        .eq('showroom_id', showroom_id);
+
+      const seq = ((invoiceCount ?? 0) + 1).toString().padStart(4, '0');
+      const now = new Date();
+      const yy  = now.getFullYear().toString().slice(-2);
+      const mm  = (now.getMonth() + 1).toString().padStart(2, '0');
+      const invoiceNumber = `SRV/${yy}${mm}/${seq}`;
+
+      const laborCost    = Number(body.labor_cost    || 0);
+      const partsCost    = Number(body.parts_cost    || 0);
+      const taxAmount    = Number(body.tax_amount    || 0);
+      const discAmount   = Number(body.discount_amount || 0);
+      const totalAmount  = laborCost + partsCost + taxAmount - discAmount;
+
+      await supabase.from('service_invoices').insert({
+        showroom_id,
+        service_record_id : record.id,
+        customer_id       : body.customer_id,
+        vehicle_id        : body.vehicle_id,
+        invoice_number    : invoiceNumber,
+        invoice_date      : body.service_date || now.toISOString().split('T')[0],
+        service_type      : body.service_type || 'Free Service',
+        labor_cost        : laborCost,
+        parts_cost        : partsCost,
+        tax_amount        : taxAmount,
+        discount_amount   : discAmount,
+        total_amount      : totalAmount,
+        payment_status    : body.payment_status || 'Pending',
+        payment_method    : body.payment_method || null,
+        parts_detail      : body.parts_replaced  || null,
+        notes             : body.technician_notes || null,
+      });
+
+      console.log(`Service invoice ${invoiceNumber} created for record ${record.id}`);
+    } catch (invErr) {
+      // Non-fatal — log but don't fail the service record creation
+      console.error('Failed to auto-create service invoice:', invErr);
+    }
+    // ────────────────────────────────────────────────────────────────────────
+
     // Fetch complete record with relations
     const { data: completeRecord } = await supabase
       .from('service_records')
@@ -318,7 +364,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: true,
       data: completeRecord || record,
-      message: `Service record created. ${body.parts_replaced?.length > 0 ? 'Parts deducted from stock.' : ''} Appointment updated to "${appointmentStatus}".`
+      message: `Service record created. ${body.parts_replaced?.length > 0 ? 'Parts deducted from stock.' : ''} Appointment updated to "${appointmentStatus}". Service invoice generated.`
     }, { status: 201 });
   } catch (error) {
     console.error('Error in service record create API:', error);
