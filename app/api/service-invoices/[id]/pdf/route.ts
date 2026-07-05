@@ -3,6 +3,7 @@ import { cookies } from 'next/headers';
 import { createClient } from '@supabase/supabase-js';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import QRCode from 'qrcode';
 
 const supabaseUrl  = process.env.SUPABASE_URL!;
 const serviceKey   = process.env.SUPABASE_SERVICE_ROLE_KEY!;
@@ -263,13 +264,15 @@ async function generateServiceInvoicePDF(data: any): Promise<ArrayBuffer> {
     ty += 9;
   }
 
-  // ============ BANK / SIGNATURE ============
+  // ============ BANK / UPI QR / SIGNATURE ============
+  // Three-column layout — exactly mirrors billing/invoices/route.ts
   const payH = 40;
-  const c1 = L, c3 = 145;
+  const c1 = L, c2 = 78, c3 = 145;
   box(L, ty, R - L, payH);
+  vline(c2, ty, ty + payH);
   vline(c3, ty, ty + payH);
 
-  // Bank details
+  // Column 1 — Bank details
   txt('Bank Details:', c1 + 3, ty + 5, { size: 8, bold: true });
   const bankRows: [string, string][] = [
     ['Bank:',   data.bank_name      || 'N/A'],
@@ -284,16 +287,22 @@ async function generateServiceInvoicePDF(data: any): Promise<ArrayBuffer> {
     byk += 5;
   });
 
-  // Notes in the middle section
-  if (data.notes) {
-    const noteX = (c1 + c3) / 2 - 10;
-    txt('Notes:', noteX, ty + 5, { size: 8, bold: true });
-    const noteLines = doc.splitTextToSize(data.notes, c3 - noteX - 4);
-    let ny = ty + 10;
-    noteLines.slice(0, 5).forEach((ln: string) => { txt(ln, noteX, ny, { size: 7, color: GRAY }); ny += 3.5; });
+  // Column 2 — UPI QR code
+  txt('Pay using UPI', (c2 + c3) / 2, ty + 5, { size: 8, bold: true, align: 'center' });
+  if (data.upi_id) {
+    try {
+      const upiString = `upi://pay?pa=${encodeURIComponent(data.upi_id)}&pn=${encodeURIComponent(data.showroom_name || 'Merchant')}&am=${grandTotal}&cu=INR`;
+      const qrDataUrl = await QRCode.toDataURL(upiString, { margin: 0, width: 240 });
+      const qrSize = 26;
+      doc.addImage(qrDataUrl, 'PNG', (c2 + c3) / 2 - qrSize / 2, ty + 8, qrSize, qrSize);
+    } catch {
+      txt('QR unavailable', (c2 + c3) / 2, ty + 22, { size: 7, color: GRAY, align: 'center' });
+    }
+  } else {
+    txt('No UPI configured', (c2 + c3) / 2, ty + 22, { size: 7, color: GRAY, align: 'center' });
   }
 
-  // Signature
+  // Column 3 — Signature
   txt(`For ${data.showroom_name || 'EV Showroom'}`, R - 3, ty + 5, { size: 7.5, bold: true, align: 'right' });
   const signImg = await fetchImageAsDataUrl(data.authorized_signature_url);
   const signPlaced = (() => {
