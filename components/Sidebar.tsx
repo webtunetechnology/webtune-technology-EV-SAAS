@@ -187,7 +187,7 @@ export function Sidebar({
 
   return (
     <div
-      className={`flex h-full flex-col border-r border-gray-800 bg-gray-950 transition-[width] duration-300 ease-in-out ${
+      className={`flex h-full flex-col border-r border-gray-200 bg-white transition-[width] duration-300 ease-in-out ${
         collapsed ? 'lg:w-20 w-72' : 'w-72 lg:w-64'
       }`}
     >
@@ -210,10 +210,10 @@ export function Sidebar({
           </div>
           {!collapsed && (
             <div className="min-w-0">
-              <h1 className="truncate text-base font-bold text-white">
+              <h1 className="truncate text-base font-bold text-gray-900">
                 {showroom?.showroom_name || 'EV Showroom'}
               </h1>
-              <p className="truncate text-xs text-gray-400">Management System</p>
+              <p className="truncate text-xs text-gray-500">Management System</p>
             </div>
           )}
         </Link>
@@ -221,7 +221,7 @@ export function Sidebar({
           <button
             type="button"
             onClick={onToggleCollapse}
-            className="hidden shrink-0 rounded-md p-1 text-gray-400 transition-colors hover:bg-gray-800 hover:text-white lg:block"
+            className="hidden shrink-0 rounded-md p-1 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-700 lg:block"
             aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
           >
             <ChevronLeft className={`h-5 w-5 transition-transform ${collapsed ? 'rotate-180' : ''}`} />
@@ -229,7 +229,7 @@ export function Sidebar({
         )}
       </div>
 
-      <div className="h-px bg-gray-800" />
+      <div className="h-px bg-gray-200" />
 
       {/* Navigation */}
       <nav className="flex-1 space-y-0.5 overflow-y-auto px-3 py-4">
@@ -248,12 +248,12 @@ export function Sidebar({
               } ${
                 isActive
                   ? 'font-semibold'
-                  : 'font-medium text-gray-400 hover:bg-gray-800 hover:text-white'
+                  : 'font-medium text-gray-500 hover:bg-gray-100 hover:text-gray-900'
               }`}
               style={isActive ? { background: ACCENT_SOFT, color: ACCENT } : undefined}
             >
               <Icon
-                className={`h-5 w-5 shrink-0 ${isActive ? '' : 'text-gray-500'}`}
+                className={`h-5 w-5 shrink-0 ${isActive ? '' : 'text-gray-400'}`}
                 style={isActive ? { color: ACCENT } : undefined}
               />
               <span className={`truncate ${collapsed ? 'lg:hidden' : ''}`}>{item.label}</span>
@@ -271,17 +271,17 @@ export function Sidebar({
       </nav>
 
       {/* Footer: logout */}
-      <div className="mx-4 h-px bg-gray-800" />
+      <div className="mx-4 h-px bg-gray-200" />
       <div className="p-3">
         <button
           type="button"
           onClick={handleLogout}
           title={collapsed ? 'Logout' : undefined}
-          className={`flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-gray-400 transition-colors hover:bg-gray-800 hover:text-white ${
+          className={`flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-900 ${
             collapsed ? 'lg:justify-center' : ''
           }`}
         >
-          <LogOut className="h-5 w-5 shrink-0 text-gray-500" />
+          <LogOut className="h-5 w-5 shrink-0 text-gray-400" />
           <span className={collapsed ? 'lg:hidden' : ''}>Logout</span>
         </button>
       </div>
