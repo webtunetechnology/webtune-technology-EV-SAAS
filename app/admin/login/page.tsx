@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import Image from 'next/image'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -53,113 +54,88 @@ export default function AdminLoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex">
-      {/* Left — illustrative art background */}
-      <div
-        className="hidden lg:flex flex-1 relative overflow-hidden"
-        style={{ backgroundImage: "url('/images/admin-login-bg.png')", backgroundSize: 'cover', backgroundPosition: 'center' }}
-      >
-        {/* Dark overlay for readability */}
-        <div className="absolute inset-0 bg-slate-950/60" />
-
-        {/* Branding overlay */}
-        <div className="relative z-10 flex flex-col justify-between p-10 w-full">
-          {/* Top badge */}
-          <div className="flex items-center gap-2">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary">
-              <ShieldCheck className="h-5 w-5 text-white" />
-            </div>
-            <span className="text-white font-semibold text-base tracking-wide">EV SaaS Platform</span>
+    <div
+      className="min-h-screen bg-cover bg-center bg-no-repeat flex items-center justify-center p-4"
+      style={{ backgroundImage: "url('https://res.cloudinary.com/doficc2yl/image/upload/v1778936343/ChatGPT_Image_May_16_2026_06_06_15_PM_zmj8wf.png')" }}
+    >
+      <div className="w-full max-w-md">
+        {/* Logo / Header */}
+        <div className="text-center mb-8">
+          <div className="flex justify-center mb-4">
+            <Image
+              src="https://res.cloudinary.com/doficc2yl/image/upload/v1778937807/WhatsApp_Image_2026-05-10_at_4.45.44_PM_ikm7ay.jpg"
+              alt="Webtune Technology Logo"
+              width={68}
+              height={68}
+              className="rounded-lg"
+              priority
+            />
           </div>
-
-          {/* Centre headline */}
-          <div>
-            <h2 className="text-4xl font-bold text-white leading-tight text-balance mb-3">
-              Platform Administration
-            </h2>
-            <p className="text-slate-300 text-base leading-relaxed max-w-sm">
-              Master control panel for managing showrooms, subscriptions, and the entire EV dealership network.
-            </p>
-          </div>
-
-          {/* Bottom tag */}
-          <p className="text-slate-500 text-xs">
-            Restricted access · Authorised administrators only
-          </p>
+          <h1 className="text-2xl font-bold text-black mb-1">Webtune Technology</h1>
+          <p className="text-slate-300 text-sm">Admin Control Panel</p>
         </div>
-      </div>
 
-      {/* Right — login form */}
-      <div className="flex flex-1 items-center justify-center bg-white px-6 py-12 lg:max-w-md xl:max-w-lg">
-        <div className="w-full max-w-sm">
-          {/* Mobile brand header (shown only on small screens) */}
-          <div className="flex items-center gap-2.5 mb-8 lg:hidden">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary">
-              <ShieldCheck className="h-6 w-6 text-white" />
+        <Card className="bg-white border-slate-200">
+          <div className="p-6">
+            {/* Admin badge */}
+            <div className="flex items-center gap-2 mb-5 p-3 bg-slate-50 border border-slate-200 rounded-lg">
+              <ShieldCheck className="h-4 w-4 text-primary shrink-0" />
+              <p className="text-xs text-slate-600 font-medium">Platform Administrator Access</p>
             </div>
-            <div>
-              <p className="font-bold text-gray-900 text-base leading-tight">EV SaaS Platform</p>
-              <p className="text-xs text-slate-500">Admin Panel</p>
+
+            {error && (
+              <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+                {error}
+              </div>
+            )}
+
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="email" className="text-slate-700 font-medium">
+                  Admin Email
+                </Label>
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="admin@evsaas.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  onKeyDown={onKeyDown}
+                  className="mt-1 border-slate-200 focus:ring-primary"
+                  disabled={loading}
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="password" className="text-slate-700 font-medium">
+                  Password
+                </Label>
+                <Input
+                  id="password"
+                  type="password"
+                  placeholder="••••••••"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  onKeyDown={onKeyDown}
+                  className="mt-1 border-slate-200 focus:ring-primary"
+                  disabled={loading}
+                />
+              </div>
+
+              <Button
+                onClick={handleLogin}
+                disabled={loading || !email || !password}
+                className="w-full bg-primary hover:bg-primary/90 text-white"
+              >
+                {loading ? 'Signing in...' : 'Sign In to Admin Panel'}
+              </Button>
             </div>
           </div>
+        </Card>
 
-          <div className="mb-8">
-            <h1 className="text-2xl font-bold text-gray-900 mb-1">Welcome back</h1>
-            <p className="text-slate-500 text-sm">Sign in to the admin panel to continue</p>
-          </div>
-
-          {error && (
-            <div className="mb-5 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
-              {error}
-            </div>
-          )}
-
-          <div className="space-y-5">
-            <div>
-              <Label htmlFor="email" className="text-slate-700 font-medium text-sm">
-                Admin Email
-              </Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="admin@evsaas.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                onKeyDown={onKeyDown}
-                className="mt-1.5 border-slate-200 focus-visible:ring-primary"
-                disabled={loading}
-              />
-            </div>
-
-            <div>
-              <Label htmlFor="password" className="text-slate-700 font-medium text-sm">
-                Password
-              </Label>
-              <Input
-                id="password"
-                type="password"
-                placeholder="••••••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                onKeyDown={onKeyDown}
-                className="mt-1.5 border-slate-200 focus-visible:ring-primary"
-                disabled={loading}
-              />
-            </div>
-
-            <Button
-              onClick={handleLogin}
-              disabled={loading || !email || !password}
-              className="w-full h-11 text-sm font-semibold"
-            >
-              {loading ? 'Signing in...' : 'Sign In to Admin Panel'}
-            </Button>
-          </div>
-
-          <p className="text-center text-xs text-slate-400 mt-8">
-            Restricted access. Authorised platform administrators only.
-          </p>
-        </div>
+        <p className="text-center text-xs text-slate-400 mt-6">
+          Restricted access. Authorised platform administrators only.
+        </p>
       </div>
     </div>
   )
