@@ -23,8 +23,9 @@ export async function GET(request: NextRequest) {
         customer:customers(id, first_name, last_name, mobile),
         vehicle:customer_vehicles(
           id, chassis_number, registration_number,
-          vehicle_model:vehicles(model_name, brand:brands(brand_name))
-        )
+          vehicle_model:vehicles(model_name, variant_name, brand:brands(brand_name))
+        ),
+        showroom:showrooms(showroom_name, gst_number, pan_number)
       `, { count: 'exact' })
       .eq('showroom_id', showroom_id)
       .order('created_at', { ascending: false });
