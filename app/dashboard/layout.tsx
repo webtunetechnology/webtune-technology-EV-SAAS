@@ -17,14 +17,14 @@ export default function DashboardLayout({
   const [collapsed, setCollapsed] = useState(false);
   const pathname = usePathname();
 
-  // Belt-and-suspenders client-side auth guard.
-  // The edge proxy (proxy.ts) is the primary gate; this catches any case
-  // where the cookie has been cleared without a full navigation (e.g. logout
-  // in another tab, cookie expiry mid-session).
+  // Belt-and-suspenders client-side auth guard (mirrors proxy.ts logic).
+  // Runs on every route change to catch mid-session cookie expiry and
+  // logout-in-another-tab scenarios.
   useEffect(() => {
-    const isLoggedIn =
-      document.cookie.split(';').some(c => c.trim().startsWith('user_logged_in=true'));
-    if (!isLoggedIn) {
+    const parts = document.cookie.split(';');
+    const hasAuthToken  = parts.some(c => c.trim().startsWith('auth_token=') && c.trim() !== 'auth_token=');
+    const hasLoggedIn   = parts.some(c => c.trim() === 'user_logged_in=true');
+    if (!hasAuthToken && !hasLoggedIn) {
       router.replace('/');
     }
   }, [pathname, router]);
