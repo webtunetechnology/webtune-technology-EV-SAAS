@@ -23,6 +23,7 @@ interface SidebarProps {
   onSectionChange?: (section: string) => void;
   collapsed?: boolean;
   onToggleCollapse?: () => void;
+  onClose?: () => void;
 }
 
 interface ShowroomData {
@@ -48,6 +49,7 @@ export function Sidebar({
   activeSection: propActiveSection,
   collapsed = false,
   onToggleCollapse,
+  onClose,
 }: SidebarProps) {
   const [showroom, setShowroom] = useState<ShowroomData | null>(null);
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
@@ -185,8 +187,8 @@ export function Sidebar({
 
   return (
     <div
-      className={`fixed left-0 top-0 z-50 flex h-full flex-col border-r border-gray-200 bg-white transition-[width] duration-300 ease-in-out ${
-        collapsed ? 'w-20' : 'w-64'
+      className={`flex h-full flex-col border-r border-gray-200 bg-white transition-[width] duration-300 ease-in-out ${
+        collapsed ? 'lg:w-20 w-72' : 'w-72 lg:w-64'
       }`}
     >
       {/* Brand header + collapse toggle */}
@@ -240,8 +242,9 @@ export function Sidebar({
               key={item.id}
               href={item.href}
               title={collapsed ? item.label : undefined}
+              onClick={onClose}
               className={`flex items-center gap-3 rounded-full px-3 py-2.5 text-sm transition-colors ${
-                collapsed ? 'justify-center' : ''
+                collapsed ? 'lg:justify-center' : ''
               } ${isActive ? 'font-semibold' : 'font-medium text-gray-600 hover:bg-gray-50'}`}
               style={isActive ? { background: ACCENT_SOFT, color: ACCENT } : undefined}
             >
@@ -249,8 +252,8 @@ export function Sidebar({
                 className={`h-5 w-5 shrink-0 ${isActive ? '' : 'text-gray-500'}`}
                 style={isActive ? { color: ACCENT } : undefined}
               />
-              {!collapsed && <span className="truncate">{item.label}</span>}
-              {!collapsed && item.badge ? (
+              <span className={`truncate ${collapsed ? 'lg:hidden' : ''}`}>{item.label}</span>
+              {item.badge && !collapsed ? (
                 <span
                   className="ml-auto flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 text-xs font-semibold text-white"
                   style={{ background: ACCENT }}
@@ -271,11 +274,11 @@ export function Sidebar({
           onClick={handleLogout}
           title={collapsed ? 'Logout' : undefined}
           className={`flex w-full items-center gap-3 rounded-full px-3 py-2.5 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-50 ${
-            collapsed ? 'justify-center' : ''
+            collapsed ? 'lg:justify-center' : ''
           }`}
         >
           <LogOut className="h-5 w-5 shrink-0 text-gray-500" />
-          {!collapsed && <span>Logout</span>}
+          <span className={collapsed ? 'lg:hidden' : ''}>Logout</span>
         </button>
       </div>
     </div>
