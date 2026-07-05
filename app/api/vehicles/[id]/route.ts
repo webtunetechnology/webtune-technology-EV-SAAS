@@ -225,23 +225,29 @@ export async function PUT(
       }
     }
     
-    // Check for duplicate model name within same brand (excluding current vehicle)
-    const { data: duplicate, error: dupError } = await supabase
+    // Check for duplicate model + variant combination within same brand (excluding current vehicle)
+    const variantValue = body.variant_name?.trim() || null;
+    let dupQuery = supabase
       .from('vehicles')
       .select('id')
       .eq('brand_id', body.brand_id)
       .eq('model_name', body.model_name)
-      .neq('id', id)
-      .maybeSingle();
-    
+      .neq('id', id);
+    dupQuery = variantValue
+      ? dupQuery.eq('variant_name', variantValue)
+      : dupQuery.is('variant_name', null);
+    const { data: duplicate, error: dupError } = await dupQuery.maybeSingle();
+
     if (dupError) {
       console.error('Error checking duplicate:', dupError);
     }
-    
+
     if (duplicate) {
-      return NextResponse.json({ 
-        success: false, 
-        error: 'A vehicle with this model name already exists for this brand' 
+      return NextResponse.json({
+        success: false,
+        error: variantValue
+          ? `A vehicle with model "${body.model_name}" and variant "${variantValue}" already exists for this brand`
+          : `A vehicle with model "${body.model_name}" (no variant) already exists for this brand. Please add a variant name to differentiate.`,
       }, { status: 400 });
     }
     
