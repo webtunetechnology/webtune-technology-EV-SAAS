@@ -3,6 +3,10 @@
 import { useState, useEffect, useCallback } from 'react';
 import { createClient } from '@supabase/supabase-js';
 import { useRouter } from 'next/navigation';
+import {
+  Check, CheckCircle, AlertTriangle, Trash2, Plus, X,
+  Loader2, ArrowLeft,
+} from 'lucide-react';
 
 // ============================================
 // TYPES
@@ -562,9 +566,7 @@ export default function CreateInvoicePage() {
     <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 sticky top-6">
       <div className="flex items-center space-x-2 mb-4">
         <div className="p-2 bg-blue-100 rounded-lg">
-          <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-          </svg>
+          <AlertTriangle className="w-5 h-5 text-blue-600" />
         </div>
         <h2 className="text-lg font-semibold text-gray-900">Invoice Summary</h2>
       </div>
@@ -623,9 +625,7 @@ export default function CreateInvoicePage() {
       {billingConfig && (
         <div className="mt-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
           <div className="flex items-center space-x-2 mb-3">
-            <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
-            </svg>
+            <AlertTriangle className="w-4 h-4 text-gray-600" />
             <h3 className="text-sm font-semibold text-gray-900">Bank Details</h3>
           </div>
           <div className="space-y-1.5 text-xs">
@@ -676,9 +676,7 @@ export default function CreateInvoicePage() {
                   } ${step < currentStep ? 'cursor-pointer hover:scale-110' : ''}`}
                 >
                   {currentStep > step ? (
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M5 13l4 4L19 7" />
-                    </svg>
+                    <Check className="w-5 h-5" />
                   ) : step}
                 </button>
                 <div className="ml-3">
@@ -811,9 +809,7 @@ export default function CreateInvoicePage() {
                   <SectionCard>
                     <div className="flex items-center space-x-2 mb-4">
                       <div className="p-2 bg-green-100 rounded-lg">
-                        <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
+                        <CheckCircle className="w-5 h-5 text-green-600" />
                       </div>
                       <h2 className="text-lg font-semibold text-gray-900">EV Subsidies</h2>
                     </div>
@@ -827,9 +823,7 @@ export default function CreateInvoicePage() {
                   <SectionCard>
                     <div className="flex items-center space-x-2 mb-4">
                       <div className="p-2 bg-red-100 rounded-lg">
-                        <svg className="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
+                        <AlertTriangle className="w-5 h-5 text-red-600" />
                       </div>
                       <h2 className="text-lg font-semibold text-gray-900">Discounts</h2>
                     </div>
@@ -848,17 +842,13 @@ export default function CreateInvoicePage() {
               <div className="flex justify-between pb-6">
                 {currentStep > 1 ? (
                   <button type="button" onClick={handlePrevStep} className="group flex items-center px-6 py-3 border-2 border-gray-300 rounded-xl text-gray-600 hover:bg-gray-50 hover:border-gray-400 transition-all duration-200 font-medium">
-                    <svg className="w-5 h-5 mr-2 group-hover:-translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-                    </svg>
+                    <ArrowLeft className="w-5 h-5 mr-2 group-hover:-translate-x-1 transition-transform" />
                     Previous
                   </button>
                 ) : <div></div>}
                 <button type="button" onClick={handleNextStep} className="group flex items-center px-8 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl hover:from-blue-700 hover:to-blue-800 shadow-lg shadow-blue-200 hover:shadow-xl transition-all duration-200 font-medium">
                   Next Step
-                  <svg className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
-                  </svg>
+                  <ExternalLink className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
                 </button>
               </div>
             </div>
@@ -879,9 +869,7 @@ export default function CreateInvoicePage() {
                 <SectionCard>
                   <div className="flex items-center space-x-2 mb-4">
                     <div className="p-2 bg-indigo-100 rounded-lg">
-                      <svg className="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
-                      </svg>
+                      <AlertTriangle className="w-5 h-5 text-indigo-600" />
                     </div>
                     <h2 className="text-lg font-semibold text-gray-900">Payment Details</h2>
                   </div>
@@ -919,9 +907,7 @@ export default function CreateInvoicePage() {
                               <p className="text-xs font-medium text-blue-700">ESTIMATED MONTHLY EMI</p>
                               <p className="text-2xl font-bold text-blue-900">{formatCurrency(calculateEMI())}</p>
                             </div>
-                            <svg className="w-10 h-10 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                            </svg>
+                            <AlertTriangle className="w-10 h-10 text-blue-400" />
                           </div>
                         </div>
                       )}
@@ -942,9 +928,7 @@ export default function CreateInvoicePage() {
                 <SectionCard>
                   <div className="flex items-center space-x-2 mb-4">
                     <div className="p-2 bg-purple-100 rounded-lg">
-                      <svg className="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
-                      </svg>
+                      <Check className="w-5 h-5 text-purple-600" />
                     </div>
                     <h2 className="text-lg font-semibold text-gray-900">Registration & Vehicle Setup</h2>
                   </div>
@@ -1014,18 +998,13 @@ export default function CreateInvoicePage() {
                   >
                     {saving ? (
                       <>
-                        <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">
-                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                        </svg>
+                        <Loader2 className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" />
                         Creating Invoice...
                       </>
                     ) : (
                       <>
                         Generate Invoice
-                        <svg className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
-                        </svg>
+                        <Check className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
                       </>
                     )}
                   </button>
@@ -1041,17 +1020,12 @@ export default function CreateInvoicePage() {
                 >
                   {saving ? (
                     <span className="flex items-center justify-center">
-                      <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
-                      </svg>
+                      <Loader2 className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" />
                       Creating Invoice...
                     </span>
                   ) : (
                     <span className="flex items-center justify-center">
-                      <svg className="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
+                      <CheckCircle className="w-6 h-6 mr-2" />
                       Generate Invoice
                     </span>
                   )}

@@ -3,6 +3,11 @@
 import { useState, useEffect, useCallback } from 'react';
 import { createClient } from '@supabase/supabase-js';
 import Link from 'next/link';
+import {
+  Download, Printer, ExternalLink, X, FileText,
+  Search, AlertTriangle, Plus, Eye, Pencil, Trash2,
+  MessageCircle,
+} from 'lucide-react';
 
 // ============================================
 // SERVICE INVOICE TYPES
@@ -236,25 +241,25 @@ const PDFViewerModal: React.FC<{ invoice: SalesInvoice; onClose: () => void }> =
                 onClick={handleDownload}
                 className="px-4 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition-colors font-medium flex items-center"
               >
-                <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                <Download className="w-4 h-4 mr-1.5" />
                 Download
               </button>
               <button 
                 onClick={handlePrint}
                 className="px-4 py-2 bg-gray-600 text-white text-sm rounded-lg hover:bg-gray-700 transition-colors font-medium flex items-center"
               >
-                <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" /></svg>
+                <Printer className="w-4 h-4 mr-1.5" />
                 Print
               </button>
               <button 
                 onClick={() => pdfUrl ? window.open(pdfUrl, '_blank') : null}
                 className="px-4 py-2 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700 transition-colors font-medium flex items-center"
               >
-                <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>
+                <ExternalLink className="w-4 h-4 mr-1.5" />
                 Open in New Tab
               </button>
               <button onClick={onClose} className="p-2 hover:bg-gray-200 rounded-lg transition-colors ml-2">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                <X className="w-5 h-5" />
               </button>
             </div>
           </div>
@@ -269,7 +274,7 @@ const PDFViewerModal: React.FC<{ invoice: SalesInvoice; onClose: () => void }> =
               />
             ) : (
               <div className="flex flex-col items-center justify-center h-64 text-gray-500">
-                <svg className="w-16 h-16 mb-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                <FileText className="w-16 h-16 mb-4 text-gray-400" />
                 <p className="text-lg font-medium">PDF Not Available</p>
                 <p className="text-sm mt-1">The invoice PDF has not been generated yet.</p>
               </div>
@@ -352,7 +357,7 @@ const EditModal: React.FC<{
         <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[85vh] flex flex-col">
           <div className="flex items-center justify-between p-5 border-b bg-gray-50/80 rounded-t-2xl">
             <div><h3 className="text-lg font-semibold">Edit Invoice</h3><p className="text-sm text-gray-500">{invoice.invoice_number}</p></div>
-            <button onClick={onClose} className="p-2 hover:bg-gray-200 rounded-lg"><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg></button>
+            <button onClick={onClose} className="p-2 hover:bg-gray-200 rounded-lg"><X className="w-5 h-5" /></button>
           </div>
           <div className="flex border-b bg-white px-5 overflow-x-auto">
             {tabs.map(t => (
@@ -444,7 +449,7 @@ const CancelModal: React.FC<{
         <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md">
           <div className="p-6">
             <div className="flex items-center justify-center w-14 h-14 mx-auto bg-red-100 rounded-full">
-              <svg className="w-7 h-7 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" /></svg>
+              <AlertTriangle className="w-7 h-7 text-red-600" />
             </div>
             <div className="mt-4 text-center"><h3 className="text-lg font-semibold">Cancel Invoice</h3><p className="text-sm text-gray-500 mt-2">Cancel <strong>{invoice.invoice_number}</strong>? Vehicle will be restored to inventory.</p></div>
             <form onSubmit={handleSubmit} className="mt-6 space-y-4">
@@ -512,16 +517,16 @@ const ServiceInvoicePDFModal: React.FC<{ invoice: ServiceInvoice; onClose: () =>
             <div className="flex items-center gap-2">
               <button onClick={handleDownload}
                 className="px-4 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition-colors font-medium flex items-center">
-                <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                <Download className="w-4 h-4 mr-1.5" />
                 Download
               </button>
               <button onClick={handlePrint}
                 className="px-4 py-2 bg-gray-600 text-white text-sm rounded-lg hover:bg-gray-700 transition-colors font-medium flex items-center">
-                <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" /></svg>
+                <Printer className="w-4 h-4 mr-1.5" />
                 Print
               </button>
               <button onClick={onClose} className="p-2 hover:bg-gray-200 rounded-lg transition-colors ml-1">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                <X className="w-5 h-5" />
               </button>
             </div>
           </div>
@@ -536,7 +541,7 @@ const ServiceInvoicePDFModal: React.FC<{ invoice: ServiceInvoice; onClose: () =>
             )}
             {error ? (
               <div className="flex flex-col items-center justify-center h-64 text-gray-500">
-                <svg className="w-16 h-16 mb-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                <FileText className="w-16 h-16 mb-4 text-gray-400" />
                 <p className="text-lg font-medium">Could not load PDF</p>
                 <button onClick={() => { setError(false); setLoading(true); }} className="mt-3 px-4 py-2 bg-blue-600 text-white text-sm rounded-lg">Retry</button>
               </div>
@@ -606,7 +611,7 @@ function ServiceInvoicesTab({ getShowroomId }: { getShowroomId: () => string }) 
       {/* Toolbar */}
       <div className="flex flex-col sm:flex-row gap-3 mb-5">
         <div className="relative flex-1 max-w-xs">
-          <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <input
             type="text"
             placeholder="Search by invoice number…"
@@ -625,7 +630,7 @@ function ServiceInvoicesTab({ getShowroomId }: { getShowroomId: () => string }) 
           </div>
         ) : invoices.length === 0 ? (
           <div className="text-center py-12 text-muted-foreground">
-            <svg className="mx-auto h-12 w-12 text-muted-foreground/30" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+            <FileText className="mx-auto h-12 w-12 text-muted-foreground/30" />
             <h3 className="mt-2 text-sm font-medium">No service invoices yet</h3>
             <p className="text-xs mt-1 text-muted-foreground">Service invoices are created automatically when you add a service record.</p>
           </div>
@@ -685,7 +690,7 @@ function ServiceInvoicesTab({ getShowroomId }: { getShowroomId: () => string }) 
                         title="View / Download PDF"
                         className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-lg transition-colors"
                       >
-                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                        <FileText className="w-3.5 h-3.5" />
                         View PDF
                       </button>
                     </td>
@@ -814,7 +819,7 @@ export default function InvoiceListPage() {
 
   return (
     <div>
-      {error && <div className="mb-4 p-4 bg-destructive/10 border border-destructive/20 rounded-2xl flex items-center justify-between"><span className="text-destructive text-sm">{error}</span><button onClick={()=>setError('')} className="text-destructive/70 hover:text-destructive"><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg></button></div>}
+      {error && <div className="mb-4 p-4 bg-destructive/10 border border-destructive/20 rounded-2xl flex items-center justify-between"><span className="text-destructive text-sm">{error}</span><button onClick={()=>setError('')} className="text-destructive/70 hover:text-destructive"><X className="w-4 h-4" /></button></div>}
 
       {/* Header */}
       <div className="flex items-start justify-between mb-4">
