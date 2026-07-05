@@ -174,10 +174,10 @@ export async function PUT(
     // Get current showroom ID
     const showroomId = await getCurrentShowroomId(supabase);
     
-    // Check if vehicle exists
+    // Check if vehicle exists — fetch warranty fields so we can preserve them when null is sent
     const { data: existingVehicle, error: checkError } = await supabase
       .from('vehicles')
-      .select('id, brand_id')
+      .select('id, brand_id, vehicle_warranty_years, vehicle_warranty_km, battery_warranty_years, battery_warranty_km')
       .eq('id', id)
       .single();
     
@@ -260,10 +260,10 @@ export async function PUT(
       ex_showroom_price: body.ex_showroom_price || null,
       insurance_amount: body.insurance_amount || null,
       rto_charges: body.rto_charges || null,
-      vehicle_warranty_years: body.vehicle_warranty_years || 3,
-      vehicle_warranty_km: body.vehicle_warranty_km || 125000,
-      battery_warranty_years: body.battery_warranty_years || 5,
-      battery_warranty_km: body.battery_warranty_km || 60000,
+      vehicle_warranty_years: body.vehicle_warranty_years ?? existingVehicle.vehicle_warranty_years ?? 3,
+      vehicle_warranty_km: body.vehicle_warranty_km ?? existingVehicle.vehicle_warranty_km ?? 125000,
+      battery_warranty_years: body.battery_warranty_years ?? existingVehicle.battery_warranty_years ?? 5,
+      battery_warranty_km: body.battery_warranty_km ?? existingVehicle.battery_warranty_km ?? 60000,
       is_active: body.is_active !== undefined ? body.is_active : true,
       is_discontinued: body.is_discontinued !== undefined ? body.is_discontinued : false,
       updated_at: new Date().toISOString(),
