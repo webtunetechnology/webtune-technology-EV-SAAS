@@ -5,6 +5,38 @@ import { createClient } from '@supabase/supabase-js';
 import Link from 'next/link';
 
 // ============================================
+// SERVICE INVOICE TYPES
+// ============================================
+
+interface ServiceInvoice {
+  id: string;
+  showroom_id: string;
+  service_record_id: string;
+  customer_id: string;
+  vehicle_id: string;
+  invoice_number: string;
+  invoice_date: string;
+  service_type: string | null;
+  labor_cost: number;
+  parts_cost: number;
+  tax_amount: number;
+  discount_amount: number;
+  total_amount: number;
+  payment_status: string;
+  payment_method: string | null;
+  parts_detail: any[] | null;
+  notes: string | null;
+  created_at: string;
+  customer?: { id: string; first_name: string; last_name: string | null; mobile: string };
+  vehicle?: {
+    id: string;
+    chassis_number: string | null;
+    registration_number: string | null;
+    vehicle_model?: { model_name: string; brand?: { brand_name: string } };
+  };
+}
+
+// ============================================
 // TYPES
 // ============================================
 
@@ -430,10 +462,144 @@ const CancelModal: React.FC<{
 };
 
 // ============================================
+// SERVICE INVOICES TAB
+// ============================================
+
+const svcStatusColors: Record<string, string> = {
+  Pending: 'bg-yellow-100 text-yellow-800',
+  Paid:    'bg-green-100 text-green-800',
+  Partial: 'bg-orange-100 text-orange-800',
+  Waived:  'bg-gray-100 text-gray-600',
+};
+
+function ServiceInvoicesTab({ getShowroomId }: { getShowroomId: () => string }) {
+  const [invoices, setInvoices]   = useState<ServiceInvoice[]>([]);
+  const [loading, setLoading]     = useState(true);
+  const [search, setSearch]       = useState('');
+  const [error, setError]         = useState('');
+
+  const fmt = (a: number) =>
+    new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(a || 0);
+
+  const fetchServiceInvoices = useCallback(async () => {
+    const showroomId = getShowroomId();
+    if (!showroomId) { setError('No showroom ID'); setLoading(false); return; }
+    setLoading(true); setError('');
+    try {
+      const params = new URLSearchParams({ limit: '200', ...(search ? { search } : {}) });
+      const res  = await fetch(`/api/service-invoices?${params}`);
+      const json = await res.json();
+      if (json.success) setInvoices(json.data);
+      else setError(json.error || 'Failed to load');
+    } catch { setError('Network error'); } finally { setLoading(false); }
+  }, [getShowroomId, search]);
+
+  useEffect(() => { fetchServiceInvoices(); }, [fetchServiceInvoices]);
+
+  return (
+    <div>
+      {error && (
+        <div className="mb-4 p-3 bg-destructive/10 border border-destructive/20 rounded-xl text-destructive text-sm flex justify-between">
+          {error}
+          <button onClick={() => setError('')} className="ml-2 font-bold">×</button>
+        </div>
+      )}
+
+      {/* Toolbar */}
+      <div className="flex flex-col sm:flex-row gap-3 mb-5">
+        <div className="relative flex-1 max-w-xs">
+          <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+          <input
+            type="text"
+            placeholder="Search by invoice number…"
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            className="w-full pl-9 pr-4 py-2 border border-border rounded-xl bg-card text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/40"
+          />
+        </div>
+        <button onClick={fetchServiceInvoices} className="px-3 py-2 border border-border rounded-xl bg-card text-sm text-muted-foreground hover:text-foreground transition-colors">Refresh</button>
+      </div>
+
+      <div className="bg-card border border-border/60 rounded-2xl overflow-hidden">
+        {loading ? (
+          <div className="flex items-center justify-center py-12">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+          </div>
+        ) : invoices.length === 0 ? (
+          <div className="text-center py-12 text-muted-foreground">
+            <svg className="mx-auto h-12 w-12 text-muted-foreground/30" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+            <h3 className="mt-2 text-sm font-medium">No service invoices yet</h3>
+            <p className="text-xs mt-1 text-muted-foreground">Service invoices are created automatically when you add a service record.</p>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-border/40">
+              <thead>
+                <tr className="border-b border-border/60">
+                  <th className="px-4 py-3.5 text-left text-xs font-medium text-muted-foreground">Invoice #</th>
+                  <th className="px-4 py-3.5 text-left text-xs font-medium text-muted-foreground">Date</th>
+                  <th className="px-4 py-3.5 text-left text-xs font-medium text-muted-foreground">Customer</th>
+                  <th className="px-4 py-3.5 text-left text-xs font-medium text-muted-foreground">Vehicle</th>
+                  <th className="px-4 py-3.5 text-left text-xs font-medium text-muted-foreground">Service Type</th>
+                  <th className="px-4 py-3.5 text-right text-xs font-medium text-muted-foreground">Total</th>
+                  <th className="px-4 py-3.5 text-left text-xs font-medium text-muted-foreground">Status</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border/40">
+                {invoices.map(inv => (
+                  <tr key={inv.id} className="hover:bg-muted/20 transition-colors">
+                    <td className="px-4 py-4 whitespace-nowrap">
+                      <span className="text-sm font-medium text-primary">{inv.invoice_number}</span>
+                    </td>
+                    <td className="px-4 py-4 whitespace-nowrap text-sm text-foreground">
+                      {new Date(inv.invoice_date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
+                    </td>
+                    <td className="px-4 py-4 whitespace-nowrap">
+                      <div className="text-sm font-medium text-foreground">
+                        {inv.customer?.first_name || 'N/A'} {inv.customer?.last_name || ''}
+                      </div>
+                      <div className="text-xs text-muted-foreground">{inv.customer?.mobile || ''}</div>
+                    </td>
+                    <td className="px-4 py-4 whitespace-nowrap">
+                      <div className="text-sm text-foreground">
+                        {inv.vehicle?.vehicle_model?.brand?.brand_name || ''} {inv.vehicle?.vehicle_model?.model_name || ''}
+                      </div>
+                      <div className="text-xs text-muted-foreground">
+                        {inv.vehicle?.registration_number || inv.vehicle?.chassis_number || 'N/A'}
+                      </div>
+                    </td>
+                    <td className="px-4 py-4 whitespace-nowrap text-sm text-foreground">{inv.service_type || '—'}</td>
+                    <td className="px-4 py-4 whitespace-nowrap text-right">
+                      <div className="text-sm font-semibold text-foreground">{fmt(inv.total_amount)}</div>
+                      {inv.discount_amount > 0 && (
+                        <div className="text-xs text-muted-foreground">Disc: {fmt(inv.discount_amount)}</div>
+                      )}
+                    </td>
+                    <td className="px-4 py-4 whitespace-nowrap">
+                      <span className={`px-2.5 py-1 text-xs font-medium rounded-full ${svcStatusColors[inv.payment_status] || 'bg-gray-100 text-gray-600'}`}>
+                        {inv.payment_status}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            <div className="px-4 py-3 border-t border-border/40">
+              <p className="text-sm text-muted-foreground">Showing {invoices.length} service invoice{invoices.length !== 1 ? 's' : ''}</p>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ============================================
 // MAIN INVOICE LIST PAGE
 // ============================================
 
 export default function InvoiceListPage() {
+  const [pageTab, setPageTab] = useState<'sales' | 'service'>('sales');
   const [invoices, setInvoices] = useState<SalesInvoice[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -542,18 +708,44 @@ export default function InvoiceListPage() {
       {error && <div className="mb-4 p-4 bg-destructive/10 border border-destructive/20 rounded-2xl flex items-center justify-between"><span className="text-destructive text-sm">{error}</span><button onClick={()=>setError('')} className="text-destructive/70 hover:text-destructive"><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg></button></div>}
 
       {/* Header */}
-      <div className="flex items-start justify-between mb-6">
+      <div className="flex items-start justify-between mb-4">
         <div>
           <h1 className="text-2xl font-bold text-foreground">Invoices</h1>
           <p className="text-sm text-muted-foreground mt-0.5">
-            {loading ? 'Loading…' : `${invoices.length} invoice${invoices.length !== 1 ? 's' : ''}`}
+            {pageTab === 'sales'
+              ? (loading ? 'Loading…' : `${invoices.length} sales invoice${invoices.length !== 1 ? 's' : ''}`)
+              : 'Service invoices generated automatically from service records'}
           </p>
         </div>
-        <Link href="/dashboard/invoice/create" className="inline-flex items-center gap-2 px-4 py-2.5 rounded-full bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors">
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4"/></svg>
-          New Invoice
-        </Link>
+        {pageTab === 'sales' && (
+          <Link href="/dashboard/invoice/create" className="inline-flex items-center gap-2 px-4 py-2.5 rounded-full bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4"/></svg>
+            New Invoice
+          </Link>
+        )}
       </div>
+
+      {/* Tab switcher */}
+      <div className="flex gap-1 mb-5 p-1 bg-muted/40 rounded-xl w-fit border border-border/50">
+        <button
+          onClick={() => setPageTab('sales')}
+          className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${pageTab === 'sales' ? 'bg-white shadow-sm text-foreground' : 'text-muted-foreground hover:text-foreground'}`}
+        >
+          Sales Invoices
+        </button>
+        <button
+          onClick={() => setPageTab('service')}
+          className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${pageTab === 'service' ? 'bg-white shadow-sm text-foreground' : 'text-muted-foreground hover:text-foreground'}`}
+        >
+          Service Invoices
+        </button>
+      </div>
+
+      {/* Service invoices tab */}
+      {pageTab === 'service' && <ServiceInvoicesTab getShowroomId={getShowroomId} />}
+
+      {/* Sales invoices — hidden when service tab is active */}
+      {pageTab === 'sales' && <>
 
       {/* Toolbar */}
       <div className="flex flex-col sm:flex-row gap-3 mb-5">
@@ -595,6 +787,7 @@ export default function InvoiceListPage() {
       {viewInvoice && <PDFViewerModal invoice={viewInvoice} onClose={()=>setViewInvoice(null)} />}
       {editInvoice && <EditModal invoice={editInvoice} onSave={handleUpdate} onClose={()=>setEditInvoice(null)} saving={saving} />}
       {cancelInvoice && <CancelModal invoice={cancelInvoice} onConfirm={handleCancel} onClose={()=>setCancelInvoice(null)} saving={saving} />}
+      </>}
     </div>
   );
 }
