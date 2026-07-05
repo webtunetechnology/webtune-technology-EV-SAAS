@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import Image from 'next/image'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -53,20 +54,35 @@ export default function AdminLoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4">
+    <div
+      className="min-h-screen bg-cover bg-center bg-no-repeat flex items-center justify-center p-4"
+      style={{ backgroundImage: "url('https://res.cloudinary.com/doficc2yl/image/upload/v1778936343/ChatGPT_Image_May_16_2026_06_06_15_PM_zmj8wf.png')" }}
+    >
       <div className="w-full max-w-md">
+        {/* Logo / Header */}
         <div className="text-center mb-8">
           <div className="flex justify-center mb-4">
-            <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-primary">
-              <ShieldCheck className="h-7 w-7 text-primary-foreground" />
-            </div>
+            <Image
+              src="https://res.cloudinary.com/doficc2yl/image/upload/v1778937807/WhatsApp_Image_2026-05-10_at_4.45.44_PM_ikm7ay.jpg"
+              alt="Webtune Technology Logo"
+              width={68}
+              height={68}
+              className="rounded-lg"
+              priority
+            />
           </div>
-          <h1 className="text-2xl font-bold text-white mb-1 text-balance">Platform Admin</h1>
-          <p className="text-slate-400 text-sm">Master control panel for the EV SaaS platform</p>
+          <h1 className="text-2xl font-bold text-black mb-1">Webtune Technology</h1>
+          <p className="text-slate-300 text-sm">Admin Control Panel</p>
         </div>
 
         <Card className="bg-white border-slate-200">
           <div className="p-6">
+            {/* Admin badge */}
+            <div className="flex items-center gap-2 mb-5 p-3 bg-slate-50 border border-slate-200 rounded-lg">
+              <ShieldCheck className="h-4 w-4 text-primary shrink-0" />
+              <p className="text-xs text-slate-600 font-medium">Platform Administrator Access</p>
+            </div>
+
             {error && (
               <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
                 {error}
@@ -85,7 +101,7 @@ export default function AdminLoginPage() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   onKeyDown={onKeyDown}
-                  className="mt-1"
+                  className="mt-1 border-slate-200 focus:ring-primary"
                   disabled={loading}
                 />
               </div>
@@ -101,7 +117,7 @@ export default function AdminLoginPage() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   onKeyDown={onKeyDown}
-                  className="mt-1"
+                  className="mt-1 border-slate-200 focus:ring-primary"
                   disabled={loading}
                 />
               </div>
@@ -109,7 +125,7 @@ export default function AdminLoginPage() {
               <Button
                 onClick={handleLogin}
                 disabled={loading || !email || !password}
-                className="w-full"
+                className="w-full bg-primary hover:bg-primary/90 text-white"
               >
                 {loading ? 'Signing in...' : 'Sign In to Admin Panel'}
               </Button>
@@ -117,8 +133,8 @@ export default function AdminLoginPage() {
           </div>
         </Card>
 
-        <p className="text-center text-xs text-slate-500 mt-6">
-          Restricted access. Authorized platform administrators only.
+        <p className="text-center text-xs text-slate-400 mt-6">
+          Restricted access. Authorised platform administrators only.
         </p>
       </div>
     </div>
