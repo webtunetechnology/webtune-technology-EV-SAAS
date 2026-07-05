@@ -466,12 +466,12 @@ const CancelModal: React.FC<{
 // SERVICE INVOICE PDF MODAL
 // ============================================
 
-function generateServiceInvoicePDF(inv: ServiceInvoice): string {
-  // Dynamic import workaround — jsPDF is CJS; we import at call-time.
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
-  const { jsPDF } = require('jspdf');
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
-  require('jspdf-autotable');
+async function generateServiceInvoicePDF(inv: ServiceInvoice): Promise<string> {
+  // Use dynamic import — required for Next.js / Turbopack (no CommonJS require)
+  const { jsPDF } = await import('jspdf');
+  const autoTableMod = await import('jspdf-autotable');
+  // jspdf-autotable patches jsPDF.prototype; calling it directly also works
+  const autoTable = (autoTableMod as any).default ?? (autoTableMod as any).autoTable ?? autoTableMod;
 
   const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
   const pw = doc.internal.pageSize.getWidth();
@@ -590,7 +590,7 @@ function generateServiceInvoicePDF(inv: ServiceInvoice): string {
   if (inv.discount_amount > 0) tableRows.push(['Discount', '', '', `-${fmt(inv.discount_amount)}`]);
   if (inv.tax_amount > 0)      tableRows.push(['Tax / GST', '', '', fmt(inv.tax_amount)]);
 
-  (doc as any).autoTable({
+  autoTable(doc, {
     head: [['Description', 'Part No.', 'Qty', 'Amount']],
     body: tableRows,
     startY: y,
@@ -651,14 +651,18 @@ const ServiceInvoicePDFModal: React.FC<{ invoice: ServiceInvoice; onClose: () =>
   const [generating, setGenerating] = useState(true);
 
   useEffect(() => {
-    try {
-      const uri = generateServiceInvoicePDF(invoice);
-      setPdfSrc(uri);
-    } catch (e) {
-      console.error('PDF generation error:', e);
-    } finally {
-      setGenerating(false);
-    }
+    let cancelled = false;
+    (async () => {
+      try {
+        const uri = await generateServiceInvoicePDF(invoice);
+        if (!cancelled) setPdfSrc(uri);
+      } catch (e) {
+        console.error('PDF generation error:', e);
+      } finally {
+        if (!cancelled) setGenerating(false);
+      }
+    })();
+    return () => { cancelled = true; };
   }, [invoice]);
 
   const handleDownload = () => {
