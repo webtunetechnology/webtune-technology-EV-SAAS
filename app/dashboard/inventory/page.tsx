@@ -669,17 +669,6 @@ export default function InventoryManagementPage() {
   const getStatusColor = (status: StockStatus): string =>
     STOCK_STATUS_OPTIONS.find(s => s.value === status)?.color || 'bg-muted text-muted-foreground';
 
-  const getVehicleIcon = (type: VehicleType): string => {
-    switch (type) {
-      case 'Electric Scooter': return '🛵';
-      case 'Electric Motorcycle': return '🏍️';
-      case 'Electric Car': return '🚗';
-      case 'Electric Rickshaw': return '🛺';
-      case 'Electric Bus': return '🚌';
-      default: return '🚗';
-    }
-  };
-
   const formatCurrency = (amount: number | null | undefined): string => {
     if (!amount && amount !== 0) return '₹0';
     return new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(amount);
@@ -863,7 +852,6 @@ export default function InventoryManagementPage() {
                       <td className="w-10 px-4 py-3"><input type="checkbox" checked={selectedItems.has(item.id)} onChange={() => toggleSelectItem(item.id)} className="rounded border-border text-primary focus:ring-primary/20" /></td>
                       <td className="px-4 py-3">
                         <div className="flex items-center min-w-0">
-                          <span className="text-xl mr-2 flex-shrink-0">{getVehicleIcon(item.vehicles?.vehicle_type)}</span>
                           <div className="min-w-0">
                             <div className="text-sm font-medium text-foreground truncate">{item.vehicles?.brands?.brand_name || 'Unknown'} {item.vehicles?.model_name || 'Unknown'}</div>
                             <div className="text-xs text-muted-foreground flex flex-wrap gap-1">
