@@ -22,12 +22,17 @@ export default function DashboardLayout({
   // logout-in-another-tab scenarios.
   useEffect(() => {
     const parts = document.cookie.split(';');
-    const hasAuthToken  = parts.some(c => c.trim().startsWith('auth_token=') && c.trim() !== 'auth_token=');
-    const hasLoggedIn   = parts.some(c => c.trim() === 'user_logged_in=true');
+    const hasAuthToken = parts.some(c => c.trim().startsWith('auth_token=') && c.trim() !== 'auth_token=');
+    const hasLoggedIn  = parts.some(c => c.trim() === 'user_logged_in=true');
     if (!hasAuthToken && !hasLoggedIn) {
       router.replace('/');
     }
   }, [pathname, router]);
+
+  // Close mobile drawer on route change
+  useEffect(() => {
+    setSidebarOpen(false);
+  }, [pathname]);
   
   // Get active section from pathname
   const getActiveSection = () => {
@@ -48,6 +53,7 @@ export default function DashboardLayout({
           activeSection={activeSection}
           collapsed={collapsed}
           onToggleCollapse={() => setCollapsed((v) => !v)}
+          onClose={() => setSidebarOpen(false)}
         />
       </div>
       
