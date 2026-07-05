@@ -336,21 +336,38 @@ export async function GET(
 
     const supabase = createClient(supabaseUrl, serviceKey);
 
+    // Step 1: fetch the sale + customer (no deep nesting to avoid FK ambiguity)
     const { data: sale, error: saleErr } = await supabase
       .from('parts_counter_sales')
-      .select(`
-        *,
-        customer:customers(id, first_name, last_name, mobile, gst_number),
-        items:parts_counter_sale_items(
-          id, quantity, unit_price, total_price,
-          part:parts(id, part_name, part_code, hsn_code, gst_percentage)
-        )
-      `)
+      .select('*, customer:customers(id, first_name, last_name, mobile, gst_number)')
       .eq('id', id)
       .eq('showroom_id', showroomId)
       .single();
 
-    if (saleErr || !sale) return NextResponse.json({ error: 'Invoice not found' }, { status: 404 });
+    if (saleErr || !sale) {
+      console.error('[v0] parts PDF sale fetch:', saleErr?.message, 'id:', id, 'showroom:', showroomId);
+      return NextResponse.json({ error: 'Invoice not found' }, { status: 404 });
+    }
+
+    // Step 2: fetch line items separately, then fetch part details
+    const { data: rawItems } = await supabase
+      .from('parts_counter_sale_items')
+      .select('id, quantity, unit_price, total_price, part_id')
+      .eq('counter_sale_id', id);
+
+    const partIds = (rawItems || []).map((it: any) => it.part_id).filter(Boolean);
+    const { data: partsData } = partIds.length
+      ? await supabase.from('parts').select('id, part_name, part_code, hsn_code, gst_percentage').in('id', partIds)
+      : { data: [] };
+
+    const partsMap: Record<string, any> = {};
+    (partsData || []).forEach((p: any) => { partsMap[p.id] = p; });
+
+    const saleItems = (rawItems || []).map((it: any) => ({
+      ...it,
+      part: partsMap[it.part_id] || null,
+    }));
+    (sale as any).items = saleItems;
 
     const [{ data: brandingData }, { data: billingData }, { data: addressData }, { data: showroomData }] =
       await Promise.all([
