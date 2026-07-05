@@ -562,6 +562,219 @@ const ServiceInvoicePDFModal: React.FC<{ invoice: ServiceInvoice; onClose: () =>
 };
 
 // ============================================
+// PARTS INVOICES TYPES
+// ============================================
+
+interface PartsSaleItem {
+  id: string;
+  quantity: number;
+  unit_price: number;
+  total_price: number;
+  part?: { part_name: string; part_code: string; hsn_code: string | null; gst_percentage: number };
+}
+
+interface PartsInvoice {
+  id: string;
+  sale_number: string;
+  sale_date: string;
+  customer_id: string | null;
+  customer_name: string | null;
+  customer_mobile: string | null;
+  subtotal: number;
+  tax_amount: number;
+  discount_amount: number;
+  total_amount: number;
+  payment_method: string;
+  payment_status: string;
+  notes: string | null;
+  created_at: string;
+  customer?: { id: string; first_name: string; last_name: string | null; mobile: string } | null;
+  items?: PartsSaleItem[];
+}
+
+// ── Parts Invoice PDF Viewer Modal ──────────────────────────────────────────
+
+function PartsInvoicePDFModal({ invoice, onClose }: { invoice: PartsInvoice; onClose: () => void }) {
+  const pdfUrl = `/api/parts-invoices/${invoice.id}/pdf`;
+  return (
+    <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl h-[92vh] flex flex-col overflow-hidden">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+          <div>
+            <h3 className="font-semibold text-gray-900">Parts Invoice — {invoice.sale_number}</h3>
+            <p className="text-xs text-gray-500 mt-0.5">
+              {invoice.customer_name || 'Walk-in'} · {new Date(invoice.sale_date).toLocaleDateString('en-IN')}
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            <a
+              href={pdfUrl}
+              download={`${invoice.sale_number}.pdf`}
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-primary text-primary-foreground rounded-lg text-xs font-medium hover:bg-primary/90 transition-colors"
+            >
+              <Download className="w-3.5 h-3.5" /> Download
+            </a>
+            <a
+              href={pdfUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-1.5 px-3 py-1.5 border border-border rounded-lg text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <ExternalLink className="w-3.5 h-3.5" /> Open
+            </a>
+            <button onClick={onClose} className="p-1.5 text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg transition-colors">
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+        <div className="flex-1 overflow-hidden">
+          <iframe src={pdfUrl} className="w-full h-full border-0" title="Parts Invoice PDF" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ============================================
+// PARTS INVOICES TAB
+// ============================================
+
+const partsStatusColors: Record<string, string> = {
+  Pending: 'bg-yellow-100 text-yellow-800',
+  Paid:    'bg-green-100 text-green-800',
+  Partial: 'bg-orange-100 text-orange-800',
+};
+
+function PartsInvoicesTab({ getShowroomId }: { getShowroomId: () => string }) {
+  const [invoices, setInvoices]       = useState<PartsInvoice[]>([]);
+  const [loading, setLoading]         = useState(true);
+  const [search, setSearch]           = useState('');
+  const [error, setError]             = useState('');
+  const [viewInvoice, setViewInvoice] = useState<PartsInvoice | null>(null);
+
+  const fmt = (a: number) =>
+    new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(a || 0);
+
+  const fetchPartsInvoices = useCallback(async () => {
+    setLoading(true); setError('');
+    try {
+      const params = new URLSearchParams({ limit: '200', ...(search ? { search } : {}) });
+      const res    = await fetch(`/api/parts-invoices?${params}`);
+      const json   = await res.json();
+      if (json.success) setInvoices(json.data);
+      else setError(json.error || 'Failed to load');
+    } catch { setError('Network error'); } finally { setLoading(false); }
+  }, [search]);
+
+  useEffect(() => { fetchPartsInvoices(); }, [fetchPartsInvoices]);
+
+  return (
+    <div>
+      {viewInvoice && <PartsInvoicePDFModal invoice={viewInvoice} onClose={() => setViewInvoice(null)} />}
+
+      {error && (
+        <div className="mb-4 p-3 bg-destructive/10 border border-destructive/20 rounded-xl text-destructive text-sm flex justify-between">
+          {error}
+          <button onClick={() => setError('')} className="ml-2 font-bold">×</button>
+        </div>
+      )}
+
+      {/* Toolbar */}
+      <div className="flex flex-col sm:flex-row gap-3 mb-5">
+        <div className="relative flex-1 max-w-xs">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <input
+            type="text"
+            placeholder="Search by invoice or customer…"
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            className="w-full pl-9 pr-4 py-2 border border-border rounded-xl bg-card text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/40"
+          />
+        </div>
+        <button onClick={fetchPartsInvoices} className="px-3 py-2 border border-border rounded-xl bg-card text-sm text-muted-foreground hover:text-foreground transition-colors">Refresh</button>
+      </div>
+
+      <div className="bg-card border border-border/60 rounded-2xl overflow-hidden">
+        {loading ? (
+          <div className="flex items-center justify-center py-12">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+          </div>
+        ) : invoices.length === 0 ? (
+          <div className="text-center py-12 text-muted-foreground">
+            <FileText className="mx-auto h-12 w-12 text-muted-foreground/30" />
+            <h3 className="mt-2 text-sm font-medium">No parts invoices yet</h3>
+            <p className="text-xs mt-1 text-muted-foreground">Create a parts invoice using the button above.</p>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-border/40">
+              <thead>
+                <tr className="border-b border-border/60">
+                  <th className="px-4 py-3.5 text-left text-xs font-medium text-muted-foreground">Invoice #</th>
+                  <th className="px-4 py-3.5 text-left text-xs font-medium text-muted-foreground">Date</th>
+                  <th className="px-4 py-3.5 text-left text-xs font-medium text-muted-foreground">Customer</th>
+                  <th className="px-4 py-3.5 text-left text-xs font-medium text-muted-foreground">Items</th>
+                  <th className="px-4 py-3.5 text-right text-xs font-medium text-muted-foreground">Total</th>
+                  <th className="px-4 py-3.5 text-left text-xs font-medium text-muted-foreground">Payment</th>
+                  <th className="px-4 py-3.5 text-left text-xs font-medium text-muted-foreground">Status</th>
+                  <th className="px-4 py-3.5 text-center text-xs font-medium text-muted-foreground">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border/40">
+                {invoices.map(inv => (
+                  <tr key={inv.id} className="hover:bg-muted/20 transition-colors">
+                    <td className="px-4 py-4 whitespace-nowrap">
+                      <span className="text-sm font-medium text-primary">{inv.sale_number}</span>
+                    </td>
+                    <td className="px-4 py-4 whitespace-nowrap text-sm text-foreground">
+                      {new Date(inv.sale_date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
+                    </td>
+                    <td className="px-4 py-4 whitespace-nowrap">
+                      <div className="text-sm font-medium text-foreground">
+                        {inv.customer_name || inv.customer?.first_name || 'Walk-in'}
+                        {inv.customer?.last_name ? ` ${inv.customer.last_name}` : ''}
+                      </div>
+                      <div className="text-xs text-muted-foreground">{inv.customer_mobile || inv.customer?.mobile || ''}</div>
+                    </td>
+                    <td className="px-4 py-4 whitespace-nowrap text-sm text-muted-foreground">
+                      {inv.items?.length ?? '—'} part{(inv.items?.length ?? 0) !== 1 ? 's' : ''}
+                    </td>
+                    <td className="px-4 py-4 whitespace-nowrap text-right">
+                      <div className="text-sm font-semibold text-foreground">{fmt(inv.total_amount)}</div>
+                      {inv.discount_amount > 0 && (
+                        <div className="text-xs text-muted-foreground">Disc: {fmt(inv.discount_amount)}</div>
+                      )}
+                    </td>
+                    <td className="px-4 py-4 whitespace-nowrap text-sm text-foreground">{inv.payment_method}</td>
+                    <td className="px-4 py-4 whitespace-nowrap">
+                      <span className={`px-2.5 py-1 text-xs font-medium rounded-full ${partsStatusColors[inv.payment_status] || 'bg-gray-100 text-gray-600'}`}>
+                        {inv.payment_status}
+                      </span>
+                    </td>
+                    <td className="px-4 py-4 whitespace-nowrap text-center">
+                      <button
+                        onClick={() => setViewInvoice(inv)}
+                        className="p-1.5 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-lg transition-colors"
+                        title="View PDF"
+                      >
+                        <Eye className="w-4 h-4" />
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            <div className="px-4 py-3 border-t border-border/40">
+              <p className="text-sm text-muted-foreground">Showing {invoices.length} parts invoice{invoices.length !== 1 ? 's' : ''}</p>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ============================================
 // SERVICE INVOICES TAB
 // ============================================
 
@@ -713,7 +926,13 @@ function ServiceInvoicesTab({ getShowroomId }: { getShowroomId: () => string }) 
 // ============================================
 
 export default function InvoiceListPage() {
-  const [pageTab, setPageTab] = useState<'sales' | 'service'>('sales');
+  const [pageTab, setPageTab] = useState<'sales' | 'service' | 'parts'>(() => {
+    if (typeof window !== 'undefined') {
+      const tab = new URLSearchParams(window.location.search).get('tab');
+      if (tab === 'service' || tab === 'parts') return tab;
+    }
+    return 'sales';
+  });
   const [invoices, setInvoices] = useState<SalesInvoice[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -828,13 +1047,21 @@ export default function InvoiceListPage() {
           <p className="text-sm text-muted-foreground mt-0.5">
             {pageTab === 'sales'
               ? (loading ? 'Loading…' : `${invoices.length} sales invoice${invoices.length !== 1 ? 's' : ''}`)
-              : 'Service invoices generated automatically from service records'}
+              : pageTab === 'service'
+              ? 'Service invoices generated automatically from service records'
+              : 'Spare parts counter sales and billing'}
           </p>
         </div>
         {pageTab === 'sales' && (
           <Link href="/dashboard/invoice/create" className="inline-flex items-center gap-2 px-4 py-2.5 rounded-full bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors">
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4"/></svg>
             New Invoice
+          </Link>
+        )}
+        {pageTab === 'parts' && (
+          <Link href="/dashboard/invoice/parts" className="inline-flex items-center gap-2 px-4 py-2.5 rounded-full bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4"/></svg>
+            New Parts Invoice
           </Link>
         )}
       </div>
@@ -853,10 +1080,19 @@ export default function InvoiceListPage() {
         >
           Service Invoices
         </button>
+        <button
+          onClick={() => setPageTab('parts')}
+          className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${pageTab === 'parts' ? 'bg-white shadow-sm text-foreground' : 'text-muted-foreground hover:text-foreground'}`}
+        >
+          Parts Invoices
+        </button>
       </div>
 
       {/* Service invoices tab */}
       {pageTab === 'service' && <ServiceInvoicesTab getShowroomId={getShowroomId} />}
+
+      {/* Parts invoices tab */}
+      {pageTab === 'parts' && <PartsInvoicesTab getShowroomId={getShowroomId} />}
 
       {/* Sales invoices — hidden when service tab is active */}
       {pageTab === 'sales' && <>
