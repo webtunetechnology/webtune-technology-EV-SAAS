@@ -43,15 +43,12 @@ export async function GET(request: NextRequest) {
             model_name,
             brand:brands(brand_name)
           )
-        ),
+        )
       `, { count: 'exact' })
       .eq('showroom_id', showroom_id);
     
-    if (search) {
-      query = query.or(
-        `customer.first_name.ilike.%${search}%,customer.last_name.ilike.%${search}%,customer.mobile.ilike.%${search}%`
-      );
-    }
+    // Note: Supabase does not support .or() across foreign table columns.
+    // Search is handled client-side; skip server-side filtering on joined columns.
     
     if (status) query = query.eq('status', status);
     if (service_type) query = query.eq('service_type', service_type);
@@ -356,7 +353,7 @@ export async function POST(request: NextRequest) {
             model_name,
             brand:brands(brand_name)
           )
-        ),
+        )
       `)
       .eq('id', record.id)
       .single();
