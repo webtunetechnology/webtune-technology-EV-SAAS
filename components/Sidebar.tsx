@@ -33,9 +33,9 @@ interface ShowroomData {
   logo_url?: string;
 }
 
-// Accent used for the active/selected state (matches the reference UI).
-const ACCENT = '#C15F3C';
-const ACCENT_SOFT = '#F8E7DC';
+// Active item accent — rich blue that reads well on the light-blue sidebar.
+const ACCENT = '#1D6FB8';
+const ACCENT_SOFT = '#DBEAFE';
 
 type MenuItem = {
   id: string;
@@ -187,14 +187,14 @@ export function Sidebar({
 
   return (
     <div
-      className={`flex h-full flex-col border-r border-gray-200 bg-white transition-[width] duration-300 ease-in-out ${
+      className={`flex h-full flex-col border-r border-blue-200 bg-blue-50 transition-[width] duration-300 ease-in-out ${
         collapsed ? 'lg:w-20 w-72' : 'w-72 lg:w-64'
       }`}
     >
       {/* Brand header + collapse toggle */}
       <div className="flex items-center justify-between px-4 py-5">
         <Link href="/dashboard" className="flex min-w-0 items-center gap-2.5">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-[#C15F3C]">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-[#1D6FB8]">
             {logoUrl ? (
               <img
                 src={logoUrl || '/placeholder.svg'}
@@ -221,7 +221,7 @@ export function Sidebar({
           <button
             type="button"
             onClick={onToggleCollapse}
-            className="hidden shrink-0 rounded-md p-1 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600 lg:block"
+            className="hidden shrink-0 rounded-md p-1 text-blue-400 transition-colors hover:bg-blue-100 hover:text-blue-700 lg:block"
             aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
           >
             <ChevronLeft className={`h-5 w-5 transition-transform ${collapsed ? 'rotate-180' : ''}`} />
@@ -229,7 +229,7 @@ export function Sidebar({
         )}
       </div>
 
-      <div className="h-px bg-gray-200" />
+      <div className="h-px bg-blue-200" />
 
       {/* Navigation */}
       <nav className="flex-1 space-y-1 overflow-y-auto px-3 py-4">
@@ -245,11 +245,11 @@ export function Sidebar({
               onClick={onClose}
               className={`flex items-center gap-3 rounded-full px-3 py-2.5 text-sm transition-colors ${
                 collapsed ? 'lg:justify-center' : ''
-              } ${isActive ? 'font-semibold' : 'font-medium text-gray-600 hover:bg-gray-50'}`}
+              } ${isActive ? 'font-semibold' : 'font-medium text-blue-900 hover:bg-blue-100'}`}
               style={isActive ? { background: ACCENT_SOFT, color: ACCENT } : undefined}
             >
               <Icon
-                className={`h-5 w-5 shrink-0 ${isActive ? '' : 'text-gray-500'}`}
+                className={`h-5 w-5 shrink-0 ${isActive ? '' : 'text-blue-500'}`}
                 style={isActive ? { color: ACCENT } : undefined}
               />
               <span className={`truncate ${collapsed ? 'lg:hidden' : ''}`}>{item.label}</span>
@@ -267,17 +267,17 @@ export function Sidebar({
       </nav>
 
       {/* Footer: logout */}
-      <div className="mx-4 h-px bg-gray-200" />
+      <div className="mx-4 h-px bg-blue-200" />
       <div className="p-3">
         <button
           type="button"
           onClick={handleLogout}
           title={collapsed ? 'Logout' : undefined}
-          className={`flex w-full items-center gap-3 rounded-full px-3 py-2.5 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-50 ${
+          className={`flex w-full items-center gap-3 rounded-full px-3 py-2.5 text-sm font-medium text-blue-900 transition-colors hover:bg-blue-100 ${
             collapsed ? 'lg:justify-center' : ''
           }`}
         >
-          <LogOut className="h-5 w-5 shrink-0 text-gray-500" />
+          <LogOut className="h-5 w-5 shrink-0 text-blue-500" />
           <span className={collapsed ? 'lg:hidden' : ''}>Logout</span>
         </button>
       </div>
