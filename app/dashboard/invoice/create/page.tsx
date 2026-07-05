@@ -323,10 +323,30 @@ export default function CreateInvoicePage() {
   };
 
   const fetchVehicles = async () => {
+    const showroomId = getShowroomId();
+    if (!showroomId) return;
+
+    // Only show vehicle models that this showroom has in inventory
+    const { data: inventoryRows } = await supabase
+      .from('inventory')
+      .select('vehicle_model_id')
+      .eq('showroom_id', showroomId);
+
+    const modelIds = [
+      ...new Set((inventoryRows ?? []).map((r: { vehicle_model_id: string }) => r.vehicle_model_id).filter(Boolean)),
+    ];
+
+    if (modelIds.length === 0) {
+      setVehicles([]);
+      return;
+    }
+
     const { data } = await supabase
       .from('vehicles')
       .select('*, brands(brand_name)')
-      .eq('is_active', true);
+      .eq('is_active', true)
+      .in('id', modelIds);
+
     if (data) setVehicles(data as Vehicle[]);
   };
 
