@@ -466,218 +466,30 @@ const CancelModal: React.FC<{
 // SERVICE INVOICE PDF MODAL
 // ============================================
 
-async function generateServiceInvoicePDF(inv: ServiceInvoice): Promise<string> {
-  // Use dynamic import — required for Next.js / Turbopack (no CommonJS require)
-  const { jsPDF } = await import('jspdf');
-  const autoTableMod = await import('jspdf-autotable');
-  // jspdf-autotable patches jsPDF.prototype; calling it directly also works
-  const autoTable = (autoTableMod as any).default ?? (autoTableMod as any).autoTable ?? autoTableMod;
-
-  const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
-  const pw = doc.internal.pageSize.getWidth();
-  const fmt = (n: number) =>
-    new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 2 }).format(n || 0);
-  const fmtDate = (d: string) =>
-    new Date(d).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
-
-  // ── Header bar ────────────────────────────────────────────────────────────
-  doc.setFillColor(29, 111, 184);
-  doc.rect(0, 0, pw, 28, 'F');
-
-  doc.setTextColor(255, 255, 255);
-  doc.setFontSize(18);
-  doc.setFont('helvetica', 'bold');
-  doc.text(inv.showroom?.showroom_name || 'EV Showroom', 14, 12);
-
-  doc.setFontSize(9);
-  doc.setFont('helvetica', 'normal');
-  const headerRight: string[] = [];
-  if (inv.showroom?.gst_number) headerRight.push(`GST: ${inv.showroom.gst_number}`);
-  if (inv.showroom?.pan_number) headerRight.push(`PAN: ${inv.showroom.pan_number}`);
-  doc.text(headerRight, pw - 14, 10, { align: 'right' });
-
-  doc.setFontSize(11);
-  doc.setFont('helvetica', 'bold');
-  doc.text('SERVICE INVOICE', pw - 14, 22, { align: 'right' });
-
-  // ── Invoice meta ──────────────────────────────────────────────────────────
-  doc.setTextColor(30, 30, 30);
-  let y = 38;
-
-  doc.setFillColor(241, 245, 249);
-  doc.roundedRect(14, y - 4, pw - 28, 28, 3, 3, 'F');
-
-  doc.setFontSize(9);
-  doc.setFont('helvetica', 'bold');
-  doc.setTextColor(100, 116, 139);
-  doc.text('INVOICE NUMBER', 20, y + 2);
-  doc.text('INVOICE DATE', 80, y + 2);
-  doc.text('SERVICE TYPE', 130, y + 2);
-  doc.text('PAYMENT STATUS', pw - 50, y + 2);
-
-  doc.setFontSize(10);
-  doc.setFont('helvetica', 'bold');
-  doc.setTextColor(29, 111, 184);
-  doc.text(inv.invoice_number, 20, y + 10);
-
-  doc.setTextColor(30, 30, 30);
-  doc.text(fmtDate(inv.invoice_date), 80, y + 10);
-  doc.text(inv.service_type || 'Service', 130, y + 10);
-
-  const statusColor = inv.payment_status === 'Paid' ? [22, 163, 74] : inv.payment_status === 'Pending' ? [202, 138, 4] : [100, 116, 139];
-  doc.setTextColor(...(statusColor as [number, number, number]));
-  doc.text(inv.payment_status, pw - 50, y + 10);
-
-  y += 34;
-
-  // ── Billed To / Vehicle ───────────────────────────────────────────────────
-  const colMid = pw / 2 + 4;
-  doc.setFillColor(248, 250, 252);
-  doc.roundedRect(14, y - 4, (pw - 32) / 2, 34, 3, 3, 'F');
-  doc.roundedRect(colMid, y - 4, (pw - 32) / 2, 34, 3, 3, 'F');
-
-  doc.setFontSize(8);
-  doc.setFont('helvetica', 'bold');
-  doc.setTextColor(100, 116, 139);
-  doc.text('BILLED TO', 20, y + 2);
-
-  doc.setFontSize(10);
-  doc.setFont('helvetica', 'bold');
-  doc.setTextColor(30, 30, 30);
-  const custName = [inv.customer?.first_name, inv.customer?.last_name].filter(Boolean).join(' ') || 'N/A';
-  doc.text(custName, 20, y + 10);
-  doc.setFont('helvetica', 'normal');
-  doc.setFontSize(9);
-  if (inv.customer?.mobile) doc.text(`Mobile: ${inv.customer.mobile}`, 20, y + 17);
-
-  doc.setFontSize(8);
-  doc.setFont('helvetica', 'bold');
-  doc.setTextColor(100, 116, 139);
-  doc.text('VEHICLE', colMid + 6, y + 2);
-
-  doc.setFontSize(10);
-  doc.setFont('helvetica', 'bold');
-  doc.setTextColor(30, 30, 30);
-  const brand    = inv.vehicle?.vehicle_model?.brand?.brand_name || '';
-  const model    = inv.vehicle?.vehicle_model?.model_name || '';
-  const variant  = inv.vehicle?.vehicle_model?.variant_name || '';
-  doc.text([brand, [model, variant].filter(Boolean).join(' ')].filter(Boolean).join(' '), colMid + 6, y + 10);
-  doc.setFont('helvetica', 'normal');
-  doc.setFontSize(9);
-  const regOrChassis = inv.vehicle?.registration_number || inv.vehicle?.chassis_number || '';
-  if (regOrChassis) doc.text(`Reg/Chassis: ${regOrChassis}`, colMid + 6, y + 17);
-
-  y += 42;
-
-  // ── Cost breakdown table ───────────────────────────────────────────────────
-  const tableRows: (string | number)[][] = [
-    ['Labour Charges', '', '1', fmt(inv.labor_cost)],
-    ['Parts & Materials', '', '1', fmt(inv.parts_cost)],
-  ];
-
-  // Parts detail rows
-  if (Array.isArray(inv.parts_detail) && inv.parts_detail.length > 0) {
-    inv.parts_detail.forEach((p: any) => {
-      tableRows.push([
-        `  • ${p.part_name || p.name || 'Part'}`,
-        p.part_number || '',
-        String(p.quantity || 1),
-        fmt(Number(p.price || p.cost || 0) * Number(p.quantity || 1)),
-      ]);
-    });
-  }
-
-  if (inv.discount_amount > 0) tableRows.push(['Discount', '', '', `-${fmt(inv.discount_amount)}`]);
-  if (inv.tax_amount > 0)      tableRows.push(['Tax / GST', '', '', fmt(inv.tax_amount)]);
-
-  autoTable(doc, {
-    head: [['Description', 'Part No.', 'Qty', 'Amount']],
-    body: tableRows,
-    startY: y,
-    margin: { left: 14, right: 14 },
-    headStyles: { fillColor: [29, 111, 184], textColor: 255, fontStyle: 'bold', fontSize: 9 },
-    bodyStyles: { fontSize: 9, textColor: [30, 30, 30] },
-    columnStyles: {
-      0: { cellWidth: 'auto' },
-      1: { cellWidth: 28, halign: 'center' },
-      2: { cellWidth: 15, halign: 'center' },
-      3: { cellWidth: 32, halign: 'right' },
-    },
-    alternateRowStyles: { fillColor: [248, 250, 252] },
-    theme: 'grid',
-  });
-
-  const afterTable = (doc as any).lastAutoTable.finalY + 6;
-
-  // ── Total box ─────────────────────────────────────────────────────────────
-  const boxW = 72;
-  const boxX = pw - 14 - boxW;
-  doc.setFillColor(29, 111, 184);
-  doc.roundedRect(boxX, afterTable, boxW, 16, 3, 3, 'F');
-  doc.setTextColor(255, 255, 255);
-  doc.setFontSize(10);
-  doc.setFont('helvetica', 'bold');
-  doc.text('TOTAL AMOUNT', boxX + 4, afterTable + 7);
-  doc.text(fmt(inv.total_amount), pw - 18, afterTable + 7, { align: 'right' });
-  doc.setFontSize(8);
-  doc.setFont('helvetica', 'normal');
-  doc.text(`Payment: ${inv.payment_method || 'N/A'}`, boxX + 4, afterTable + 13);
-
-  // ── Notes ─────────────────────────────────────────────────────────────────
-  if (inv.notes) {
-    doc.setTextColor(100, 116, 139);
-    doc.setFontSize(8);
-    doc.setFont('helvetica', 'bold');
-    doc.text('NOTES', 14, afterTable + 8);
-    doc.setFont('helvetica', 'normal');
-    doc.setTextColor(50, 50, 50);
-    doc.text(doc.splitTextToSize(inv.notes, boxX - 22), 14, afterTable + 14);
-  }
-
-  // ── Footer ─────────────────────────────────────────────────────────────────
-  const ph = doc.internal.pageSize.getHeight();
-  doc.setFillColor(241, 245, 249);
-  doc.rect(0, ph - 12, pw, 12, 'F');
-  doc.setTextColor(150, 150, 150);
-  doc.setFontSize(7);
-  doc.setFont('helvetica', 'normal');
-  doc.text('This is a computer-generated invoice and does not require a physical signature.', pw / 2, ph - 5, { align: 'center' });
-
-  return doc.output('datauristring');
-}
-
 const ServiceInvoicePDFModal: React.FC<{ invoice: ServiceInvoice; onClose: () => void }> = ({ invoice, onClose }) => {
-  const [pdfSrc, setPdfSrc] = useState<string | null>(null);
-  const [generating, setGenerating] = useState(true);
+  // Use the server-side PDF endpoint — matches the sales invoice template exactly
+  const pdfUrl = `/api/service-invoices/${invoice.id}/pdf`;
+  const [loading, setLoading] = useState(true);
+  const [error, setError]     = useState(false);
 
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      try {
-        const uri = await generateServiceInvoicePDF(invoice);
-        if (!cancelled) setPdfSrc(uri);
-      } catch (e) {
-        console.error('PDF generation error:', e);
-      } finally {
-        if (!cancelled) setGenerating(false);
-      }
-    })();
-    return () => { cancelled = true; };
-  }, [invoice]);
-
-  const handleDownload = () => {
-    if (!pdfSrc) return;
-    const link = document.createElement('a');
-    link.href = pdfSrc;
-    link.download = `${invoice.invoice_number.replace(/\//g, '_')}.pdf`;
-    link.click();
+  const handleDownload = async () => {
+    try {
+      const res  = await fetch(pdfUrl);
+      if (!res.ok) throw new Error('Failed');
+      const blob = await res.blob();
+      const url  = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href     = url;
+      link.download = `${invoice.invoice_number.replace(/\//g, '_')}.pdf`;
+      link.click();
+      URL.revokeObjectURL(url);
+    } catch { /* ignore */ }
   };
 
   const handlePrint = () => {
-    if (!pdfSrc) return;
     const iframe = document.createElement('iframe');
     Object.assign(iframe.style, { position: 'fixed', right: '0', bottom: '0', width: '0', height: '0', border: 'none' });
-    iframe.src = pdfSrc;
+    iframe.src = pdfUrl;
     document.body.appendChild(iframe);
     iframe.onload = () => {
       iframe.contentWindow?.focus();
@@ -698,13 +510,13 @@ const ServiceInvoicePDFModal: React.FC<{ invoice: ServiceInvoice; onClose: () =>
               <p className="text-xs text-gray-500">{invoice.service_type || 'Service'} | {invoice.payment_status}</p>
             </div>
             <div className="flex items-center gap-2">
-              <button onClick={handleDownload} disabled={generating}
-                className="px-4 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition-colors font-medium flex items-center disabled:opacity-50">
+              <button onClick={handleDownload}
+                className="px-4 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition-colors font-medium flex items-center">
                 <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
                 Download
               </button>
-              <button onClick={handlePrint} disabled={generating}
-                className="px-4 py-2 bg-gray-600 text-white text-sm rounded-lg hover:bg-gray-700 transition-colors font-medium flex items-center disabled:opacity-50">
+              <button onClick={handlePrint}
+                className="px-4 py-2 bg-gray-600 text-white text-sm rounded-lg hover:bg-gray-700 transition-colors font-medium flex items-center">
                 <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" /></svg>
                 Print
               </button>
@@ -714,25 +526,28 @@ const ServiceInvoicePDFModal: React.FC<{ invoice: ServiceInvoice; onClose: () =>
             </div>
           </div>
 
-          {/* PDF Viewer */}
-          <div className="flex-1 overflow-hidden bg-gray-100 rounded-b-2xl min-h-[70vh]">
-            {generating ? (
-              <div className="flex flex-col items-center justify-center h-64">
+          {/* PDF Viewer — iframe loads the server-rendered PDF directly */}
+          <div className="flex-1 overflow-hidden bg-gray-100 rounded-b-2xl min-h-[70vh] relative">
+            {loading && !error && (
+              <div className="absolute inset-0 flex flex-col items-center justify-center bg-gray-100 z-10">
                 <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600 mb-3" />
-                <p className="text-sm text-gray-500">Generating PDF…</p>
+                <p className="text-sm text-gray-500">Loading PDF…</p>
               </div>
-            ) : pdfSrc ? (
-              <iframe
-                src={`${pdfSrc}#toolbar=0&navpanes=0`}
-                className="w-full h-full min-h-[70vh] border-0"
-                title={`Service Invoice ${invoice.invoice_number}`}
-              />
-            ) : (
+            )}
+            {error ? (
               <div className="flex flex-col items-center justify-center h-64 text-gray-500">
                 <svg className="w-16 h-16 mb-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
-                <p className="text-lg font-medium">PDF Generation Failed</p>
-                <p className="text-sm mt-1">Please try again.</p>
+                <p className="text-lg font-medium">Could not load PDF</p>
+                <button onClick={() => { setError(false); setLoading(true); }} className="mt-3 px-4 py-2 bg-blue-600 text-white text-sm rounded-lg">Retry</button>
               </div>
+            ) : (
+              <iframe
+                src={`${pdfUrl}#toolbar=0&navpanes=0`}
+                className="w-full h-full min-h-[70vh] border-0"
+                title={`Service Invoice ${invoice.invoice_number}`}
+                onLoad={() => setLoading(false)}
+                onError={() => { setLoading(false); setError(true); }}
+              />
             )}
           </div>
         </div>
