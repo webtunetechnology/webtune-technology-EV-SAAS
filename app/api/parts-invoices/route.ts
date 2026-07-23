@@ -75,16 +75,28 @@ export async function POST(request: NextRequest) {
 
     const supabase = createClient(supabaseUrl, serviceKey);
 
-    // Generate sale number: PCS-YYYYMM-NNNN
-    const now  = new Date();
-    const ym   = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}`;
-    const { count: existing } = await supabase
-      .from('parts_counter_sales')
-      .select('id', { count: 'exact', head: true })
+    // ── Generate sale number using a persistent per-showroom sequence ──────
+    // Same pattern as vehicle invoices: read current sequence from
+    // billing_configurations, build the number, then increment after save.
+    // A UNIQUE constraint on (showroom_id, sale_number) acts as the final
+    // safety net so no duplicate can ever be committed even under race conditions.
+    const { data: billingConfig, error: bcErr } = await supabase
+      .from('billing_configurations')
+      .select('parts_invoice_sequence, invoice_prefix')
       .eq('showroom_id', showroomId)
-      .like('sale_number', `PCS-${ym}-%`);
-    const seq       = (existing || 0) + 1;
-    const saleNumber = `PCS-${ym}-${String(seq).padStart(4, '0')}`;
+      .single();
+
+    if (bcErr || !billingConfig) {
+      return NextResponse.json({ success: false, error: 'Billing configuration not found for this showroom' }, { status: 400 });
+    }
+
+    const now    = new Date();
+    const ym     = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}`;
+    const seq    = billingConfig.parts_invoice_sequence ?? 1;
+    // Use configured prefix + "P" to distinguish parts from vehicle invoices
+    // e.g. INV → INVP, or a plain PCS prefix as fallback
+    const prefix = billingConfig.invoice_prefix ? `${billingConfig.invoice_prefix}P` : 'PCS';
+    const saleNumber = `${prefix}-${ym}-${String(seq).padStart(4, '0')}`;
 
     // Compute totals
     const subtotal   = items.reduce((sum: number, it: any) => sum + Number(it.unit_price) * Number(it.quantity), 0);
@@ -118,8 +130,19 @@ export async function POST(request: NextRequest) {
 
     if (saleErr || !sale) {
       console.error('Parts invoice insert error:', saleErr);
+      // If it was a duplicate number (race condition hit the unique constraint),
+      // give the user a clear message so they can retry
+      if (saleErr?.code === '23505') {
+        return NextResponse.json({ success: false, error: 'Invoice number conflict — please try again' }, { status: 409 });
+      }
       return NextResponse.json({ success: false, error: 'Failed to create invoice' }, { status: 500 });
     }
+
+    // Increment the sequence so the next invoice gets a different number
+    await supabase
+      .from('billing_configurations')
+      .update({ parts_invoice_sequence: seq + 1, updated_at: new Date().toISOString() })
+      .eq('showroom_id', showroomId);
 
     // Insert line items
     const lineItems = items.map((it: any) => ({
